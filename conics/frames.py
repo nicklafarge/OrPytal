@@ -20,6 +20,9 @@ class Vector(object):
     def orbit_fixed(self):
         return self.frame.orbit_fixed_dcm.dot(self.value)
 
+    def norm(self):
+        return np.linalg.norm(self.value)
+
 
 class CoordinateFrame(object):
     def __init__(self):
@@ -43,9 +46,6 @@ class CoordinateFrame(object):
 
 
 class RotatingFrame(CoordinateFrame):
-    def __init__(self):
-        super().__init__()
-
     @classmethod
     def inertial_dcm(cls, orbit, state):
         Omega = orbit.ascending_node
