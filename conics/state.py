@@ -59,6 +59,15 @@ class State(object):
         self.set_vars()
 
     @property
+    def v(self):
+        return self._v.value
+
+    @v.setter
+    def v(self, v=None):
+        self._v.value = v
+        self.set_vars()
+
+    @property
     def ascending_sign(self):
         return 1 if self.is_ascending() else -1
 
@@ -265,6 +274,34 @@ class RotationMatrixRi(StateValue):
             dcm_ri[2, 2] = np.cos(i)
 
             self.value = dcm_ri
+
+        # Requirements not met
+        else:
+            return False
+
+        return True
+
+
+class VelocityMagnitude(StateValue):
+    symbol = 'v'
+
+    def __init__(self):
+        super().__init__(ureg.radian)
+        self.orbit_requirements = [
+            ('r', 'se'),
+            ('r', 'a')
+        ]
+
+    def set(self, state, orbit):
+        if self.evaluated:
+            return False
+
+        # sqrt( 2(se + mu/r))
+        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+            self.value = np.sqrt(2 * (orbit.se + orbit.central_body.mu / state.r))
+        # sqrt( mu(2/r-1/a) )
+        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
+            self.value = np.sqrt(orbit.central_body.mu * (2. / state.r - 1 / orbit.a))
 
         # Requirements not met
         else:

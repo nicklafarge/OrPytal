@@ -73,40 +73,6 @@ class KeplarianState(object):
         self.orbit.h_xyz_from_state(self)
 
 
-
-    @property
-    def dcm_ri(self):
-        return self._dcm_ri
-
-    @dcm_ri.setter
-    def dcm_ri(self, dcm_ri=None):
-        if self._dcm_ri is not None:
-            return
-
-        if dcm_ri is not None:
-            self._dcm_ri = dcm_ri
-
-        if self.theta is not None and self.orbit.asc_node is not None and self.orbit.i is not None:
-            Omega = self.orbit.asc_node
-            theta = self._theta
-            i = self.orbit.i
-            dcm_ri = np.zeros((3, 3))
-            dcm_ri[0, 0] = np.cos(Omega) * np.cos(theta) - np.sin(Omega) * np.cos(i) * np.sin(theta)
-            dcm_ri[0, 1] = -np.cos(Omega) * np.sin(theta) - np.sin(Omega) * np.cos(i) * np.cos(theta)
-            dcm_ri[0, 2] = np.sin(Omega) * np.sin(i)
-            dcm_ri[1, 0] = np.sin(Omega) * np.cos(theta) + np.cos(Omega) * np.cos(i) * np.sin(theta)
-            dcm_ri[1, 1] = -np.sin(Omega) * np.sin(theta) + np.cos(Omega) * np.cos(i) * np.cos(theta)
-            dcm_ri[1, 2] = -np.cos(Omega) * np.sin(i)
-            dcm_ri[2, 0] = np.sin(i) * np.sin(theta)
-            dcm_ri[2, 1] = np.sin(i) * np.cos(theta)
-            dcm_ri[2, 2] = np.cos(i)
-
-            self._dcm_ri = dcm_ri
-        else:
-            return
-
-        self.set_vars()
-
     @property
     def v(self):
         return self._v
