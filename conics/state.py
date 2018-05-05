@@ -14,15 +14,18 @@ class State(object):
         self.orbit = orbit
         self.name = name
 
+        self._ascending = True
+
         self._r = Position()
         self._ta = TrueAnomaly()
-        self._ascending = False
         self._arg_latitude = ArgumentOfLatitude()
+        self._v = VelocityMagnitude()
 
         self.vars = [
             self._r,
             self._ta,
-            self._arg_latitude
+            self._arg_latitude,
+            self._v
         ]
 
     def set_vars(self):
@@ -184,96 +187,6 @@ class ArgumentOfLatitude(StateValue):
         # omega + ta
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.arg_periapsis + state.ta
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
-
-class RotationMatrixEr(StateValue):
-    symbol = 'dcm_er'
-
-    def __init__(self):
-        super().__init__(ureg.dimensionless)
-        self.orbit_requirements = [
-            TrueAnomaly.symbol
-        ]
-
-    def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = np.array(
-                [[np.cos(state.ta), np.sin(state.ta), 0],
-                 [-np.sin(state.ta), np.cos(state.ta), 0],
-                 [0, 0, 1]]
-            )
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
-
-class RotationMatrixRv(StateValue):
-    symbol = 'dcm_rv'
-
-    def __init__(self):
-        super().__init__(ureg.dimensionless)
-        self.orbit_requirements = [
-            'fpa'
-        ]
-
-    def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = np.array(
-                [[np.sin(state.fpa), 0, np.cos(state.fpa)],
-                 [np.cos(state.fpa), 0, -np.sin(state.fpa)],
-                 [0, 1, 0]])
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
-
-class RotationMatrixRi(StateValue):
-    symbol = 'dcm_ri'
-
-    def __init__(self):
-        super().__init__(ureg.dimensionless)
-        self.orbit_requirements = [
-            'arg_latitude', 'ascending_node', 'inclination'
-        ]
-
-    def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            Omega = orbit.ascending_node
-            theta = state.arg_latitude
-            i = orbit.inclination
-            dcm_ri = np.zeros((3, 3))
-            dcm_ri[0, 0] = np.cos(Omega) * np.cos(theta) - np.sin(Omega) * np.cos(i) * np.sin(theta)
-            dcm_ri[0, 1] = -np.cos(Omega) * np.sin(theta) - np.sin(Omega) * np.cos(i) * np.cos(theta)
-            dcm_ri[0, 2] = np.sin(Omega) * np.sin(i)
-            dcm_ri[1, 0] = np.sin(Omega) * np.cos(theta) + np.cos(Omega) * np.cos(i) * np.sin(theta)
-            dcm_ri[1, 1] = -np.sin(Omega) * np.sin(theta) + np.cos(Omega) * np.cos(i) * np.cos(theta)
-            dcm_ri[1, 2] = -np.cos(Omega) * np.sin(i)
-            dcm_ri[2, 0] = np.sin(i) * np.sin(theta)
-            dcm_ri[2, 1] = np.sin(i) * np.cos(theta)
-            dcm_ri[2, 2] = np.cos(i)
-
-            self.value = dcm_ri
 
         # Requirements not met
         else:
