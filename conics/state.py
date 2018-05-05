@@ -16,11 +16,16 @@ class State(object):
 
         self._r = Position()
         self._ta = TrueAnomaly()
+        self._arg_periapsis = ArgumentOfPeriapsis()
+        self._arg_latitude = ArgumentOfLatitude()
 
         self._ascending = False
 
         self.vars = [
-            self._r, self._ta
+            self._r,
+            self._ta,
+            self._arg_periapsis,
+            self._arg_latitude
         ]
 
     def set_vars(self):
@@ -45,6 +50,24 @@ class State(object):
     @ta.setter
     def ta(self, ta=None):
         self._ta.value = ta
+        self.set_vars()
+
+    @property
+    def arg_periapsis(self):
+        return self._arg_periapsis.value
+
+    @arg_periapsis.setter
+    def arg_periapsis(self, arg_periapsis=None):
+        self._arg_periapsis.value = arg_periapsis
+        self.set_vars()
+
+    @property
+    def arg_latitude(self):
+        return self._arg_periapsis.value
+
+    @arg_latitude.setter
+    def arg_latitude(self, arg_latitude=None):
+        self._arg_latitude.value = arg_latitude
         self.set_vars()
 
     @property
@@ -140,6 +163,54 @@ class Position(StateValue):
         # |a|(E cosh H - 1)
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             self.value = abs(orbit.a) * (state.E * np.cosh(state.H) - 1)
+
+        # Requirements not met
+        else:
+            return False
+
+        return True
+
+
+class ArgumentOfPeriapsis(StateValue):
+    symbol = 'arg_periapsis'
+
+    def __init__(self):
+        super().__init__(ureg.rad)
+        self.orbit_requirements = [
+            (ArgumentOfLatitude.symbol, TrueAnomaly.symbol)
+        ]
+
+    def set(self, state, orbit):
+        if self.evaluated:
+            return False
+
+        # omega + ta
+        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+            self.value = orbit.arg_latitude - state.ta
+
+        # Requirements not met
+        else:
+            return False
+
+        return True
+
+
+class ArgumentOfLatitude(StateValue):
+    symbol = 'arg_latitude'
+
+    def __init__(self):
+        super().__init__(ureg.rad)
+        self.orbit_requirements = [
+            (ArgumentOfPeriapsis.symbol, TrueAnomaly.symbol)
+        ]
+
+    def set(self, state, orbit):
+        if self.evaluated:
+            return False
+
+        # omega + ta
+        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+            self.value = orbit.arg_periapsis + state.ta
 
         # Requirements not met
         else:

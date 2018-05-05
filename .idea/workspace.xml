@@ -2,24 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a862a79c-4ae6-4c0c-b98a-b6c462045626" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/OrPytal.iml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/base.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/common/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/common/body_data.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/common/utils.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/orbit.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/planet_constants.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/state.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/requirements.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/test_basic.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/tests/test_sandbox.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/conics/conics_old.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/conics/state.py" afterPath="$PROJECT_DIR$/conics/state.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tests/test_basic.py" afterPath="$PROJECT_DIR$/tests/test_basic.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -30,88 +15,101 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="planet_constants.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/conics/planet_constants.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-347">
-              <caret line="61" column="30" lean-forward="false" selection-start-line="61" selection-start-column="30" selection-end-line="61" selection-end-column="30" />
-              <folding>
-                <element signature="e#33#42#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/conics/common/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1" column="55" lean-forward="false" selection-start-line="1" selection-start-column="55" selection-end-line="1" selection-end-column="55" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test_basic.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/tests/test_basic.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="10" column="0" lean-forward="false" selection-start-line="10" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-              <folding>
-                <element signature="e#33#48#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="test_sandbox.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/tests/test_sandbox.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="19" column="27" lean-forward="true" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
-              <folding>
-                <element signature="e#33#48#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="registry.py" pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/virtualenvs/research3/lib/python3.6/site-packages/pint/registry.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="161">
-              <caret line="707" column="0" lean-forward="false" selection-start-line="707" selection-start-column="0" selection-end-line="707" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="orbit.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/conics/orbit.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="212">
-              <caret line="151" column="0" lean-forward="false" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
-              <folding>
-                <element signature="e#64#90#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/conics/base.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="206">
-              <caret line="25" column="0" lean-forward="false" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
-              <folding>
-                <element signature="e#64#91#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <splitter split-orientation="horizontal" split-proportion="0.5">
+      <split-first>
+        <leaf>
+          <file leaf-file-name="planet_constants.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/conics/planet_constants.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="-347">
+                  <caret line="61" column="30" lean-forward="false" selection-start-line="61" selection-start-column="30" selection-end-line="61" selection-end-column="30" />
+                  <folding>
+                    <element signature="e#33#42#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/conics/common/__init__.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="15">
+                  <caret line="1" column="55" lean-forward="false" selection-start-line="1" selection-start-column="55" selection-end-line="1" selection-end-column="55" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="test_sandbox.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/tests/test_sandbox.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="210">
+                  <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="19" selection-end-column="27" />
+                  <folding>
+                    <element signature="e#33#48#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="orbit.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/conics/orbit.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="661">
+                  <caret line="158" column="0" lean-forward="true" selection-start-line="158" selection-start-column="0" selection-end-line="158" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#64#90#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="state.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/conics/state.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="145">
+                  <caret line="204" column="9" lean-forward="true" selection-start-line="204" selection-start-column="9" selection-end-line="204" selection-end-column="9" />
+                  <folding>
+                    <element signature="e#64#90#0" expanded="true" />
+                    <element signature="e#2335#3608#0" expanded="false" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="conics_old.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/conics/conics_old.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="108">
+                  <caret line="72" column="41" lean-forward="false" selection-start-line="72" selection-start-column="41" selection-end-line="72" selection-end-column="41" />
+                  <folding>
+                    <element signature="e#260#780#0" expanded="false" />
+                    <element signature="e#814#1257#0" expanded="false" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf>
+          <file leaf-file-name="conics_old.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/conics/conics_old.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="367">
+                  <caret line="85" column="37" lean-forward="false" selection-start-line="85" selection-start-column="24" selection-end-line="85" selection-end-column="37" />
+                  <folding>
+                    <element signature="e#260#780#0" expanded="false" />
+                    <element signature="e#814#1257#0" expanded="false" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-second>
+    </splitter>
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -132,6 +130,7 @@
       <find>instan</find>
       <find>radius</find>
       <find>body_data</find>
+      <find>def ta</find>
     </findStrings>
     <replaceStrings>
       <replace>a</replace>
@@ -145,16 +144,17 @@
       <list>
         <option value="$PROJECT_DIR$/conics/common/orbit.py" />
         <option value="$PROJECT_DIR$/conics/base.py" />
-        <option value="$PROJECT_DIR$/conics/state.py" />
         <option value="$PROJECT_DIR$/requirements.txt" />
         <option value="$PROJECT_DIR$/conics/__init__.py" />
         <option value="$PROJECT_DIR$/conics/common/utils.py" />
         <option value="$PROJECT_DIR$/conics/common/planet_constants.py" />
         <option value="$PROJECT_DIR$/conics/common/__init__.py" />
         <option value="$PROJECT_DIR$/conics/planet_constants.py" />
-        <option value="$PROJECT_DIR$/tests/test_basic.py" />
         <option value="$PROJECT_DIR$/tests/test_sandbox.py" />
         <option value="$PROJECT_DIR$/conics/orbit.py" />
+        <option value="$PROJECT_DIR$/tests/test_basic.py" />
+        <option value="$PROJECT_DIR$/conics/conics_old.py" />
+        <option value="$PROJECT_DIR$/conics/state.py" />
       </list>
     </option>
   </component>
@@ -247,6 +247,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/conics" />
       <recent name="$PROJECT_DIR$/conics/common" />
       <recent name="$PROJECT_DIR$" />
     </key>
@@ -267,7 +268,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.test_sandbox">
+  <component name="RunManager" selected="Python tests.Unittests in test_basic.py">
     <configuration default="false" name="Unittests in test_basic.py" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -371,8 +372,8 @@
     </list>
     <recent_temporary>
       <list size="2">
-        <item index="0" class="java.lang.String" itemvalue="Python.test_sandbox" />
-        <item index="1" class="java.lang.String" itemvalue="Python tests.Unittests in test_basic.py" />
+        <item index="0" class="java.lang.String" itemvalue="Python tests.Unittests in test_basic.py" />
+        <item index="1" class="java.lang.String" itemvalue="Python.test_sandbox" />
       </list>
     </recent_temporary>
   </component>
@@ -390,9 +391,6 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Unittests_in_test_basic_py - 2018.05.05 at 13h 20m 05s.xml">
-      <configuration name="Unittests in test_basic.py" configurationId="tests" />
-    </history-entry>
     <history-entry file="Unittests_in_test_basic_py - 2018.05.05 at 13h 31m 20s.xml">
       <configuration name="Unittests in test_basic.py" configurationId="tests" />
     </history-entry>
@@ -415,6 +413,12 @@
       <configuration name="Unittests in test_basic.py" configurationId="tests" />
     </history-entry>
     <history-entry file="Unittests_in_test_basic_py - 2018.05.05 at 13h 37m 42s.xml">
+      <configuration name="Unittests in test_basic.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_test_basic_py - 2018.05.05 at 13h 43m 49s.xml">
+      <configuration name="Unittests in test_basic.py" configurationId="tests" />
+    </history-entry>
+    <history-entry file="Unittests_in_test_basic_py - 2018.05.05 at 13h 43m 52s.xml">
       <configuration name="Unittests in test_basic.py" configurationId="tests" />
     </history-entry>
   </component>
@@ -447,9 +451,14 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="2" />
+      <option name="time" value="4" />
     </breakpoint-manager>
     <watches-manager>
+      <configuration name="tests">
+        <watch expression="orbit" language="Python" />
+        <watch expression="orbit.p" language="Python" />
+        <watch expression="orbit.h" language="Python" />
+      </configuration>
       <configuration name="PythonConfigurationType">
         <watch expression="orbit.p" language="Python" />
         <watch expression="orbit.central_body.mu" language="Python" />
@@ -492,16 +501,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/conics/state.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-375">
-          <caret line="81" column="30" lean-forward="false" selection-start-line="81" selection-start-column="25" selection-end-line="81" selection-end-column="30" />
-          <folding>
-            <element signature="e#64#90#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/conics/common/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-230">
@@ -520,12 +519,30 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_basic.py">
+    <entry file="file://$USER_HOME$/virtualenvs/research3/lib/python3.6/site-packages/pint/registry.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="0" lean-forward="false" selection-start-line="10" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
+        <state relative-caret-position="161">
+          <caret line="707" column="0" lean-forward="false" selection-start-line="707" selection-start-column="0" selection-end-line="707" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_sandbox.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="19" selection-end-column="27" />
           <folding>
             <element signature="e#33#48#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/tests/test_basic.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="227">
+          <caret line="26" column="28" lean-forward="true" selection-start-line="26" selection-start-column="28" selection-end-line="26" selection-end-column="28" />
+          <folding>
+            <element signature="e#33#48#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -538,17 +555,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/virtualenvs/research3/lib/python3.6/site-packages/pint/registry.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="161">
-          <caret line="707" column="0" lean-forward="false" selection-start-line="707" selection-start-column="0" selection-end-line="707" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/conics/base.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="206">
+        <state relative-caret-position="375">
           <caret line="25" column="0" lean-forward="false" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
           <folding>
             <element signature="e#64#91#0" expanded="true" />
@@ -558,20 +567,32 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/conics/orbit.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="212">
-          <caret line="151" column="0" lean-forward="false" selection-start-line="151" selection-start-column="0" selection-end-line="151" selection-end-column="0" />
+        <state relative-caret-position="661">
+          <caret line="158" column="0" lean-forward="true" selection-start-line="158" selection-start-column="0" selection-end-line="158" selection-end-column="0" />
           <folding>
             <element signature="e#64#90#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/tests/test_sandbox.py">
+    <entry file="file://$PROJECT_DIR$/conics/conics_old.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="19" column="27" lean-forward="true" selection-start-line="19" selection-start-column="27" selection-end-line="19" selection-end-column="27" />
+        <state relative-caret-position="108">
+          <caret line="72" column="41" lean-forward="false" selection-start-line="72" selection-start-column="41" selection-end-line="72" selection-end-column="41" />
           <folding>
-            <element signature="e#33#48#0" expanded="true" />
+            <element signature="e#260#780#0" expanded="false" />
+            <element signature="e#814#1257#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/conics/state.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="145">
+          <caret line="204" column="9" lean-forward="true" selection-start-line="204" selection-start-column="9" selection-end-line="204" selection-end-column="9" />
+          <folding>
+            <element signature="e#64#90#0" expanded="true" />
+            <element signature="e#2335#3608#0" expanded="false" />
           </folding>
         </state>
       </provider>
