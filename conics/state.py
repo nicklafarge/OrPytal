@@ -10,7 +10,7 @@ import numpy as np
 import scipy as sp
 
 
-class State(object):
+class KeplarianState(object):
     def __init__(self, orbit, name=''):
         self.orbit = orbit
         self.name = name
@@ -40,6 +40,14 @@ class State(object):
             self._M,
             self._E
         ]
+
+    def __str__(self):
+        x = ['{} Orbit State {}'.format(self.orbit, self.name)]
+        for var in self.vars:
+            if var.evaluated:
+                x.append(str(var))
+
+        return '\n'.join(x)
 
     def set_vars(self):
         for var in self.vars:
@@ -339,7 +347,7 @@ class PositionVector(StateValue):
 
         # r (rhat)
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = frames.Vector(state.r, frames.RotatingFrame)
+            self.value = frames.Vector(np.array([state.r.m, 0, 0]), frames.RotatingFrame)
 
         # Requirements not met
         else:

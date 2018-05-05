@@ -11,7 +11,10 @@ class Vector(object):
         self.value = value
         self.frame = frame
 
-    def inertal(self):
+    def __str__(self):
+        return '{} in {}'.format(self.value, self.frame.name)
+
+    def inertial(self):
         return self.frame.inertial_dcm.dot(self.value)
 
     def rotating(self):
@@ -25,8 +28,7 @@ class Vector(object):
 
 
 class CoordinateFrame(object):
-    def __init__(self):
-        pass
+    name = None
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -46,6 +48,8 @@ class CoordinateFrame(object):
 
 
 class RotatingFrame(CoordinateFrame):
+    name = 'Rotating Frame'
+
     @classmethod
     def inertial_dcm(cls, orbit, state):
         Omega = orbit.ascending_node
@@ -81,8 +85,7 @@ class RotatingFrame(CoordinateFrame):
 
 
 class VncFrame(CoordinateFrame):
-    def __init__(self):
-        super().__init__()
+    name = 'Vnc Frame'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -106,8 +109,7 @@ class VncFrame(CoordinateFrame):
 
 
 class OrbitFixedFrame(CoordinateFrame):
-    def __init__(self):
-        super().__init__()
+    name = 'Orbit Fixed Frame'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -135,8 +137,7 @@ class OrbitFixedFrame(CoordinateFrame):
 
 
 class InertialFrame(CoordinateFrame):
-    def __init__(self):
-        super().__init__()
+    name = 'Inertial Frame'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):

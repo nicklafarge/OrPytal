@@ -2,6 +2,7 @@
 
 ########### Local ###########
 from common import ureg, Q_
+import frames
 
 ########### External ###########
 import numpy as np
@@ -9,12 +10,17 @@ import scipy as sp
 
 
 class OrbitBase(object):
+    symbol = ''
+
     def __init__(self, units):
         self.units = units
 
         self.requirements = None
         self._value = None
         self.evaluated = False
+
+    def __str__(self):
+        return '{}: {}'.format(self.symbol, self._value)
 
     @property
     def value(self):
@@ -24,6 +30,11 @@ class OrbitBase(object):
     def value(self, value=None):
         if isinstance(value, ureg.Quantity):
             self._value = value.to(self.units)
+        elif isinstance(value, frames.Vector):
+            if isinstance(value.value, ureg.Quantity):
+                self._value = frames.Vector(value.value.to(self.units), value.frame)
+            else:
+                self._value = frames.Vector(value.value * self.units, value.frame)
         else:
             self._value = value * self.units
 

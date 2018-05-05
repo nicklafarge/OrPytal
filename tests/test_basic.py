@@ -2,7 +2,7 @@
 import unittest
 
 ########### Local ###########
-from conics import Orbit, State
+from conics import Orbit, KeplarianState
 from common import ureg, Q_
 
 ########### External ###########
@@ -12,7 +12,7 @@ import numpy as np
 class TestOrbit(unittest.TestCase):
     def test_ta(self):
         orbit = Orbit('earth')
-        state = State(orbit)
+        state = KeplarianState(orbit)
 
         orbit.e = 0.1
         orbit.p = 18400000 * ureg.m
@@ -24,7 +24,7 @@ class TestOrbit(unittest.TestCase):
 
     def test_from_state(self):
         orbit = Orbit('earth')
-        state = State(orbit)
+        state = KeplarianState(orbit)
 
         orbit.e = 0.1
 

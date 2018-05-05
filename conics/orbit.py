@@ -52,6 +52,14 @@ class Orbit():
             self._inclination,
         ]
 
+    def __str__(self):
+        x = ['%s Orbit Info' % self.name]
+        for var in self.vars:
+            if var.evaluated:
+                x.append(str(var))
+
+        return '\n'.join(x)
+
     @property
     def a(self):
         return self._a.value
@@ -344,7 +352,7 @@ class AngularMomentumVector(OrbitValue):
             ('p')
         ]
         self.orbit_state_requirements = [
-            ('pos', 'vel')
+            ('pos', 'vel', 'arg_periapsis', 'inclination', 'ascending_node')
         ]
 
     def set(self, orbit):

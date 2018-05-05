@@ -2,14 +2,16 @@
 import unittest
 
 ########### Local ###########
-from conics import Orbit, State
+from conics import Orbit, KeplarianState
 from common import ureg, Q_
 
 ########### External ###########
 import numpy as np
 
-orbit = Orbit('earth')
-state = State(orbit)
+np.set_printoptions(precision=4)
+
+orbit = Orbit('earth', name='Test Orbit')
+state = KeplarianState(orbit, name='Test State')
 
 if __name__ == '__main__':
     orbit.e = 0.1
@@ -19,3 +21,6 @@ if __name__ == '__main__':
 
     orbit.from_state(state)
 
+    print(orbit)
+    print()
+    print(state)
