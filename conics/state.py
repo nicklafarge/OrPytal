@@ -296,7 +296,7 @@ class VelocityMagnitude(StateValue):
     symbol = 'v'
 
     def __init__(self):
-        super().__init__(ureg.radian)
+        super().__init__(ureg.km / ureg.second)
         self.orbit_requirements = [
             ('r', 'se'),
             ('r', 'a'),
@@ -352,7 +352,7 @@ class VelocityVector(StateValue):
     symbol = 'velocity'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(ureg.km / ureg.second)
         self.orbit_requirements = [
             ('ta', 'e', 'h', 'ta'),
             ('fpa' 'v')
@@ -382,7 +382,7 @@ class TimeSincePeriapsis(StateValue):
     symbol = 't_since_rp'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(ureg.seconds)
         self.orbit_requirements = [
             ('E', 'e', 'n'),
         ]
@@ -406,7 +406,7 @@ class MeanAnomaly(StateValue):
     symbol = 'M'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(ureg.radians)
         self.orbit_requirements = [
             ('n', 't_since_rp'),
             ('E', 'e')
@@ -435,7 +435,7 @@ class EccentricAnomaly(StateValue):
     symbol = 'E'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(ureg.radians)
         self.orbit_requirements = [
             ('a', 'r', 'e'),
             ('e', 'M')
