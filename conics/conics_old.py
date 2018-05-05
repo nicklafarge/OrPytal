@@ -72,63 +72,7 @@ class KeplarianState(object):
         self.orbit.h_from_state(self)
         self.orbit.h_xyz_from_state(self)
 
-    @property
-    def theta(self):
-        return self._theta
 
-    @theta.setter
-    def theta(self, theta=None):
-        if self._theta is not None:
-            return
-
-        if theta is not None:
-            self._theta = theta
-        elif self.orbit.arg_periapsis is not None and self.ta is not None:
-            self._theta = self.orbit.arg_periapsis + self.ta
-        else:
-            return
-
-        self.set_vars()
-
-    @property
-    def dcm_er(self):
-        return self._dcm_er
-
-    @dcm_er.setter
-    def dcm_er(self, dcm_er=None):
-        if self._dcm_er is not None:
-            return
-
-        if dcm_er is not None:
-            self._dcm_er = dcm_er
-
-        if self.ta is not None:
-            self._dcm_er = np.array(
-                [[np.cos(self.ta), np.sin(self.ta), 0], [-np.sin(self.ta), np.cos(self.ta), 0], [0, 0, 1]])
-        else:
-            return
-
-        self.set_vars()
-
-    @property
-    def dcm_rv(self):
-        return self._dcm_rv
-
-    @dcm_rv.setter
-    def dcm_rv(self, dcm_rv=None):
-        if self._dcm_rv is not None:
-            return
-
-        if dcm_rv is not None:
-            self._dcm_rv = dcm_rv
-
-        if self._fpa is not None:
-            self._dcm_rv = np.array(
-                [[np.sin(self.fpa), 0, np.cos(self.fpa)], [np.cos(self.fpa), 0, -np.sin(self.fpa)], [0, 1, 0]])
-        else:
-            return
-
-        self.set_vars()
 
     @property
     def dcm_ri(self):

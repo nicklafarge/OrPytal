@@ -19,8 +19,18 @@ class Orbit():
         self._e = Eccentricity()
         self._h = AngularMomentum()
 
+        # Orientation angles
+        self._arg_periapsis = ArgumentOfPeriapsis()
+        self._ascending_node = LongitudeOfAscendingNode()
+        self._inclination = Inclination()
+
         self.vars = [
-            self._p, self._e, self._h
+            self._p,
+            self._e,
+            self._h,
+            self._arg_periapsis,
+            self._ascending_node,
+            self._inclination,
         ]
 
     @property
@@ -46,6 +56,33 @@ class Orbit():
     @h.setter
     def h(self, h=None):
         self._h.value = h
+
+    @property
+    def arg_periapsis(self):
+        return self._arg_periapsis.value
+
+    @arg_periapsis.setter
+    def arg_periapsis(self, arg_periapsis=None):
+        self._arg_periapsis.value = arg_periapsis
+        self.set_vars()
+
+    @property
+    def ascending_node(self):
+        return self._ascending_node.value
+
+    @ascending_node.setter
+    def ascending_node(self, ascending_node=None):
+        self._ascending_node.value = ascending_node
+        self.set_vars()
+
+    @property
+    def inclination(self):
+        return self._inclination.value
+
+    @inclination.setter
+    def inclination(self, inclination=None):
+        self._inclination.value = inclination
+        self.set_vars()
 
     def set_vars(self):
         for var in self.vars:
@@ -156,3 +193,70 @@ class AngularMomentum(OrbitValue):
             return False
 
         return True
+
+
+class ArgumentOfPeriapsis(OrbitValue):
+    symbol = 'arg_periapsis'
+
+    def __init__(self):
+        super().__init__(ureg.rad)
+        self.orbit_requirements = [
+
+        ]
+        self.orbit_state_requirements = [
+            ('arg_latitude', 'ta')
+        ]
+
+    def set(self, orbit):
+        if self.evaluated:
+            return False
+
+        return False
+
+    def set_from_state(self, state, orbit):
+        if self.evaluated:
+            return False
+
+        # r(1+ecos(ta))
+        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+            self.value = state.arg_latitude - state.ta
+
+        # Requirements not met
+        else:
+            return False
+
+        return True
+
+
+class LongitudeOfAscendingNode(OrbitValue):
+    symbol = 'ascending_node'
+
+    def __init__(self):
+        super().__init__(ureg.rad)
+        self.orbit_requirements = [
+        ]
+        self.orbit_state_requirements = [
+        ]
+
+    def set(self, orbit):
+        if self.evaluated:
+            return False
+
+        return False
+
+
+class Inclination(OrbitValue):
+    symbol = 'inclination'
+
+    def __init__(self):
+        super().__init__(ureg.rad)
+        self.orbit_requirements = [
+        ]
+        self.orbit_state_requirements = [
+        ]
+
+    def set(self, orbit):
+        if self.evaluated:
+            return False
+
+        return False
