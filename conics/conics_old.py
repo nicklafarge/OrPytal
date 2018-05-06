@@ -91,10 +91,10 @@ class KeplarianState(object):
             elif self._ta == np.pi:
                 self._E = np.pi
             else:
-                self._E = self._get_ascending_sign() * np.arccos(
+                self._E = self._get_ascending_sign* np.arccos(
                     (self.orbit.a - self._r) / (self.orbit.a * self.orbit.e))
         elif self.orbit.a is not None and self._r is not None and self.orbit.e is not None and self.orbit.is_ellipse():
-            self._E = self._get_ascending_sign() * np.arccos(((self.orbit.a - self._r) / (self.orbit.a * self.orbit.e)))
+            self._E = self._get_ascending_sign* np.arccos(((self.orbit.a - self._r) / (self.orbit.a * self.orbit.e)))
         else:
             return
 

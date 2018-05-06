@@ -14,7 +14,10 @@ import scipy as sp
 
 class Orbit():
     def __init__(self, central_body, name=''):
-        self.central_body = BODIES[central_body.upper()]
+        if isinstance(central_body, str):
+            self.central_body = BODIES[central_body.upper()]
+        else:
+            self.central_body = central_body
         self.name = name
 
         self._p = SemiLatusRectum()
@@ -196,7 +199,7 @@ class Orbit():
             if new_value_set:
                 self.set_vars()
                 self.from_state(state)
-                break
+                return True
 
 
 class OrbitValue(OrbitBase):
@@ -308,10 +311,11 @@ class AngularMomentumMagnitude(OrbitValue):
     def __init__(self):
         super().__init__(ureg.km ** 2 / ureg.s)
         self.orbit_requirements = [
-            ('p')
+            ('p'),
+            ('angular_momentum')
         ]
         self.orbit_state_requirements = [
-            ('pos', 'vel')
+            ('position', 'velocity')
         ]
 
     def set(self, orbit):
@@ -321,6 +325,9 @@ class AngularMomentumMagnitude(OrbitValue):
         # sqrt(p mu)
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.sqrt(orbit.p * orbit.central_body.mu)
+        # | h |
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
+            self.value = np.linalg.norm(orbit.angular_momentum)
 
         # Requirements not met
         else:
@@ -334,7 +341,7 @@ class AngularMomentumMagnitude(OrbitValue):
 
         # | r cross v |
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
-            self.value = np.linalg.norm(np.cross(state.pos.value, state.vel.value))
+            self.value = np.linalg.norm(np.cross(state.position.value, state.velocity.value))
 
         # Requirements not met
         else:
@@ -349,33 +356,21 @@ class AngularMomentumVector(OrbitValue):
     def __init__(self):
         super().__init__(ureg.km ** 2 / ureg.s)
         self.orbit_requirements = [
-            ('p')
         ]
         self.orbit_state_requirements = [
-            ('pos', 'vel', 'arg_periapsis', 'inclination', 'ascending_node')
+            ('position', 'velocity', 'arg_periapsis', 'inclination', 'ascending_node')
         ]
 
     def set(self, orbit):
-        if self.evaluated:
-            return False
-
-        # sqrt(p mu)
-        if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = np.sqrt(orbit.p * orbit.central_body.mu)
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
+        return False
 
     def set_from_state(self, state, orbit):
         if self.evaluated:
             return False
 
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
-            h = np.cross(state.pos.inertial(), state.vel.inertial())
-            self.value = frames.Vector(h, frames.InertialFrame)
+            h = np.cross(state.position.inertial(), state.velocity.inertial())
+            self.value = frames.Vector(orbit, state, h, frames.InertialFrame)
 
         # Requirements not met
         else:
@@ -513,9 +508,6 @@ class SemiminorAxis(OrbitValue):
 
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.a * np.sqrt(1 - orbit.e ** 2)
-
-        elif self.satisfied(orbit, self.orbit_requirements[2]):
-            self.value = orbit.p / (1. - orbit.e ** 2)
 
         # Requirements not met
         else:

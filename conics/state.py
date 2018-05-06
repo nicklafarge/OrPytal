@@ -15,14 +15,14 @@ class KeplarianState(object):
         self.orbit = orbit
         self.name = name
 
-        self._ascending = True
+        self._ascending = None
 
         self._r = PositionMagnitude()
         self._ta = TrueAnomaly()
         self._arg_latitude = ArgumentOfLatitude()
         self._v = VelocityMagnitude()
-        self._pos = PositionVector()
-        self._vel = VelocityVector()
+        self._position = PositionVector()
+        self._velocity = VelocityVector()
         self._fpa = FlightPathAngle()
         self._t_since_rp = TimeSincePeriapsis()
         self._M = MeanAnomaly()
@@ -33,8 +33,8 @@ class KeplarianState(object):
             self._ta,
             self._arg_latitude,
             self._v,
-            self._pos,
-            self._vel,
+            self._position,
+            self._velocity,
             self._fpa,
             self._t_since_rp,
             self._M,
@@ -42,7 +42,7 @@ class KeplarianState(object):
         ]
 
     def __str__(self):
-        x = ['{} Orbit State {}'.format(self.orbit, self.name)]
+        x = ['{} Orbit State {}'.format(self.orbit.name, self.name)]
         for var in self.vars:
             if var.evaluated:
                 x.append(str(var))
@@ -54,6 +54,10 @@ class KeplarianState(object):
             new_value_set = var.set(self, self.orbit)
             if new_value_set:
                 self.set_vars()
+
+        orbit_changed = self.orbit.from_state(self)
+        if orbit_changed:
+            self.set_vars()
 
     @property
     def r(self):
@@ -70,6 +74,8 @@ class KeplarianState(object):
 
     @ta.setter
     def ta(self, ta=None):
+        self._ascending = 0 < ta < np.pi
+
         self._ta.value = ta
         self.set_vars()
 
@@ -92,21 +98,21 @@ class KeplarianState(object):
         self.set_vars()
 
     @property
-    def pos(self):
-        return self._pos.value
+    def position(self):
+        return self._position.value
 
-    @pos.setter
-    def pos(self, pos=None):
-        self._pos.value = pos
+    @position.setter
+    def position(self, position=None):
+        self._position.value = position
         self.set_vars()
 
     @property
-    def vel(self):
-        return self._vel.value
+    def velocity(self):
+        return self._velocity.value
 
-    @vel.setter
-    def vel(self, vel=None):
-        self._vel.value = vel
+    @velocity.setter
+    def velocity(self, velocity=None):
+        self._velocity.value = velocity
         self.set_vars()
 
     @property
@@ -115,6 +121,8 @@ class KeplarianState(object):
 
     @fpa.setter
     def fpa(self, fpa=None):
+        self._ascending = 0 < fpa < np.pi
+
         self._fpa.value = fpa
         self.set_vars()
 
@@ -133,6 +141,8 @@ class KeplarianState(object):
 
     @E.setter
     def E(self, E=None):
+        self._ascending = 0 < E < np.pi
+
         self._E.value = E
         self.set_vars()
 
@@ -147,7 +157,7 @@ class KeplarianState(object):
 
     @property
     def ascending_sign(self):
-        return 1 if self.is_ascending() else -1
+        return 1 if self._ascending else -1
 
     def is_ascending(self):
 
@@ -159,7 +169,10 @@ class KeplarianState(object):
         return 0 <= angle_to_check <= np.pi
 
     def angle_check_tan(self, tan_val):
-        if (self.is_ascending() and tan_val > 0) or (not self.is_ascending() and tan_val < 0):
+        if self._ascending is None:
+            return tan_val
+
+        if (self._ascending and tan_val > 0) or (not self._ascending and tan_val < 0):
             return tan_val
         else:
             return np.pi + tan_val
@@ -286,7 +299,7 @@ class FlightPathAngle(StateValue):
 
         # acos(h/(rv))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = state.ascending_sign() * np.arccos(orbit.h / (state.r * state.v))
+            self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
 
         # atan(vr/vt)
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
@@ -308,7 +321,7 @@ class VelocityMagnitude(StateValue):
         self.orbit_requirements = [
             ('r', 'se'),
             ('r', 'a'),
-            ('velocity')
+            ('velocity',)
         ]
 
     def set(self, state, orbit):
@@ -347,7 +360,10 @@ class PositionVector(StateValue):
 
         # r (rhat)
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = frames.Vector(np.array([state.r.m, 0, 0]), frames.RotatingFrame)
+            self.value = frames.Vector(orbit,
+                                       state,
+                                       np.array([state.r.m, 0, 0]),
+                                       frames.RotatingFrame)
 
         # Requirements not met
         else:
@@ -374,10 +390,15 @@ class VelocityVector(StateValue):
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             vr = (orbit.central_body.mu * orbit.e) / orbit.h * np.sin(state.ta)
             vt = orbit.central_body.mu / orbit.h * (1 + orbit.e * np.cos(state.ta))
-            self.value = frames.Vector(np.array([vr, vt, 0]), frames.RotatingFrame)
+            self.value = frames.Vector(orbit,
+                                       state,
+                                       np.array([vr, vt, 0]),
+                                       frames.RotatingFrame)
 
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
-            self.value = frames.Vector(np.array([state.v * np.sin(state.fpa), state.v * np.cos(state.fpa), 0]),
+            self.value = frames.Vector(orbit,
+                                       state,
+                                       np.array([state.v * np.sin(state.fpa), state.v * np.cos(state.fpa), 0]),
                                        frames.RotatingFrame)
         # Requirements not met
         else:
@@ -455,7 +476,7 @@ class EccentricAnomaly(StateValue):
 
         # acos((a-r)/(ae))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = state.ascending_sign() * np.arccos(
+            self.value = state.ascending_sign * np.arccos(
                 (orbit.a - state.r) / (orbit.a * orbit.e))
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
             self._iterative_eccentric_anomaly(state)

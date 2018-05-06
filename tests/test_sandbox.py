@@ -21,6 +21,10 @@ if __name__ == '__main__':
 
     orbit.from_state(state)
 
+    state.position.orbit_fixed()
+
     print(orbit)
     print()
     print(state)
+
+    pass

@@ -32,9 +32,11 @@ class OrbitBase(object):
             self._value = value.to(self.units)
         elif isinstance(value, frames.Vector):
             if isinstance(value.value, ureg.Quantity):
-                self._value = frames.Vector(value.value.to(self.units), value.frame)
+                value.value = value.value.to(self.units)
+                self._value = value
             else:
-                self._value = frames.Vector(value.value * self.units, value.frame)
+                value.value = value.value * self.units
+                self._value = value
         else:
             self._value = value * self.units
 
@@ -44,4 +46,7 @@ class OrbitBase(object):
         return hasattr(obj, '_' + req) and getattr(obj, '_' + req).evaluated
 
     def state_orbit_satisfied(self, state, orbit, requirements):
-        return all([self.check_satisfied(state, req) or self.check_satisfied(orbit, req) for req in requirements])
+        if isinstance(requirements, str):
+            return self.check_satisfied(state, requirements) or self.check_satisfied(orbit, requirements)
+        else:
+            return all([self.check_satisfied(state, req) or self.check_satisfied(orbit, req) for req in requirements])

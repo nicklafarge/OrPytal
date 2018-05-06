@@ -7,21 +7,39 @@ import numpy as np
 
 
 class Vector(object):
-    def __init__(self, value, frame):
+    def __init__(self, orbit, state, value, frame):
+        self.orbit = orbit
+        self.state = state
+
         self.value = value
         self.frame = frame
 
     def __str__(self):
         return '{} in {}'.format(self.value, self.frame.name)
 
+    def __getitem__(self, i):
+        return self.value.__getitem__(i)
+
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return self.value.__iter__()
+
     def inertial(self):
-        return self.frame.inertial_dcm.dot(self.value)
+        value = self.frame.inertial_dcm(self.orbit, self.state).dot(self.value)
+        frame = InertialFrame
+        return Vector(self.orbit, self.state, value, frame)
 
     def rotating(self):
-        return self.frame.rotating_dcm.dot(self.value)
+        value = self.frame.rotating_dcm(self.orbit, self.state).dot(self.value)
+        frame = RotatingFrame
+        return Vector(self.orbit, self.state, value, frame)
 
     def orbit_fixed(self):
-        return self.frame.orbit_fixed_dcm.dot(self.value)
+        value = self.frame.orbit_fixed_dcm(self.orbit, self.state).dot(self.value)
+        frame = OrbitFixedFrame
+        return Vector(self.orbit, self.state, value, frame)
 
     def norm(self):
         return np.linalg.norm(self.value)
