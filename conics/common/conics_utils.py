@@ -27,3 +27,18 @@ def common_val(sin_val, cos_val, tol=1e-3):
         raise ValueError('No common value found for %f and %f\n' % (sin_val, cos_val))
 
     return val
+
+def orbit_setter(setter_function):
+    def wrapper(*args):
+        orbit_value = args[0]
+
+        if orbit_value.evaluated:
+            return False
+
+        value_before = orbit_value.value
+        setter_function(*args)
+        value_after = orbit_value.value
+
+        return value_before != value_after
+
+    return wrapper

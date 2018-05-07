@@ -2,7 +2,7 @@
 
 ########### Local ###########
 from base import OrbitBase
-from common import ureg, Q_
+from common import ureg, Q_, orbit_setter
 import conics_utils
 import frames
 from planet_constants import BODIES
@@ -226,9 +226,8 @@ class SemiLatusRectum(OrbitValue):
             ('r', 'e', 'ta')
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         # a(1-e^2)
         if self.satisfied(orbit, self.orbit_requirements[0]):
@@ -238,25 +237,12 @@ class SemiLatusRectum(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.h ** 2 / orbit.central_body.mu
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # r(1+ecos(ta))
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = state.r * (1 + orbit.e * np.cos(state.ta))
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class Eccentricity(OrbitValue):
@@ -272,9 +258,8 @@ class Eccentricity(OrbitValue):
             ('r', 'v', 'fpa')
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         # sqrt(1 + (2 se h^2) / (mu ^ 2) )
         if self.satisfied(orbit, self.orbit_requirements[0]):
@@ -284,25 +269,13 @@ class Eccentricity(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = 1.0 - orbit.rp / orbit.a
 
-        # Requirements not met
-        else:
-            return False
 
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.evaluated:
-            return False
 
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = np.sqrt(((state.r * state.v ** 2) / orbit.central_body.mu - 1) ** 2 * np.cos(state.fpa) ** 2 + \
                                  np.sin(state.fpa) ** 2)
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class AngularMomentumMagnitude(OrbitValue):
@@ -318,9 +291,8 @@ class AngularMomentumMagnitude(OrbitValue):
             ('position', 'velocity')
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         # sqrt(p mu)
         if self.satisfied(orbit, self.orbit_requirements[0]):
@@ -329,25 +301,13 @@ class AngularMomentumMagnitude(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.linalg.norm(orbit.angular_momentum)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # | r cross v |
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = np.linalg.norm(np.cross(state.position.value, state.velocity.value))
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class AngularMomentumVector(OrbitValue):
@@ -361,22 +321,17 @@ class AngularMomentumVector(OrbitValue):
             ('position', 'velocity', 'arg_periapsis', 'inclination', 'ascending_node')
         ]
 
+    @orbit_setter
     def set(self, orbit):
         return False
 
+    @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.evaluated:
-            return False
 
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             h = np.cross(state.position.inertial(), state.velocity.inertial())
             self.value = frames.Vector(orbit, state, h, frames.InertialFrame)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class ArgumentOfPeriapsis(OrbitValue):
@@ -391,22 +346,17 @@ class ArgumentOfPeriapsis(OrbitValue):
             ('arg_latitude', 'ta')
         ]
 
+    @orbit_setter
     def set(self, orbit):
         return False
 
+    @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # r(1+ecos(ta))
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = state.arg_latitude - state.ta
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class LongitudeOfAscendingNode(OrbitValue):
@@ -420,9 +370,8 @@ class LongitudeOfAscendingNode(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         if self.satisfied(orbit, self.orbit_requirements[0]):
             h_xyz = orbit.angular_momentum / np.linalg.norm(orbit.angular_momentum)
@@ -430,11 +379,6 @@ class LongitudeOfAscendingNode(OrbitValue):
             cos_val = np.arccos(-h_xyz[1] / np.sin(orbit.inclination))
             self.value = conics_utils.common_val(sin_val, cos_val)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class Inclination(OrbitValue):
@@ -447,6 +391,7 @@ class Inclination(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
         return False
 
@@ -464,9 +409,8 @@ class SemimajorAxis(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 0.5 * (orbit.ra + orbit.rp)
@@ -477,12 +421,7 @@ class SemimajorAxis(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = orbit.p / (1. - orbit.e ** 2)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
         return False
 
@@ -499,9 +438,8 @@ class SemiminorAxis(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = orbit.p / (1. + orbit.e ** 2.)
@@ -509,12 +447,7 @@ class SemiminorAxis(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.a * np.sqrt(1 - orbit.e ** 2)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
         return False
 
@@ -530,19 +463,13 @@ class OrbitalPeriod(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 2.0 * np.pi / orbit.n
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
         return False
 
@@ -558,19 +485,13 @@ class MeanMotion(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.sqrt(orbit.central_body.mu / (orbit.a ** 3))
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
         return False
 
@@ -587,33 +508,20 @@ class SpecificEnergy(OrbitValue):
             ('r', 'v')
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         # -mu/(2a)
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = -orbit.central_body.mu / (2 * orbit.a)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # v^2/2 - mu/r
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = state.v ** 2. / 2. - orbit.central_body.mu / state.r
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class Apoapsis(OrbitValue):
@@ -628,9 +536,8 @@ class Apoapsis(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         # p / (1 + e)
         if self.satisfied(orbit, self.orbit_requirements[0]):
@@ -640,12 +547,7 @@ class Apoapsis(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.a * (1 + orbit.e)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
         return False
 
@@ -662,9 +564,8 @@ class Periapsis(OrbitValue):
         self.orbit_state_requirements = [
         ]
 
+    @orbit_setter
     def set(self, orbit):
-        if self.evaluated:
-            return False
 
         # p / (1 - e)
         if self.satisfied(orbit, self.orbit_requirements[0]):
@@ -674,11 +575,6 @@ class Periapsis(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.a * (1 - orbit.e)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
+    @orbit_setter
     def set_from_state(self, state, orbit):
         return False

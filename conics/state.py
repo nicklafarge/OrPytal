@@ -2,7 +2,7 @@
 
 ########### Local ###########
 from base import OrbitBase
-from common import ureg, Q_
+from common import ureg, Q_, orbit_setter
 import frames
 
 ########### External ###########
@@ -179,6 +179,7 @@ class KeplarianState(object):
 
 
 class StateValue(OrbitBase):
+
     def set(self, state, orbit):
         raise NotImplementedError()
 
@@ -197,9 +198,8 @@ class TrueAnomaly(StateValue):
             ('r', 'v', 'fpa')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # acos((1/e) (p/r - 1))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
@@ -218,12 +218,6 @@ class TrueAnomaly(StateValue):
                            (t * np.cos(state.fpa) ** 2 - 1))
             self.value = state.angle_check_tan(ta)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
 
 class PositionMagnitude(StateValue):
     symbol = 'r'
@@ -236,9 +230,8 @@ class PositionMagnitude(StateValue):
             ('a', 'E', 'H')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # p/1+ecos(ta)
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
@@ -252,12 +245,6 @@ class PositionMagnitude(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             self.value = abs(orbit.a) * (state.E * np.cosh(state.H) - 1)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
 
 class ArgumentOfLatitude(StateValue):
     symbol = 'arg_latitude'
@@ -268,19 +255,11 @@ class ArgumentOfLatitude(StateValue):
             ('arg_periapsis', 'ta')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
         # omega + ta
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.arg_periapsis + state.ta
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class FlightPathAngle(StateValue):
@@ -293,9 +272,8 @@ class FlightPathAngle(StateValue):
             ('velocity')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # acos(h/(rv))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
@@ -305,12 +283,6 @@ class FlightPathAngle(StateValue):
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
             fpa = np.arctan(state.velocity[0] / state.velocity[1])
             self.value = state.angle_check_tan(fpa)
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class VelocityMagnitude(StateValue):
@@ -324,9 +296,8 @@ class VelocityMagnitude(StateValue):
             ('velocity',)
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # sqrt( 2(se + mu/r))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
@@ -338,12 +309,6 @@ class VelocityMagnitude(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             self.value = state.velocity.norm()
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
 
 class PositionVector(StateValue):
     symbol = 'position'
@@ -354,22 +319,14 @@ class PositionVector(StateValue):
             ('r')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
         # r (rhat)
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = frames.Vector(orbit,
                                        state,
                                        np.array([state.r.m, 0, 0]),
                                        frames.RotatingFrame)
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class VelocityVector(StateValue):
@@ -382,9 +339,8 @@ class VelocityVector(StateValue):
             ('fpa' 'v')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
 
         # Rotating Frame
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
@@ -392,7 +348,7 @@ class VelocityVector(StateValue):
             vt = orbit.central_body.mu / orbit.h * (1 + orbit.e * np.cos(state.ta))
             self.value = frames.Vector(orbit,
                                        state,
-                                       np.array([vr, vt, 0]),
+                                       np.array([vr.m, vt.m, 0]) * vr.u,
                                        frames.RotatingFrame)
 
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
@@ -400,11 +356,6 @@ class VelocityVector(StateValue):
                                        state,
                                        np.array([state.v * np.sin(state.fpa), state.v * np.cos(state.fpa), 0]),
                                        frames.RotatingFrame)
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class TimeSincePeriapsis(StateValue):
@@ -416,19 +367,11 @@ class TimeSincePeriapsis(StateValue):
             ('E', 'e', 'n'),
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
         # Rotating Frame
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = (state.E - orbit.e * np.sin(state.E)) / orbit.n
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class MeanAnomaly(StateValue):
@@ -441,10 +384,8 @@ class MeanAnomaly(StateValue):
             ('E', 'e')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
         # n * ttp
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.n * state.t_since_rp
@@ -452,12 +393,6 @@ class MeanAnomaly(StateValue):
         # E - e sin(E)
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
             self.value = state.E - orbit.e * np.sin(state.E)
-
-        # Requirements not met
-        else:
-            return False
-
-        return True
 
 
 class EccentricAnomaly(StateValue):
@@ -470,10 +405,8 @@ class EccentricAnomaly(StateValue):
             ('e', 'M')
         ]
 
+    @orbit_setter
     def set(self, state, orbit):
-        if self.evaluated:
-            return False
-
         # acos((a-r)/(ae))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = state.ascending_sign * np.arccos(
@@ -481,17 +414,10 @@ class EccentricAnomaly(StateValue):
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
             self._iterative_eccentric_anomaly(state)
 
-        # Requirements not met
-        else:
-            return False
-
-        return True
-
     def _iterative_eccentric_anomaly(self, state, orbit, **kwargs):
         return self._find_eccentric_anomaly_recursively(orbit, state.M, state.M, **kwargs)
 
     def _find_eccentric_anomaly_recursively(self, orbit, E, M, tol=1e-12):
-
         E1 = E - (E - orbit.e * np.sin(E) - M) / (1 - orbit.e * np.cos(E))
         dE = np.fabs(E - E1)
 
