@@ -409,8 +409,12 @@ class EccentricAnomaly(StateValue):
     def set(self, state, orbit):
         # acos((a-r)/(ae))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = state.ascending_sign * np.arccos(
-                (orbit.a - state.r) / (orbit.a * orbit.e))
+            cos_val = (orbit.a - state.r) / (orbit.a * orbit.e)
+            if cos_val > 1 and np.isclose(cos_val, 1):
+                self.value = 0
+            else:
+                self.value = state.ascending_sign * np.arccos(
+                    (orbit.a - state.r) / (orbit.a * orbit.e))
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
             self._iterative_eccentric_anomaly(state)
 

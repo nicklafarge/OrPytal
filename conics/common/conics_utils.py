@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 
@@ -32,6 +33,7 @@ def orbit_setter(setter_function):
     def wrapper(*args):
         orbit_value = args[0]
 
+        # If this orbital parameter already has a value, return immediately
         if orbit_value.evaluated:
             return False
 
@@ -39,6 +41,14 @@ def orbit_setter(setter_function):
         setter_function(*args)
         value_after = orbit_value.value
 
+        if value_before != value_after:
+            logging.debug('Set {} to {}'.format(orbit_value.symbol, orbit_value.value))
+
+        # if value_after and isinstance(value_after, float) and np.isnan(value_after.m):
+        #     logging.warning('Something went wrong setting {} (setting this value to zero now).'.format(orbit_value.symbol))
+        #     orbit_value.value = 0
+
+        # Return true if the value of the parameter has changed as as result of the function call
         return value_before != value_after
 
     return wrapper

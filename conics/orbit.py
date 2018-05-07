@@ -539,9 +539,9 @@ class Apoapsis(OrbitValue):
     @orbit_setter
     def set(self, orbit):
 
-        # p / (1 + e)
+        # p / (1 - e)
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = orbit.p / (1 + orbit.e)
+            self.value = orbit.p / (1 - orbit.e)
 
         # a * (1 + e)
         elif self.satisfied(orbit, self.orbit_requirements[1]):
@@ -567,9 +567,9 @@ class Periapsis(OrbitValue):
     @orbit_setter
     def set(self, orbit):
 
-        # p / (1 - e)
+        # p / (1 + e)
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = orbit.p / (1 - orbit.e)
+            self.value = orbit.p / (1 + orbit.e)
 
         # a * (1 - e)
         elif self.satisfied(orbit, self.orbit_requirements[1]):
