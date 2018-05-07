@@ -21,14 +21,18 @@ logging.getLogger().setLevel(logging.INFO)
 
 if __name__ == '__main__':
     orbit.e = 0.8
-    state.r = 18500 * ureg.km
-    state.ta = 45 * ureg.deg
+    orbit.p = 37800 * ureg.km
+    state.ta = -175 * ureg.deg
     print(orbit)
     print()
     print(state)
 
     plt.figure(1)
     plotting.plot_orbit_fixed(orbit)
+    plotting.plot_state(state)
     plt.show(block=False)
+
+    plt.figure(2)
+    plotting.animate_orbit_fixed(orbit)
 
     pass

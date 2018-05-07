@@ -64,7 +64,7 @@ class KeplarianState(object):
         return self._r.value
 
     @r.setter
-    def r(self, r=None):
+    def r(self, r):
         self._r.value = r
         self.set_vars()
 
@@ -73,7 +73,7 @@ class KeplarianState(object):
         return self._ta.value
 
     @ta.setter
-    def ta(self, ta=None):
+    def ta(self, ta):
         self._ascending = 0 < ta < np.pi
 
         self._ta.value = ta
@@ -84,7 +84,7 @@ class KeplarianState(object):
         return self._arg_latitude.value
 
     @arg_latitude.setter
-    def arg_latitude(self, arg_latitude=None):
+    def arg_latitude(self, arg_latitude):
         self._arg_latitude.value = arg_latitude
         self.set_vars()
 
@@ -93,7 +93,7 @@ class KeplarianState(object):
         return self._v.value
 
     @v.setter
-    def v(self, v=None):
+    def v(self, v):
         self._v.value = v
         self.set_vars()
 
@@ -102,7 +102,7 @@ class KeplarianState(object):
         return self._position.value
 
     @position.setter
-    def position(self, position=None):
+    def position(self, position):
         self._position.value = position
         self.set_vars()
 
@@ -111,7 +111,7 @@ class KeplarianState(object):
         return self._velocity.value
 
     @velocity.setter
-    def velocity(self, velocity=None):
+    def velocity(self, velocity):
         self._velocity.value = velocity
         self.set_vars()
 
@@ -120,7 +120,7 @@ class KeplarianState(object):
         return self._fpa.value
 
     @fpa.setter
-    def fpa(self, fpa=None):
+    def fpa(self, fpa):
         self._ascending = 0 < fpa < np.pi
 
         self._fpa.value = fpa
@@ -131,7 +131,7 @@ class KeplarianState(object):
         return self._M.value
 
     @M.setter
-    def M(self, M=None):
+    def M(self, M):
         self._M.value = M
         self.set_vars()
 
@@ -140,7 +140,7 @@ class KeplarianState(object):
         return self._E.value
 
     @E.setter
-    def E(self, E=None):
+    def E(self, E):
         self._ascending = 0 < E < np.pi
 
         self._E.value = E
@@ -151,7 +151,7 @@ class KeplarianState(object):
         return self._t_since_rp.value
 
     @t_since_rp.setter
-    def t_since_rp(self, t_since_rp=None):
+    def t_since_rp(self, t_since_rp):
         self._t_since_rp.value = t_since_rp
         self.set_vars()
 

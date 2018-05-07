@@ -68,7 +68,7 @@ class Orbit():
         return self._a.value
 
     @a.setter
-    def a(self, a=None):
+    def a(self, a):
         self._a.value = a
         self.set_vars()
 
@@ -77,7 +77,7 @@ class Orbit():
         return self._b.value
 
     @b.setter
-    def b(self, b=None):
+    def b(self, b):
         self._b.value = b
         self.set_vars()
 
@@ -86,7 +86,7 @@ class Orbit():
         return self._period.value
 
     @period.setter
-    def period(self, period=None):
+    def period(self, period):
         self._period.value = period
         self.set_vars()
 
@@ -95,7 +95,7 @@ class Orbit():
         return self._n.value
 
     @n.setter
-    def n(self, n=None):
+    def n(self, n):
         self._n.value = n
         self.set_vars()
 
@@ -104,7 +104,7 @@ class Orbit():
         return self._se.value
 
     @se.setter
-    def se(self, se=None):
+    def se(self, se):
         self._se.value = se
         self.set_vars()
 
@@ -113,7 +113,7 @@ class Orbit():
         return self._rp.value
 
     @rp.setter
-    def rp(self, rp=None):
+    def rp(self, rp):
         self._rp.value = rp
         self.set_vars()
 
@@ -122,7 +122,7 @@ class Orbit():
         return self._ra.value
 
     @ra.setter
-    def ra(self, ra=None):
+    def ra(self, ra):
         self._ra.value = ra
         self.set_vars()
 
@@ -131,7 +131,7 @@ class Orbit():
         return self._e.value
 
     @e.setter
-    def e(self, e=None):
+    def e(self, e):
         self._e.value = e
 
     @property
@@ -139,7 +139,7 @@ class Orbit():
         return self._p.value
 
     @p.setter
-    def p(self, p=None):
+    def p(self, p):
         self._p.value = p
 
     @property
@@ -147,7 +147,7 @@ class Orbit():
         return self._h.value
 
     @h.setter
-    def h(self, h=None):
+    def h(self, h):
         self._h.value = h
 
     @property
@@ -155,7 +155,7 @@ class Orbit():
         return self._angular_momentum.value
 
     @angular_momentum.setter
-    def angular_momentum(self, angular_momentum=None):
+    def angular_momentum(self, angular_momentum):
         self._angular_momentum.value = angular_momentum
         self.set_vars()
 
@@ -164,7 +164,7 @@ class Orbit():
         return self._arg_periapsis.value
 
     @arg_periapsis.setter
-    def arg_periapsis(self, arg_periapsis=None):
+    def arg_periapsis(self, arg_periapsis):
         self._arg_periapsis.value = arg_periapsis
         self.set_vars()
 
@@ -173,7 +173,7 @@ class Orbit():
         return self._ascending_node.value
 
     @ascending_node.setter
-    def ascending_node(self, ascending_node=None):
+    def ascending_node(self, ascending_node):
         self._ascending_node.value = ascending_node
         self.set_vars()
 
@@ -182,7 +182,7 @@ class Orbit():
         return self._inclination.value
 
     @inclination.setter
-    def inclination(self, inclination=None):
+    def inclination(self, inclination):
         self._inclination.value = inclination
         self.set_vars()
 
