@@ -29,6 +29,7 @@ def common_val(sin_val, cos_val, tol=1e-3):
 
     return val
 
+
 def orbit_setter(setter_function):
     def wrapper(*args):
         orbit_value = args[0]

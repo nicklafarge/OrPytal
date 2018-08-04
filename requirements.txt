@@ -1,6 +1,9 @@
 scipy
 numpy
-matplotlib
 untangle
-seaborn
 pint
+
+# -------- Plotting --------
+matplotlib
+seaborn
+matlab

@@ -1,11 +1,12 @@
 ########### Standard ###########
+import logging
 
 ########### Local ###########
 from base import OrbitBase
-from common import ureg, Q_, orbit_setter
+from common import units, Q_, orbit_setter
 import conics_utils
 import frames
-from planet_constants import BODIES
+import planet_constants
 
 ########### External ###########
 import numpy as np
@@ -13,9 +14,9 @@ import scipy as sp
 
 
 class Orbit():
-    def __init__(self, central_body, name=''):
+    def __init__(self, central_body, name='', **kwargs):
         if isinstance(central_body, str):
-            self.central_body = BODIES[central_body.upper()]
+            self.central_body = planet_constants.BODIES[central_body.upper()]
         else:
             self.central_body = central_body
         self.name = name
@@ -29,6 +30,7 @@ class Orbit():
         self._arg_periapsis = ArgumentOfPeriapsis()
         self._ascending_node = LongitudeOfAscendingNode()
         self._inclination = Inclination()
+        self._i = self._inclination
 
         self._a = SemimajorAxis()
         self._b = SemiminorAxis()
@@ -53,7 +55,18 @@ class Orbit():
             self._arg_periapsis,
             self._ascending_node,
             self._inclination,
+            self._i,
         ]
+
+        for k, v in kwargs.items():
+            try:
+                attribute = getattr(self, '_' + k)
+                attribute.value = v
+            except AttributeError as e:
+                logging.error('Orbit has no parameter named {}.'.format(k))
+                raise e
+
+        self.set_vars()
 
     def __str__(self):
         x = ['%s Orbit Info' % self.name]
@@ -178,6 +191,14 @@ class Orbit():
         self.set_vars()
 
     @property
+    def i(self):
+        return self.inclination
+
+    @i.setter
+    def i(self, i):
+        self.inclination = i
+
+    @property
     def inclination(self):
         return self._inclination.value
 
@@ -217,7 +238,7 @@ class SemiLatusRectum(OrbitValue):
     symbol = 'p'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('a', 'e'),
             ('h')
@@ -249,7 +270,7 @@ class Eccentricity(OrbitValue):
     symbol = 'e'
 
     def __init__(self):
-        super().__init__(ureg.dimensionless)
+        super().__init__(units.dimensionless)
         self.orbit_requirements = [
             ('se', 'h'),
             ('a', 'rp'),
@@ -269,7 +290,6 @@ class Eccentricity(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = 1.0 - orbit.rp / orbit.a
 
-
     @orbit_setter
     def set_from_state(self, state, orbit):
 
@@ -282,7 +302,7 @@ class AngularMomentumMagnitude(OrbitValue):
     symbol = 'h'
 
     def __init__(self):
-        super().__init__(ureg.km ** 2 / ureg.s)
+        super().__init__(units.km ** 2 / units.s)
         self.orbit_requirements = [
             ('p'),
             ('angular_momentum')
@@ -309,12 +329,11 @@ class AngularMomentumMagnitude(OrbitValue):
             self.value = np.linalg.norm(np.cross(state.position.value, state.velocity.value))
 
 
-
 class AngularMomentumVector(OrbitValue):
     symbol = 'angular_momentum'
 
     def __init__(self):
-        super().__init__(ureg.km ** 2 / ureg.s)
+        super().__init__(units.km ** 2 / units.s)
         self.orbit_requirements = [
         ]
         self.orbit_state_requirements = [
@@ -327,18 +346,16 @@ class AngularMomentumVector(OrbitValue):
 
     @orbit_setter
     def set_from_state(self, state, orbit):
-
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             h = np.cross(state.position.inertial(), state.velocity.inertial())
             self.value = frames.Vector(orbit, state, h, frames.InertialFrame)
-
 
 
 class ArgumentOfPeriapsis(OrbitValue):
     symbol = 'arg_periapsis'
 
     def __init__(self):
-        super().__init__(ureg.rad)
+        super().__init__(units.rad)
         self.orbit_requirements = [
 
         ]
@@ -352,18 +369,16 @@ class ArgumentOfPeriapsis(OrbitValue):
 
     @orbit_setter
     def set_from_state(self, state, orbit):
-
         # r(1+ecos(ta))
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = state.arg_latitude - state.ta
-
 
 
 class LongitudeOfAscendingNode(OrbitValue):
     symbol = 'ascending_node'
 
     def __init__(self):
-        super().__init__(ureg.rad)
+        super().__init__(units.rad)
         self.orbit_requirements = [
             'angular_momentum', 'inclination'
         ]
@@ -372,7 +387,6 @@ class LongitudeOfAscendingNode(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-
         if self.satisfied(orbit, self.orbit_requirements[0]):
             h_xyz = orbit.angular_momentum / np.linalg.norm(orbit.angular_momentum)
             sin_val = np.arcsin(h_xyz[0] / np.sin(orbit.inclination))
@@ -380,12 +394,11 @@ class LongitudeOfAscendingNode(OrbitValue):
             self.value = conics_utils.common_val(sin_val, cos_val)
 
 
-
 class Inclination(OrbitValue):
     symbol = 'inclination'
 
     def __init__(self):
-        super().__init__(ureg.rad)
+        super().__init__(units.rad)
         self.orbit_requirements = [
         ]
         self.orbit_state_requirements = [
@@ -400,7 +413,7 @@ class SemimajorAxis(OrbitValue):
     symbol = 'a'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('ra', 'rp'),
             ('se'),
@@ -430,7 +443,7 @@ class SemiminorAxis(OrbitValue):
     symbol = 'b'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('p', 'e'),
             ('a', 'e')
@@ -456,7 +469,7 @@ class OrbitalPeriod(OrbitValue):
     symbol = 'period'
 
     def __init__(self):
-        super().__init__(ureg.seconds)
+        super().__init__(units.seconds)
         self.orbit_requirements = [
             ('n')
         ]
@@ -465,7 +478,6 @@ class OrbitalPeriod(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 2.0 * np.pi / orbit.n
 
@@ -478,7 +490,7 @@ class MeanMotion(OrbitValue):
     symbol = 'n'
 
     def __init__(self):
-        super().__init__(ureg.rad / ureg.second)
+        super().__init__(units.rad / units.second)
         self.orbit_requirements = [
             ('a')
         ]
@@ -487,7 +499,6 @@ class MeanMotion(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.sqrt(orbit.central_body.mu / (orbit.a ** 3))
 
@@ -500,7 +511,7 @@ class SpecificEnergy(OrbitValue):
     symbol = 'se'
 
     def __init__(self):
-        super().__init__(ureg.km ** 2 / ureg.s ** 2)
+        super().__init__(units.km ** 2 / units.s ** 2)
         self.orbit_requirements = [
             ('a')
         ]
@@ -523,12 +534,11 @@ class SpecificEnergy(OrbitValue):
             self.value = state.v ** 2. / 2. - orbit.central_body.mu / state.r
 
 
-
 class Apoapsis(OrbitValue):
     symbol = 'ra'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('p', 'e'),
             ('a', 'e')
@@ -556,7 +566,7 @@ class Periapsis(OrbitValue):
     symbol = 'rp'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('p', 'e'),
             ('a', 'e')

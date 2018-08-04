@@ -3,7 +3,7 @@ import unittest
 
 ########### Local ###########
 from conics import Orbit, KeplarianState
-from common import ureg, Q_
+from common import units, Q_
 
 ########### External ###########
 import numpy as np
@@ -15,9 +15,9 @@ class TestOrbit(unittest.TestCase):
         state = KeplarianState(orbit)
 
         orbit.e = 0.1
-        orbit.p = 18400000 * ureg.m
+        orbit.p = 18400000 * units.m
 
-        state.r = 18500 * ureg.km
+        state.r = 18500 * units.km
 
         ta_val = 1.6248767384090719
         assert (np.isclose(state.ta, ta_val))
@@ -28,8 +28,8 @@ class TestOrbit(unittest.TestCase):
 
         orbit.e = 0.1
 
-        state.r = 18500 * ureg.km
-        state.ta = 90 * ureg.deg
+        state.r = 18500 * units.km
+        state.ta = 90 * units.deg
 
         orbit.from_state(state)
 

@@ -3,7 +3,7 @@ import unittest
 
 ########### Local ###########
 from conics import Orbit, KeplarianState
-from common import ureg, Q_
+from common import units, Q_
 import frames
 
 ########### External ###########
@@ -11,7 +11,7 @@ import numpy as np
 from planet_constants import BODIES_532
 
 earth = BODIES_532['EARTH']
-earth.radius = 6371 * ureg.km
+earth.radius = 6371 * units.km
 
 
 class TestOrbit(unittest.TestCase):
@@ -20,8 +20,8 @@ class TestOrbit(unittest.TestCase):
         orbit = Orbit(earth, name='Test Orbit')
         state = KeplarianState(orbit, name='Test State')
 
-        state.r = orbit.central_body.radius + 2000 * ureg.km
-        vel_vector = np.array([-1.2, 6.7, 0.0]) * ureg.km / ureg.s
+        state.r = orbit.central_body.radius + 2000 * units.km
+        vel_vector = np.array([-1.2, 6.7, 0.0]) * units.km / units.s
         state.velocity = frames.Vector(orbit, state, vel_vector, frames.RotatingFrame)
 
         print(orbit)

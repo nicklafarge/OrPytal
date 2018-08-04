@@ -1,7 +1,7 @@
 ########### Standard ###########
 
 ########### Local ###########
-from common import ureg, Q_
+from common import units, Q_
 import frames
 
 ########### External ###########
@@ -28,10 +28,10 @@ class OrbitBase(object):
 
     @value.setter
     def value(self, value=None):
-        if isinstance(value, ureg.Quantity):
+        if isinstance(value, units.Quantity):
             self._value = value.to(self.units)
         elif isinstance(value, frames.Vector):
-            if isinstance(value.value, ureg.Quantity):
+            if isinstance(value.value, units.Quantity):
                 value.value = value.value.to(self.units)
                 self._value = value
             else:

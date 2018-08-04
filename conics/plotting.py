@@ -3,9 +3,10 @@ import logging
 
 ########### Local ###########
 from conics import Orbit, KeplarianState, state
-from common import ureg, Q_
+from common import units, Q_
 
 ########### External ###########
+# import matlab.engine
 import matplotlib.animation as animation
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
@@ -13,22 +14,36 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_orbit_fixed(orbit, step=0.01, **kwargs):
-    ta_range = np.arange(0, 2*np.pi, step)
+
+def plot_orbit_fixed(orbit, **kwargs):
+    return plot_orbit(orbit, frame='orbit_fixed', **kwargs)
+
+
+def plot_orbit_inertial(orbit, **kwargs):
+    return plot_orbit(orbit, frame='inertial', **kwargs)
+
+
+def plot_orbit(orbit, step=0.05, frame='orbit_fixed', **kwargs):
+    logging.info('Propagating and plotting {}'.format(orbit.name))
+    ta_range = np.arange(0, 2 * np.pi, step)
 
     x_list = []
     y_list = []
 
-    logging.info('Propagating... ')
     for ta in ta_range:
-
         st = KeplarianState(orbit)
-        st._ta.value =  ta * ureg.radians
+        st._ta.value = ta * units.radians
         st._r.set(st, orbit)
         st._position.set(st, orbit)
-        orbit_fixed_pos = st.position.orbit_fixed()
+        st._arg_latitude.set(st, orbit)
+
+        frame_fn = getattr(st.position, frame)
+        orbit_fixed_pos = frame_fn()
         x_list.append(orbit_fixed_pos[0])
         y_list.append(orbit_fixed_pos[1])
+
+    if 'label' not in kwargs:
+        kwargs['label'] = orbit.name
 
     logging.info('Propagation Complete')
     plt.axis('equal')
@@ -36,8 +51,19 @@ def plot_orbit_fixed(orbit, step=0.01, **kwargs):
 
     plot_primary(orbit)
     plt.title(orbit.name)
-    plt.xlabel("{} [{}]".format('$\hat{e}$', 'km'))
-    plt.ylabel("{} [{}]".format('$\hat{p}$', 'km'))
+    if frame == 'orbit_fixed':
+        xaxis = 'e'
+        yaxis = 'p'
+    elif frame == 'inertial':
+        xaxis = 'x'
+        yaxis = 'y'
+    else:
+        return
+
+    plt.xlabel("{} [{}]".format('$\hat{%s}$' % xaxis, 'km'))
+    plt.ylabel("{} [{}]".format('$\hat{%s}$' % yaxis, 'km'))
+    plt.legend()
+
 
 def plot_state(state):
     orbit_fixed_pos = state.position.orbit_fixed()
@@ -52,23 +78,22 @@ def plot_primary(orbit):
 
     circle_primary = plt.Circle((0, 0), orbit.central_body.radius.m,
                                 color='k',
-                                fill=False,
+                                fill=True,
                                 lw=2.5)
     ax.add_artist(circle_primary)
 
 
 def animate_orbit_fixed(orbit, step=0.01, **kwargs):
-    ta_range = np.arange(0, 2*np.pi, step)
+    ta_range = np.arange(0, 2 * np.pi, step)
 
     x_list = []
     y_list = []
 
     logging.info('Propagating... ')
-    traj= []
+    traj = []
     for ta in ta_range:
-
         st = KeplarianState(orbit)
-        st._ta.value =  ta * ureg.radians
+        st._ta.value = ta * units.radians
         st._r.set(st, orbit)
         st._position.set(st, orbit)
         orbit_fixed_pos = st.position.orbit_fixed()
@@ -80,6 +105,7 @@ def animate_orbit_fixed(orbit, step=0.01, **kwargs):
     traj_animator = TrajectoryAnimator(orbit, traj)
     traj_animator.animate()
 
+
 class TrajectoryAnimator(object):
     def __init__(self,
                  orbit,
@@ -88,7 +114,6 @@ class TrajectoryAnimator(object):
 
         self.traj = traj
         self.ta_fmt_str = ta_fmt_str
-
 
         plot_primary(orbit)
         plt.axis("equal")

@@ -3,7 +3,7 @@ import unittest
 
 ########### Local ###########
 from conics import Orbit, KeplarianState, plotting
-from common import ureg, Q_
+from common import units, Q_
 
 ########### External ###########
 import matplotlib.pyplot as plt
@@ -21,14 +21,14 @@ logging.getLogger().setLevel(logging.INFO)
 
 if __name__ == '__main__':
     orbit.e = 0.8
-    orbit.p = 37800 * ureg.km
-    state.ta = -175 * ureg.deg
+    orbit.p = 37800 * units.km
+    state.ta = -175 * units.deg
     print(orbit)
     print()
     print(state)
 
     plt.figure(1)
-    plotting.plot_orbit_fixed(orbit)
+    plotting.plot_orbit(orbit)
     plotting.plot_state(state)
     plt.show(block=False)
 

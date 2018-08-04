@@ -2,7 +2,7 @@
 
 ########### Local ###########
 from base import OrbitBase
-from common import ureg, Q_, orbit_setter
+from common import units, Q_, orbit_setter
 import frames
 
 ########### External ###########
@@ -191,7 +191,7 @@ class TrueAnomaly(StateValue):
     symbol = 'ta'
 
     def __init__(self):
-        super().__init__(ureg.radian)
+        super().__init__(units.radian)
         self.orbit_requirements = [
             ('e', 'p', 'r'),
             ('e', 'E'),
@@ -223,7 +223,7 @@ class PositionMagnitude(StateValue):
     symbol = 'r'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('p', 'e', 'ta'),
             ('a', 'e', 'E'),
@@ -250,7 +250,7 @@ class ArgumentOfLatitude(StateValue):
     symbol = 'arg_latitude'
 
     def __init__(self):
-        super().__init__(ureg.rad)
+        super().__init__(units.rad)
         self.orbit_requirements = [
             ('arg_periapsis', 'ta')
         ]
@@ -266,7 +266,7 @@ class FlightPathAngle(StateValue):
     symbol = 'fpa'
 
     def __init__(self):
-        super().__init__(ureg.rad)
+        super().__init__(units.rad)
         self.orbit_requirements = [
             ('h', 'r', 'v'),
             ('velocity')
@@ -289,7 +289,7 @@ class VelocityMagnitude(StateValue):
     symbol = 'v'
 
     def __init__(self):
-        super().__init__(ureg.km / ureg.second)
+        super().__init__(units.km / units.second)
         self.orbit_requirements = [
             ('r', 'se'),
             ('r', 'a'),
@@ -314,7 +314,7 @@ class PositionVector(StateValue):
     symbol = 'position'
 
     def __init__(self):
-        super().__init__(ureg.km)
+        super().__init__(units.km)
         self.orbit_requirements = [
             ('r')
         ]
@@ -333,7 +333,7 @@ class VelocityVector(StateValue):
     symbol = 'velocity'
 
     def __init__(self):
-        super().__init__(ureg.km / ureg.second)
+        super().__init__(units.km / units.second)
         self.orbit_requirements = [
             ('ta', 'e', 'h', 'ta'),
             ('fpa' 'v')
@@ -362,7 +362,7 @@ class TimeSincePeriapsis(StateValue):
     symbol = 't_since_rp'
 
     def __init__(self):
-        super().__init__(ureg.seconds)
+        super().__init__(units.seconds)
         self.orbit_requirements = [
             ('E', 'e', 'n'),
         ]
@@ -378,7 +378,7 @@ class MeanAnomaly(StateValue):
     symbol = 'M'
 
     def __init__(self):
-        super().__init__(ureg.radians)
+        super().__init__(units.radians)
         self.orbit_requirements = [
             ('n', 't_since_rp'),
             ('E', 'e')
@@ -399,7 +399,7 @@ class EccentricAnomaly(StateValue):
     symbol = 'E'
 
     def __init__(self):
-        super().__init__(ureg.radians)
+        super().__init__(units.radians)
         self.orbit_requirements = [
             ('a', 'r', 'e'),
             ('e', 'M')

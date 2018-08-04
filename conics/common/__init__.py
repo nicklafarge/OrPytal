@@ -1,9 +1,12 @@
 # Initialize Units
 from pint import UnitRegistry, set_application_registry
 from conics_utils import orbit_setter
+import logging
 
 print('Initializing Unit Registry')
-ureg = UnitRegistry()
-Q_ = ureg.Quantity
-set_application_registry(ureg)
+units = UnitRegistry()
+Q_ = units.Quantity
+set_application_registry(units)
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
