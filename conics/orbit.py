@@ -6,7 +6,9 @@ from base import OrbitBase
 from common import units, Q_, orbit_setter
 import conics_utils
 import frames
+from state import KeplarianState
 import planet_constants
+from trajectory import Trajectory
 
 ########### External ###########
 import numpy as np
@@ -75,6 +77,24 @@ class Orbit():
                 x.append(str(var))
 
         return '\n'.join(x)
+
+    def propagate_full_orbit(self, state, step=0.1):
+        ta_range = list(np.arange(state.ta, state.ta + 2 * np.pi, step))
+        ta_range.append(2*np.pi)
+
+        st_list = []
+
+        for ta in ta_range:
+            st = KeplarianState(self)
+            st._ta.value = ta * units.radians
+            st._r.set(st, self)
+            st._position.set(st, self)
+            st._arg_latitude.set(st, self)
+            st._t_since_rp.set(st, self)
+            st_list.append(st)
+
+        return Trajectory(st_list)
+
 
     @property
     def a(self):

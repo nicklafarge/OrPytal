@@ -6,7 +6,6 @@ from conics import Orbit, KeplarianState, state
 from common import units, Q_
 
 ########### External ###########
-# import matlab.engine
 import matplotlib.animation as animation
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
@@ -23,46 +22,47 @@ def plot_orbit_inertial(orbit, **kwargs):
     return plot_orbit(orbit, frame='inertial', **kwargs)
 
 
-def plot_orbit(orbit, step=0.05, frame='orbit_fixed', **kwargs):
+def plot_orbit_inertial_3d(orbit, **kwargs):
+    return plot_orbit(orbit, frame='inertial', planar=False, **kwargs)
+
+
+def plot_orbit(orbit, frame='orbit_fixed', planar=True, **kwargs):
     logging.info('Propagating and plotting {}'.format(orbit.name))
-    ta_range = np.arange(0, 2 * np.pi, step)
 
-    x_list = []
-    y_list = []
-
-    for ta in ta_range:
-        st = KeplarianState(orbit)
-        st._ta.value = ta * units.radians
-        st._r.set(st, orbit)
-        st._position.set(st, orbit)
-        st._arg_latitude.set(st, orbit)
-
-        frame_fn = getattr(st.position, frame)
-        orbit_fixed_pos = frame_fn()
-        x_list.append(orbit_fixed_pos[0])
-        y_list.append(orbit_fixed_pos[1])
+    start_st = KeplarianState(orbit)
+    start_st.ta = 0 * units.rad
+    traj = orbit.propagate_full_orbit(start_st)
+    x_list, y_list, z_list = traj.inertial()
 
     if 'label' not in kwargs:
         kwargs['label'] = orbit.name
 
     logging.info('Propagation Complete')
-    plt.axis('equal')
-    plt.plot(x_list, y_list, ls='dashed', **kwargs)
 
-    plot_primary(orbit)
-    plt.title(orbit.name)
-    if frame == 'orbit_fixed':
-        xaxis = 'e'
-        yaxis = 'p'
-    elif frame == 'inertial':
-        xaxis = 'x'
-        yaxis = 'y'
+    if planar:
+        plt.axis('equal')
+        plt.plot(x_list, z_list, ls='dashed', **kwargs)
+        plot_primary(orbit)
+        plt.title(orbit.name)
+        if frame == 'orbit_fixed':
+            xaxis = 'e'
+            yaxis = 'p'
+        elif frame == 'inertial':
+            xaxis = 'x'
+            yaxis = 'y'
+        else:
+            return
+
+        plt.xlabel("{} [{}]".format('$\hat{%s}$' % xaxis, 'km'))
+        plt.ylabel("{} [{}]".format('$\hat{%s}$' % yaxis, 'km'))
+        plt.legend()
     else:
-        return
-
-    plt.xlabel("{} [{}]".format('$\hat{%s}$' % xaxis, 'km'))
-    plt.ylabel("{} [{}]".format('$\hat{%s}$' % yaxis, 'km'))
-    plt.legend()
+        import matlab_plotting as mplt
+        mplt.init_cr3bp_3d_plot(1)
+        mplt.title(orbit.name)
+        mplt.default_3d_axes()
+        mplt.plot_3d_traj(traj, label=orbit.name)
+        mplt.show()
 
 
 def plot_state(state):

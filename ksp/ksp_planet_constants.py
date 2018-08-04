@@ -96,7 +96,7 @@ BODIES['KERBIN'] = CentralBody(
 )
 
 BODIES['MUN'] = CentralBody(
-    name='Moon',
+    name='Mun',
     radius=200000 * units.m,
     mu=6.5138398e10 * units('m^3/s^2'),
     a=12000000 * units.m,
@@ -109,7 +109,7 @@ BODIES['MUN'] = CentralBody(
 )
 
 BODIES['MINIMUS'] = CentralBody(
-    name='Moon',
+    name='Minimus',
     radius=60000 * units.m,
     mu=1.7658000e9 * units('m^3/s^2'),
     a=47000000 * units.m,
