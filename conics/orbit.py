@@ -7,7 +7,6 @@ from common import units, Q_, orbit_setter
 import conics_utils
 import frames
 from state import KeplarianState
-import planet_constants
 from trajectory import Trajectory
 
 ########### External ###########
@@ -15,12 +14,9 @@ import numpy as np
 import scipy as sp
 
 
-class Orbit():
+class Orbit(object):
     def __init__(self, central_body, name='', **kwargs):
-        if isinstance(central_body, str):
-            self.central_body = planet_constants.BODIES[central_body.upper()]
-        else:
-            self.central_body = central_body
+        self.central_body = central_body
         self.name = name
 
         self._p = SemiLatusRectum()
@@ -56,8 +52,7 @@ class Orbit():
             self._ra,
             self._arg_periapsis,
             self._ascending_node,
-            self._inclination,
-            self._i,
+            self._inclination
         ]
 
         for k, v in kwargs.items():
@@ -80,7 +75,7 @@ class Orbit():
 
     def propagate_full_orbit(self, state, step=0.1):
         ta_range = list(np.arange(state.ta, state.ta + 2 * np.pi, step))
-        ta_range.append(2*np.pi)
+        ta_range.append(state.ta.m +2 * np.pi)
 
         st_list = []
 
@@ -94,7 +89,6 @@ class Orbit():
             st_list.append(st)
 
         return Trajectory(st_list)
-
 
     @property
     def a(self):
@@ -231,6 +225,7 @@ class Orbit():
         for var in self.vars:
             new_value_set = var.set(self)
             if new_value_set:
+                logging.debug('Set {} to {}'.format(var.symbol, var.value))
                 self.set_vars()
                 break
 
@@ -251,7 +246,10 @@ class OrbitValue(OrbitBase):
         return False
 
     def satisfied(self, orbit, requirements):
-        return all([self.check_satisfied(orbit, req) for req in requirements])
+        if isinstance(requirements, str):
+            return self.check_satisfied(orbit, requirements)
+        else:
+            return all([self.check_satisfied(orbit, req) for req in requirements])
 
 
 class SemiLatusRectum(OrbitValue):
@@ -338,7 +336,7 @@ class AngularMomentumMagnitude(OrbitValue):
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.sqrt(orbit.p * orbit.central_body.mu)
         # | h |
-        elif self.satisfied(orbit, self.orbit_requirements[0]):
+        elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = np.linalg.norm(orbit.angular_momentum)
 
     @orbit_setter
@@ -357,7 +355,8 @@ class AngularMomentumVector(OrbitValue):
         self.orbit_requirements = [
         ]
         self.orbit_state_requirements = [
-            ('position', 'velocity', 'arg_periapsis', 'inclination', 'ascending_node')
+            ('ascending_node', 'inclination', 'h'),
+            ('position', 'velocity')
         ]
 
     @orbit_setter
@@ -367,7 +366,13 @@ class AngularMomentumVector(OrbitValue):
     @orbit_setter
     def set_from_state(self, state, orbit):
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
-            h = np.cross(state.position.inertial(), state.velocity.inertial())
+            h_vector = orbit.h * np.array([np.sin(orbit.ascending_node) * np.sin(orbit.inclination),
+                                           -np.cos(orbit.ascending_node) * np.sin(orbit.inclination),
+                                           np.cos(orbit.inclination)
+                                           ])
+            self.value = frames.Vector(orbit, state, h_vector, frames.InertialFrame)
+        elif self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[1]):
+            h = state.position.inertial().cross(state.velocity.inertial())
             self.value = frames.Vector(orbit, state, h, frames.InertialFrame)
 
 
@@ -400,7 +405,7 @@ class LongitudeOfAscendingNode(OrbitValue):
     def __init__(self):
         super().__init__(units.rad)
         self.orbit_requirements = [
-            'angular_momentum', 'inclination'
+            ('angular_momentum', 'inclination')
         ]
         self.orbit_state_requirements = [
         ]
@@ -408,10 +413,14 @@ class LongitudeOfAscendingNode(OrbitValue):
     @orbit_setter
     def set(self, orbit):
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            h_xyz = orbit.angular_momentum / np.linalg.norm(orbit.angular_momentum)
-            sin_val = np.arcsin(h_xyz[0] / np.sin(orbit.inclination))
-            cos_val = np.arccos(-h_xyz[1] / np.sin(orbit.inclination))
-            self.value = conics_utils.common_val(sin_val, cos_val)
+            h_xyz = orbit.angular_momentum.unit()
+            # special case if i=0
+            if orbit.inclination == 0*units.rad:
+                self.value = 0*units.rad
+            else:
+                sin_val = np.arcsin(h_xyz[0] / np.sin(orbit.inclination))
+                cos_val = np.arccos(-h_xyz[1] / np.sin(orbit.inclination))
+                self.value = conics_utils.common_val(sin_val, cos_val) * units.rad
 
 
 class Inclination(OrbitValue):
@@ -420,13 +429,16 @@ class Inclination(OrbitValue):
     def __init__(self):
         super().__init__(units.rad)
         self.orbit_requirements = [
+            ('angular_momentum')
         ]
         self.orbit_state_requirements = [
         ]
 
     @orbit_setter
     def set(self, orbit):
-        return False
+        if self.satisfied(orbit, self.orbit_requirements[0]):
+            h_xyz = orbit.angular_momentum.unit()
+            self.value = np.arccos(h_xyz[2]) * units.rad
 
 
 class SemimajorAxis(OrbitValue):

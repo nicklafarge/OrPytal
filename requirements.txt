@@ -1,9 +1,19 @@
+
+# -------- Math --------
 scipy
 numpy
-untangle
-pint
 
 # -------- Plotting --------
 matplotlib
 seaborn
 matlab
+
+# -------- Pycharm --------
+ipython
+
+# -------- xml parsing --------
+untangle
+
+
+# -------- units --------
+pint

@@ -9,7 +9,6 @@ def loc(v1, v2, theta):
 def loc_angle(v1, v2, v3):
     return np.arccos((v3 ** 2 - v1 ** 2 - v2 ** 2) / -(2 * v1 * v2))
 
-
 def common_val(sin_val, cos_val, tol=1e-3):
     one = sin_val
     if one > 0:
@@ -39,7 +38,11 @@ def orbit_setter(setter_function):
             return False
 
         value_before = orbit_value.value
-        setter_function(*args)
+        try:
+            setter_function(*args)
+        except AssertionError as e:
+            logging.debug('Assertion Error: {}'.format(e))
+            pass
         value_after = orbit_value.value
 
         if value_before != value_after:

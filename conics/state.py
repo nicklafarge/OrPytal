@@ -1,8 +1,10 @@
 ########### Standard ###########
+import logging
 
 ########### Local ###########
 from base import OrbitBase
 from common import units, Q_, orbit_setter
+import conics_utils
 import frames
 
 ########### External ###########
@@ -53,7 +55,9 @@ class KeplarianState(object):
         for var in self.vars:
             new_value_set = var.set(self, self.orbit)
             if new_value_set:
+                logging.debug('Set {} to {}'.format(var.symbol, var.value))
                 self.set_vars()
+                break
 
         orbit_changed = self.orbit.from_state(self)
         if orbit_changed:
@@ -157,14 +161,16 @@ class KeplarianState(object):
 
     @property
     def ascending_sign(self):
-        return 1 if self._ascending else -1
+        return 1 if self.is_ascending() else -1
 
     def is_ascending(self):
 
         if self._ta.evaluated:
             angle_to_check = self.ta
+        elif self._fpa.evaluated:
+            angle_to_check = self.fpa
         else:
-            return True
+            raise AssertionError("No angle to check for flight path angle")
 
         return 0 <= angle_to_check <= np.pi
 
@@ -172,7 +178,7 @@ class KeplarianState(object):
         if self._ascending is None:
             return tan_val
 
-        if (self._ascending and tan_val > 0) or (not self._ascending and tan_val < 0):
+        if (self.is_ascending() and tan_val >= 0) or (not self.is_ascending() and tan_val < 0):
             return tan_val
         else:
             return np.pi + tan_val
@@ -203,7 +209,7 @@ class TrueAnomaly(StateValue):
 
         # acos((1/e) (p/r - 1))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            cos_val = (1. / orbit.e) * (orbit.p / state.r - 1.)
+            cos_val = np.arccos( (1. / orbit.e) * (orbit.p / state.r - 1.) )
             self.value = state.ascending_sign * np.arccos(cos_val)
 
         # acos(2 atan(sqrt( (1+e)/(1-e) tan(E/2) )))
@@ -227,7 +233,8 @@ class PositionMagnitude(StateValue):
         self.orbit_requirements = [
             ('p', 'e', 'ta'),
             ('a', 'e', 'E'),
-            ('a', 'E', 'H')
+            ('a', 'E', 'H'),
+            ('position')
         ]
 
     @orbit_setter
@@ -245,6 +252,10 @@ class PositionMagnitude(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             self.value = abs(orbit.a) * (state.E * np.cosh(state.H) - 1)
 
+        # |r|
+        elif self.satisfied(state, orbit, self.orbit_requirements[3]):
+            self.value = np.linalg.norm(state.position.value)
+
 
 class ArgumentOfLatitude(StateValue):
     symbol = 'arg_latitude'
@@ -252,7 +263,8 @@ class ArgumentOfLatitude(StateValue):
     def __init__(self):
         super().__init__(units.rad)
         self.orbit_requirements = [
-            ('arg_periapsis', 'ta')
+            ('arg_periapsis', 'ta'),
+            ('inclination', 'position', 'angular_momentum')
         ]
 
     @orbit_setter
@@ -260,6 +272,20 @@ class ArgumentOfLatitude(StateValue):
         # omega + ta
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.arg_periapsis + state.ta
+
+        # from DCM
+        if self.satisfied(state, orbit, self.orbit_requirements[1]):
+            rhat = state.position.inertial().unit()
+            hhat = orbit.angular_momentum.inertial().unit()
+            theta_hat = np.cross(hhat, rhat)
+
+            # special case i=0
+            if orbit.inclination == 0 * units.rad:
+                self.value = 0 * units.rad
+            else:
+                sin_val = np.arcsin(rhat[2] / np.sin(orbit.inclination.to(units.rad)))
+                cos_val = np.arccos(theta_hat[2] / np.sin(orbit.inclination.to(units.rad)))
+                self.value = conics_utils.common_val(sin_val, cos_val) * units.rad
 
 
 class FlightPathAngle(StateValue):
@@ -281,7 +307,7 @@ class FlightPathAngle(StateValue):
 
         # atan(vr/vt)
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
-            fpa = np.arctan(state.velocity[0] / state.velocity[1])
+            fpa = np.arctan(state.velocity.orbit_fixed()[0] / state.velocity.orbit_fixed()[1])
             self.value = state.angle_check_tan(fpa)
 
 
@@ -335,7 +361,7 @@ class VelocityVector(StateValue):
     def __init__(self):
         super().__init__(units.km / units.second)
         self.orbit_requirements = [
-            ('ta', 'e', 'h', 'ta'),
+            ('ta', 'e', 'h'),
             ('fpa' 'v')
         ]
 

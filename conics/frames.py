@@ -13,6 +13,9 @@ class Vector(object):
 
         self.value = value
         self.frame = frame
+    @classmethod
+    def from_vector(cls, orbit, state, vector):
+        return cls(orbit, state, vector.value, vector.frame)
 
     def __str__(self):
         return '{} in {}'.format(self.value, self.frame.name)
@@ -27,22 +30,39 @@ class Vector(object):
         return self.value.__iter__()
 
     def inertial(self):
-        value = self.frame.inertial_dcm(self.orbit, self.state).dot(self.value)
         frame = InertialFrame
+        if self.frame == frame:
+            value = self.value
+        else:
+            value = self.frame.inertial_dcm(self.orbit, self.state).dot(self.value) * self.value.units
         return Vector(self.orbit, self.state, value, frame)
 
     def rotating(self):
-        value = self.frame.rotating_dcm(self.orbit, self.state).dot(self.value)
         frame = RotatingFrame
+        if self.frame == frame:
+            value = self.value
+        else:
+            value = self.frame.rotating_dcm(self.orbit, self.state).dot(self.value) * self.value.units
         return Vector(self.orbit, self.state, value, frame)
 
     def orbit_fixed(self):
-        value = self.frame.orbit_fixed_dcm(self.orbit, self.state).dot(self.value)
         frame = OrbitFixedFrame
+        if self.frame == frame:
+            value = self.value
+        else:
+            value = self.frame.orbit_fixed_dcm(self.orbit, self.state).dot(self.value) * self.value.units
         return Vector(self.orbit, self.state, value, frame)
 
     def norm(self):
         return np.linalg.norm(self.value)
+
+    def unit(self):
+        return (self.value / np.linalg.norm(self.value)).m
+
+    def cross(self, vector2):
+        assert self.frame == vector2.frame
+        units = self.value.units * vector2.value.units
+        return np.cross(self.value, vector2.value) * units
 
 
 class CoordinateFrame(object):
@@ -70,6 +90,10 @@ class RotatingFrame(CoordinateFrame):
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
+        assert orbit.ascending_node is not None
+        assert orbit.inclination is not None
+        assert state.arg_latitude is not None
+
         Omega = orbit.ascending_node
         theta = state.arg_latitude
         i = orbit.inclination
@@ -137,6 +161,7 @@ class OrbitFixedFrame(CoordinateFrame):
 
     @classmethod
     def rotating_dcm(cls, orbit, state):
+        assert state.ta is not None
         return np.array(
             [[np.cos(state.ta), np.sin(state.ta), 0],
              [-np.sin(state.ta), np.cos(state.ta), 0],

@@ -32,7 +32,8 @@ def plot_orbit(orbit, frame='orbit_fixed', planar=True, **kwargs):
     start_st = KeplarianState(orbit)
     start_st.ta = 0 * units.rad
     traj = orbit.propagate_full_orbit(start_st)
-    x_list, y_list, z_list = traj.inertial()
+
+    x_list, y_list, z_list = getattr(traj, frame)()
 
     if 'label' not in kwargs:
         kwargs['label'] = orbit.name
@@ -41,7 +42,7 @@ def plot_orbit(orbit, frame='orbit_fixed', planar=True, **kwargs):
 
     if planar:
         plt.axis('equal')
-        plt.plot(x_list, z_list, ls='dashed', **kwargs)
+        plt.plot(x_list, y_list, ls='dashed', **kwargs)
         plot_primary(orbit)
         plt.title(orbit.name)
         if frame == 'orbit_fixed':
@@ -65,11 +66,17 @@ def plot_orbit(orbit, frame='orbit_fixed', planar=True, **kwargs):
         mplt.show()
 
 
-def plot_state(state):
-    orbit_fixed_pos = state.position.orbit_fixed()
-    plt.plot(orbit_fixed_pos[0], orbit_fixed_pos[1],
-             marker='o',
-             c='r')
+def plot_state_orbit_fixed(state):
+    return plot_state(state, 'orbit_fixed')
+
+def plot_state_inertial(state):
+    return plot_state(state, 'inertial')
+
+def plot_state(state, frame):
+    pos = getattr(state.position, frame)()
+    return plt.plot(pos[0], pos[1],
+                    marker='o',
+                    c='r')
 
 
 def plot_primary(orbit):

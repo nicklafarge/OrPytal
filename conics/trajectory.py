@@ -28,15 +28,22 @@ class Trajectory(object):
         for st in self.states:
             frame_fn = getattr(st.position, frame)
             pos = frame_fn().value
-            x_vals.append(pos[0])
-            y_vals.append(pos[1])
-            z_vals.append(pos[2])
+            x_vals.append(pos[0].m)
+            y_vals.append(pos[1].m)
+            z_vals.append(pos[2].m)
 
         return x_vals, y_vals, z_vals
 
     def inertial(self):
-        self.x_vals, self.y_vals, self.z_vals = self.vals('inertial')
         self.frame = frames.InertialFrame
+        return self.in_frame('inertial')
+
+    def orbit_fixed(self):
+        self.frame = frames.OrbitFixedFrame
+        return self.in_frame('orbit_fixed')
+
+    def in_frame(self, frame_name):
+        self.x_vals, self.y_vals, self.z_vals = self.vals(frame_name)
         return self.x_vals, self.y_vals, self.z_vals
 
     def start(self):
