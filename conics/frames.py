@@ -31,29 +31,58 @@ class Vector(object):
     def __iter__(self):
         return self.value.__iter__()
 
-    def inertial(self):
-        frame = InertialFrame
+    def __eq__(self, other):
+        if isinstance(other, Vector):
+            vec1 = self
+            vec2 = other
+            while vec1.frame != vec2.frame:
+                try:
+                    vec1 = vec1.to(vec2.frame)
+                    break
+                except ParameterUnavailableError:
+                    pass
+
+                try:
+                    vec2 = vec2.to(vec1.frame)
+                    break
+                except ParameterUnavailableError:
+                    raise ParameterUnavailableError(
+                        'Tried to Compare [{}] to [{}] Values, but could not put them in the same frame'.format(self, other))
+
+            return np.allclose(vec1.value, vec2.value)
+
+        return NotImplemented
+
+    def __neq__(self, other):
+        if isinstance(other, Vector):
+            return not self == other
+        return NotImplemented
+
+    def to(self, frame):
+        if frame == InertialFrame:
+            dcm = self.frame.inertial_dcm
+        elif frame == RotatingFrame:
+            dcm = self.frame.rotating_dcm
+        elif frame == OrbitFixedFrame:
+            dcm = self.frame.orbit_fixed_dcm
+        else:
+            raise ValueError('Frame ({}) is not recognized'.format(frame))
+
         if self.frame == frame:
             value = self.value
         else:
-            value = self.frame.inertial_dcm(self.orbit, self.state).dot(self.value) * self.value.units
+            value = dcm(self.orbit, self.state).dot(self.value) * self.value.units
+
         return Vector(self.orbit, self.state, value, frame)
+
+    def inertial(self):
+        return self.to(InertialFrame)
 
     def rotating(self):
-        frame = RotatingFrame
-        if self.frame == frame:
-            value = self.value
-        else:
-            value = self.frame.rotating_dcm(self.orbit, self.state).dot(self.value) * self.value.units
-        return Vector(self.orbit, self.state, value, frame)
+        return self.to(RotatingFrame)
 
     def orbit_fixed(self):
-        frame = OrbitFixedFrame
-        if self.frame == frame:
-            value = self.value
-        else:
-            value = self.frame.orbit_fixed_dcm(self.orbit, self.state).dot(self.value) * self.value.units
-        return Vector(self.orbit, self.state, value, frame)
+        return self.to(OrbitFixedFrame)
 
     def norm(self):
         return np.linalg.norm(self.value) * self.value.units

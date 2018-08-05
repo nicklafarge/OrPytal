@@ -127,6 +127,28 @@ class Orbit(object):
         else:
             raise ParameterUnavailableError('Need eccentricity to see if circular')
 
+    def compare(self, orbit):
+        # Compare which vars are evaluated
+        evaluated_vars = sorted([v.symbol for v in self.vars if v.evaluated])
+        other_evaluated_vars = sorted([v.symbol for v in orbit.vars if v.evaluated])
+        for i, var in enumerate(evaluated_vars):
+            assert var == other_evaluated_vars[i]
+
+        # Compare values of evaluated variables
+        for var in self.vars:
+            if var.evaluated and hasattr(orbit, var.symbol):
+                if isinstance(var.value, units.Quantity):
+                    assert np.isclose(var.value, getattr(orbit, var.symbol))
+                elif isinstance(var.value, frames.Vector):
+
+                    vec1 = var.value
+                    vec2 = getattr(orbit, var.symbol)
+                    assert vec1 == vec2
+                else:
+                    assert False
+
+            logging.debug('Checked {} [✓]'.format(var.symbol))
+
     @property
     def a(self):
         return self._a.value

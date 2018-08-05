@@ -47,6 +47,36 @@ class OrbitBase(object):
 
         self.evaluated = True
 
+    def __eq__(self, other):
+        if isinstance(other, OrbitBase):
+            return self._value == other._value
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, OrbitBase):
+            return self._value != other._value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, OrbitBase):
+            return self._value > other._value
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, OrbitBase):
+            return self._value >= other._value
+        return NotImplemented
+
+    def _lt__(self, other):
+        if isinstance(other, OrbitBase):
+            return self._value < other._value
+        return NotImplemented
+
+    def _e__(self, other):
+        if isinstance(other, OrbitBase):
+            return self._value <= other._value
+        return NotImplemented
+
     def check_satisfied(self, obj, req):
         return conics_utils.check_satisfied(obj, req)
 

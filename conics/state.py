@@ -62,6 +62,30 @@ class KeplarianState(object):
         if orbit_changed:
             self.set_vars()
 
+    def compare(self, other_state):
+        # Compare which vars are evaluated
+        evaluated_vars = sorted([v.symbol for v in self.vars if v.evaluated])
+        other_evaluated_vars = sorted([v.symbol for v in other_state.vars if v.evaluated])
+        for i, var in enumerate(evaluated_vars):
+            assert var == other_evaluated_vars[i]
+
+        # Compare values of evaluated variables
+        for var in self.vars:
+            if var.evaluated and hasattr(other_state, var.symbol):
+                if isinstance(var.value, units.Quantity):
+                    same = np.isclose(var.value, getattr(other_state, var.symbol))
+                elif isinstance(var.value, frames.Vector):
+
+                    vec1 = var.value
+                    vec2 = getattr(other_state, var.symbol)
+                    same = vec1 == vec2
+                else:
+                    assert False
+
+            if same:
+                logging.debug('Checked {} [✓]'.format(var.symbol))
+            else:
+                logging.warning('Error Found for {} [x]'.format(var.symbol))
     @property
     def r(self):
         return self._r.value
@@ -320,7 +344,7 @@ class FlightPathAngle(StateValue):
         super().__init__(units.rad)
         self.orbit_requirements = [
             ('h', 'r', 'v'),
-            ('velocity')
+            ('velocity', 'ta')
         ]
 
     @orbit_setter
@@ -329,10 +353,12 @@ class FlightPathAngle(StateValue):
         # acos(h/(rv))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
+            return
 
         # atan(vr/vt)
         if self.satisfied(state, orbit, self.orbit_requirements[1]):
-            fpa = np.arctan(state.velocity.orbit_fixed()[0] / state.velocity.orbit_fixed()[1])
+            v = state.velocity.orbit_fixed()
+            fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)
 
 

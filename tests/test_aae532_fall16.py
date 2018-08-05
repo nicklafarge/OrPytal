@@ -11,12 +11,12 @@ import numpy as np
 from planet_constants import BODIES_532
 
 earth = BODIES_532['EARTH']
-earth.radius = 6371 * units.km
 
 
 class TestOrbit(unittest.TestCase):
 
     def test_ps3_problem_3(self):
+        earth.radius = 6378.137 * units.km
         orbit = Orbit(earth, name='Test Orbit')
         state = KeplarianState(orbit, name='Test State')
 
@@ -47,6 +47,26 @@ class TestOrbit(unittest.TestCase):
         assert (np.isclose(state.t_since_rp, -1802.7593))
         assert (np.isclose(state.M, -1.546720643))
         assert (np.isclose(state.E, -1.7229553535))
+
+        pass
+
+    def test_ps4_problem_4(self):
+        earth.radius = 6378.137 * units.km
+        orbit = Orbit(earth, name='Test Orbit')
+        state = KeplarianState(orbit, name='Test State')
+        orbit.a = 10 * earth.radius
+        orbit.e = 0.4
+        orbit.i = 30 * units.deg
+        orbit.ascending_node = 45 * units.deg
+        orbit.arg_periapsis = -90 * units.deg
+        state.ta = 135 * units.deg
+
+        assert (np.isclose(state.r, 74707))
+        assert (np.isclose(state.v, 2.10276))
+        assert (np.isclose(orbit.h, 146135))
+        assert (np.isclose(state.fpa.to('deg'), 21.52399*units.deg))
+        assert (np.isclose(state.E.to('deg'), 115.355*units.deg))
+
 
         pass
 

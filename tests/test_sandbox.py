@@ -37,6 +37,8 @@ if __name__ == '__main__':
 
     print('------------ State 1 ------------')
     print(state)
+    print('r: ', state.position.to(frames.InertialFrame))
+    print('v: ', state.velocity.to(frames.InertialFrame))
 
     state2.position = frames.Vector.from_vector(orbit2, state2, state.position.inertial())
     state2.velocity = frames.Vector.from_vector(orbit2, state2, state.velocity.inertial())
@@ -44,6 +46,9 @@ if __name__ == '__main__':
     print(orbit2)
     print('------------ State 2 ------------')
     print(state2)
+
+    orbit.compare(orbit2)
+    state.compare(state2)
 
     # plt.figure(1)
     # frame = 'inertial'
