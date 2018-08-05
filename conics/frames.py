@@ -1,6 +1,8 @@
 ########### Standard ###########
 
 ########### Local ###########
+import conics_utils
+from errors import ParameterUnavailableError
 
 ########### External ###########
 import numpy as np
@@ -54,7 +56,7 @@ class Vector(object):
         return Vector(self.orbit, self.state, value, frame)
 
     def norm(self):
-        return np.linalg.norm(self.value)
+        return np.linalg.norm(self.value) * self.value.units
 
     def unit(self):
         return (self.value / np.linalg.norm(self.value)).m
@@ -63,6 +65,18 @@ class Vector(object):
         assert self.frame == vector2.frame
         units = self.value.units * vector2.value.units
         return np.cross(self.value, vector2.value) * units
+
+    def dot(self, vector2):
+        if isinstance(vector2, Vector):
+            assert self.frame == vector2.frame
+            units = self.value.units * vector2.value.units
+            val2 = vector2.value
+        else:
+            units = 1
+            val2 = vector2
+
+        return np.dot(self.value, val2) * units
+
 
 
 class CoordinateFrame(object):
@@ -90,9 +104,10 @@ class RotatingFrame(CoordinateFrame):
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
-        assert orbit.ascending_node is not None
-        assert orbit.inclination is not None
-        assert state.arg_latitude is not None
+
+        requirements = ['ascending_node', 'inclination', 'arg_latitude']
+        if not conics_utils.state_orbit_satisfied(state, orbit, requirements):
+            raise ParameterUnavailableError('Need ascending node, inclination and argument of latitude to convert to xyz')
 
         Omega = orbit.ascending_node
         theta = state.arg_latitude
@@ -161,7 +176,8 @@ class OrbitFixedFrame(CoordinateFrame):
 
     @classmethod
     def rotating_dcm(cls, orbit, state):
-        assert state.ta is not None
+        if state.ta is None:
+            raise ParameterUnavailableError('Need true anomaly to convert to the rotating frame')
         return np.array(
             [[np.cos(state.ta), np.sin(state.ta), 0],
              [-np.sin(state.ta), np.cos(state.ta), 0],

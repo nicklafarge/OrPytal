@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 
+from errors import ParameterUnavailableError
 
 def loc(v1, v2, theta):
     return np.sqrt(v1 ** 2 + v2 ** 2 - 2 * v1 * v2 * np.cos(theta))
@@ -40,7 +41,7 @@ def orbit_setter(setter_function):
         value_before = orbit_value.value
         try:
             setter_function(*args)
-        except AssertionError as e:
+        except ParameterUnavailableError as e:
             logging.debug('Assertion Error: {}'.format(e))
             pass
         value_after = orbit_value.value
@@ -56,3 +57,13 @@ def orbit_setter(setter_function):
         return value_before != value_after
 
     return wrapper
+
+
+def check_satisfied(obj, req):
+    return hasattr(obj, '_' + req) and getattr(obj, '_' + req).evaluated
+
+def state_orbit_satisfied(state, orbit, requirements):
+    if isinstance(requirements, str):
+        return check_satisfied(state, requirements) or check_satisfied(orbit, requirements)
+    else:
+        return all([check_satisfied(state, req) or check_satisfied(orbit, req) for req in requirements])

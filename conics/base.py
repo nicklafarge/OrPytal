@@ -3,6 +3,7 @@
 ########### Local ###########
 from common import units, Q_
 import frames
+import conics_utils
 
 ########### External ###########
 import numpy as np
@@ -40,13 +41,14 @@ class OrbitBase(object):
         else:
             self._value = value * self.units
 
+        # Resolve signs for units
+        if self.units == units.rad:
+            self._value = self._value % (2* np.pi)
+
         self.evaluated = True
 
     def check_satisfied(self, obj, req):
-        return hasattr(obj, '_' + req) and getattr(obj, '_' + req).evaluated
+        return conics_utils.check_satisfied(obj, req)
 
     def state_orbit_satisfied(self, state, orbit, requirements):
-        if isinstance(requirements, str):
-            return self.check_satisfied(state, requirements) or self.check_satisfied(orbit, requirements)
-        else:
-            return all([self.check_satisfied(state, req) or self.check_satisfied(orbit, req) for req in requirements])
+        return conics_utils.state_orbit_satisfied(state, orbit, requirements)

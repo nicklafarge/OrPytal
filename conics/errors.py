@@ -1,0 +1,2 @@
+class ParameterUnavailableError(Exception):
+    pass

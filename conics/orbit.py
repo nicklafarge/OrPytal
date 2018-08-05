@@ -5,6 +5,7 @@ import logging
 from base import OrbitBase
 from common import units, Q_, orbit_setter
 import conics_utils
+from errors import ParameterUnavailableError
 import frames
 from state import KeplarianState
 from trajectory import Trajectory
@@ -21,6 +22,7 @@ class Orbit(object):
 
         self._p = SemiLatusRectum()
         self._e = Eccentricity()
+        self._e_vec = EccentricityVector()
         self._h = AngularMomentumMagnitude()
         self._angular_momentum = AngularMomentumVector()
 
@@ -28,6 +30,7 @@ class Orbit(object):
         self._arg_periapsis = ArgumentOfPeriapsis()
         self._ascending_node = LongitudeOfAscendingNode()
         self._inclination = Inclination()
+        self._ascending_node_vec = AscendingNodeVector()
         self._i = self._inclination
 
         self._a = SemimajorAxis()
@@ -41,6 +44,7 @@ class Orbit(object):
         self.vars = [
             self._p,
             self._e,
+            self._e_vec,
             self._h,
             self._angular_momentum,
             self._a,
@@ -52,6 +56,7 @@ class Orbit(object):
             self._ra,
             self._arg_periapsis,
             self._ascending_node,
+            self._ascending_node_vec,
             self._inclination
         ]
 
@@ -67,6 +72,10 @@ class Orbit(object):
 
     def __str__(self):
         x = ['%s Orbit Info' % self.name]
+        if self.e is not None:
+            x.append('Circular: {}'.format(self.circular()))
+        if self.i is not None:
+            x.append('Equitorial: {}'.format(self.equitorial()))
         for var in self.vars:
             if var.evaluated:
                 x.append(str(var))
@@ -75,13 +84,13 @@ class Orbit(object):
 
     def propagate_full_orbit(self, state, step=0.1):
         ta_range = list(np.arange(state.ta, state.ta + 2 * np.pi, step))
-        ta_range.append(state.ta.m +2 * np.pi)
+        ta_range.append(state.ta.m + 2 * np.pi)
 
         st_list = []
 
         for ta in ta_range:
             st = KeplarianState(self)
-            st._ta.value = ta * units.radians
+            st._ta.value = ta
             st._r.set(st, self)
             st._position.set(st, self)
             st._arg_latitude.set(st, self)
@@ -89,6 +98,34 @@ class Orbit(object):
             st_list.append(st)
 
         return Trajectory(st_list)
+
+    def set_vars(self):
+        for var in self.vars:
+            new_value_set = var.set(self)
+            if new_value_set:
+                logging.debug('Set {} to {}'.format(var.symbol, var.value))
+                self.set_vars()
+                break
+
+    def from_state(self, state):
+        for var in self.vars:
+            new_value_set = var.set_from_state(state, self)
+            if new_value_set:
+                self.set_vars()
+                self.from_state(state)
+                return True
+
+    def equitorial(self, tol=1e-8):
+        if self.inclination is not None:
+            return np.abs(self.inclination) < tol
+        else:
+            raise ParameterUnavailableError('Need inclination to see if equitorial')
+
+    def circular(self, tol=1e-8):
+        if self.e is not None:
+            return self.e < tol
+        else:
+            raise ParameterUnavailableError('Need eccentricity to see if circular')
 
     @property
     def a(self):
@@ -162,6 +199,14 @@ class Orbit(object):
         self._e.value = e
 
     @property
+    def e_vec(self):
+        return self._e_vec.value
+
+    @e_vec.setter
+    def e_vec(self, e_vec):
+        self._e_vec.value = e_vec
+
+    @property
     def p(self):
         return self._p.value
 
@@ -205,6 +250,15 @@ class Orbit(object):
         self.set_vars()
 
     @property
+    def ascending_node_vec(self):
+        return self._ascending_node_vec.value
+
+    @ascending_node_vec.setter
+    def ascending_node_vec(self, ascending_node_vec):
+        self._ascending_node_vec.value = ascending_node_vec
+        self.set_vars()
+        
+    @property
     def i(self):
         return self.inclination
 
@@ -220,22 +274,6 @@ class Orbit(object):
     def inclination(self, inclination):
         self._inclination.value = inclination
         self.set_vars()
-
-    def set_vars(self):
-        for var in self.vars:
-            new_value_set = var.set(self)
-            if new_value_set:
-                logging.debug('Set {} to {}'.format(var.symbol, var.value))
-                self.set_vars()
-                break
-
-    def from_state(self, state):
-        for var in self.vars:
-            new_value_set = var.set_from_state(state, self)
-            if new_value_set:
-                self.set_vars()
-                self.from_state(state)
-                return True
 
 
 class OrbitValue(OrbitBase):
@@ -292,6 +330,7 @@ class Eccentricity(OrbitValue):
         self.orbit_requirements = [
             ('se', 'h'),
             ('a', 'rp'),
+            ('e_vec')
         ]
         self.orbit_state_requirements = [
             ('r', 'v', 'fpa')
@@ -308,12 +347,41 @@ class Eccentricity(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = 1.0 - orbit.rp / orbit.a
 
+        # |e|
+        elif self.satisfied(orbit, self.orbit_requirements[1]):
+            self.value = np.linalg.norm(orbit.e_vec)
+
     @orbit_setter
     def set_from_state(self, state, orbit):
 
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
             self.value = np.sqrt(((state.r * state.v ** 2) / orbit.central_body.mu - 1) ** 2 * np.cos(state.fpa) ** 2 + \
                                  np.sin(state.fpa) ** 2)
+
+
+class EccentricityVector(OrbitValue):
+    symbol = 'e_vec'
+
+    def __init__(self):
+        super().__init__(units.dimensionless)
+        self.orbit_requirements = [
+        ]
+        self.orbit_state_requirements = [
+            ('position', 'velocity')
+        ]
+
+    @orbit_setter
+    def set(self, orbit):
+        return
+
+    @orbit_setter
+    def set_from_state(self, state, orbit):
+        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+            v = state.velocity.inertial()  # inertial velocity (xyz)
+            r = state.position.inertial()  # inertial position (xyz)
+            mu = orbit.central_body.mu  # gravitational parameter
+            val = ((v.dot(v) - mu / r.norm()) * r.value - r.dot(v) * v.value) / mu
+            self.value = frames.Vector(orbit, state, val, frames.InertialFrame)
 
 
 class AngularMomentumMagnitude(OrbitValue):
@@ -382,15 +450,28 @@ class ArgumentOfPeriapsis(OrbitValue):
     def __init__(self):
         super().__init__(units.rad)
         self.orbit_requirements = [
+            ('e'),
+            ('e_vec', 'e'),
+            ('angular_momentum', 'ascending_node_vec')
 
         ]
         self.orbit_state_requirements = [
-            ('arg_latitude', 'ta')
+            ('arg_latitude', 'ta'),
         ]
 
     @orbit_setter
     def set(self, orbit):
-        return False
+        if self.satisfied(orbit, self.orbit_requirements[0]) and orbit.circular():
+            self.value = 0
+
+        elif self.satisfied(orbit, self.orbit_requirements[1]) and orbit.equitorial():
+            self.value = np.arctan2(orbit.e_vec[1], orbit.e_vec[0])
+
+        elif self.satisfied(orbit, self.orbit_requirements[2]) and not orbit.equitorial() and not orbit.circular():
+            e = orbit.e_vec.inertial().value.m
+            h_xyz = orbit.angular_momentum.inertial().unit()
+            line_of_nodes = orbit.ascending_node_vec
+            self.value = np.arctan2(e.dot(np.cross(h_xyz, line_of_nodes)), e.dot(line_of_nodes))
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -405,23 +486,44 @@ class LongitudeOfAscendingNode(OrbitValue):
     def __init__(self):
         super().__init__(units.rad)
         self.orbit_requirements = [
-            ('angular_momentum', 'inclination')
+            ('inclination'),
+            ('ascending_node_vec')
         ]
         self.orbit_state_requirements = [
         ]
 
     @orbit_setter
     def set(self, orbit):
-        if self.satisfied(orbit, self.orbit_requirements[0]):
-            h_xyz = orbit.angular_momentum.unit()
-            # special case if i=0
-            if orbit.inclination == 0*units.rad:
-                self.value = 0*units.rad
-            else:
-                sin_val = np.arcsin(h_xyz[0] / np.sin(orbit.inclination))
-                cos_val = np.arccos(-h_xyz[1] / np.sin(orbit.inclination))
-                self.value = conics_utils.common_val(sin_val, cos_val) * units.rad
+        # special case if i=0
+        if self.satisfied(orbit, self.orbit_requirements[0]) and orbit.equitorial():
+            self.value = 0
 
+        # Angle from line of nodes
+        elif self.satisfied(orbit, self.orbit_requirements[1]):
+            self.value = np.arctan2(orbit.ascending_node_vec[1], orbit.ascending_node_vec[0])
+
+
+class AscendingNodeVector(OrbitValue):
+    symbol = 'ascending_node_vec'
+
+    def __init__(self):
+        super().__init__(units.dimensionless)
+        self.orbit_requirements = [
+        ]
+        self.orbit_state_requirements = [
+            ('angular_momentum')
+        ]
+
+    @orbit_setter
+    def set(self, orbit):
+        return False
+
+    @orbit_setter
+    def set_from_state(self, state, orbit):
+        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+            h_xyz = orbit.angular_momentum.inertial().unit()
+            value = np.cross([0, 0, 1], h_xyz)
+            self.value = frames.Vector(orbit, state, value, frames.InertialFrame)
 
 class Inclination(OrbitValue):
     symbol = 'inclination'
@@ -438,7 +540,7 @@ class Inclination(OrbitValue):
     def set(self, orbit):
         if self.satisfied(orbit, self.orbit_requirements[0]):
             h_xyz = orbit.angular_momentum.unit()
-            self.value = np.arccos(h_xyz[2]) * units.rad
+            self.value = np.arccos(h_xyz[2])
 
 
 class SemimajorAxis(OrbitValue):

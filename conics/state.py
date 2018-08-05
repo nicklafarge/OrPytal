@@ -5,6 +5,7 @@ import logging
 from base import OrbitBase
 from common import units, Q_, orbit_setter
 import conics_utils
+from errors import ParameterUnavailableError
 import frames
 
 ########### External ###########
@@ -16,8 +17,6 @@ class KeplarianState(object):
     def __init__(self, orbit, name=''):
         self.orbit = orbit
         self.name = name
-
-        self._ascending = None
 
         self._r = PositionMagnitude()
         self._ta = TrueAnomaly()
@@ -78,8 +77,6 @@ class KeplarianState(object):
 
     @ta.setter
     def ta(self, ta):
-        self._ascending = 0 < ta < np.pi
-
         self._ta.value = ta
         self.set_vars()
 
@@ -125,8 +122,6 @@ class KeplarianState(object):
 
     @fpa.setter
     def fpa(self, fpa):
-        self._ascending = 0 < fpa < np.pi
-
         self._fpa.value = fpa
         self.set_vars()
 
@@ -145,8 +140,6 @@ class KeplarianState(object):
 
     @E.setter
     def E(self, E):
-        self._ascending = 0 < E < np.pi
-
         self._E.value = E
         self.set_vars()
 
@@ -169,15 +162,14 @@ class KeplarianState(object):
             angle_to_check = self.ta
         elif self._fpa.evaluated:
             angle_to_check = self.fpa
+        elif self._E.evaluated:
+            angle_to_check = self.E
         else:
-            raise AssertionError("No angle to check for flight path angle")
+            raise ParameterUnavailableError("Need either ta, fpa or E to check ascending")
 
         return 0 <= angle_to_check <= np.pi
 
     def angle_check_tan(self, tan_val):
-        if self._ascending is None:
-            return tan_val
-
         if (self.is_ascending() and tan_val >= 0) or (not self.is_ascending() and tan_val < 0):
             return tan_val
         else:
@@ -199,9 +191,13 @@ class TrueAnomaly(StateValue):
     def __init__(self):
         super().__init__(units.radian)
         self.orbit_requirements = [
-            ('e', 'p', 'r'),
+            ('e', 'p', 'r', 'fpa'),
             ('e', 'E'),
-            ('r', 'v', 'fpa')
+            ('r', 'v', 'fpa'),
+            ('angular_momentum', 'position', 'e_vec', 'e', 'inclination'),
+            ('angular_momentum', 'position', 'ascending_node_vec', 'e', 'inclination'),
+            ('position', 'e', 'inclination'),
+            ('angular_momentum', 'position', 'e_vec', 'e', 'inclination', 'ascending_node_vec'),
         ]
 
     @orbit_setter
@@ -209,7 +205,7 @@ class TrueAnomaly(StateValue):
 
         # acos((1/e) (p/r - 1))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            cos_val = np.arccos( (1. / orbit.e) * (orbit.p / state.r - 1.) )
+            cos_val = (1. / orbit.e) * (orbit.p / state.r - 1.)
             self.value = state.ascending_sign * np.arccos(cos_val)
 
         # acos(2 atan(sqrt( (1+e)/(1-e) tan(E/2) )))
@@ -218,12 +214,41 @@ class TrueAnomaly(StateValue):
             self.value = state.angle_check_tan(ta)
 
         # atan( ((rv2)/mu cos(g)sin(g)) / ((rv2)/mu cos^2(g)-1) )
-        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             t = (state.r * state.v ** 2) / orbit.central_body.mu
             ta = np.arctan((t * np.cos(state.fpa) * np.sin(state.fpa)) /
                            (t * np.cos(state.fpa) ** 2 - 1))
             self.value = state.angle_check_tan(ta)
 
+        elif self.satisfied(state, orbit, self.orbit_requirements[3]) and orbit.equitorial() and not orbit.circular():
+
+            h = orbit.angular_momentum.inertial().unit()
+            e = orbit.e_vec
+            r = state.position.inertial()
+            self.value = np.arctan2(h.dot(e.cross(r)), r.dot(e))
+
+        elif self.satisfied(state, orbit, self.orbit_requirements[4]) and not orbit.equitorial() and orbit.circular():
+            h = orbit.angular_momentum.inertial().unit()
+            r = state.position.inertial()
+            n = orbit.ascending_node_vec.inertial()
+            self.value = np.arctan2(r.dot(np.cross(h, n)), r.dot(n))
+
+        elif self.satisfied(state, orbit, self.orbit_requirements[5]) and orbit.equitorial() and orbit.circular():
+            r = state.position.inertial()
+            self.value = np.arctan2(r[1], r[0])
+
+        elif self.satisfied(state, orbit, self.orbit_requirements[6]) and not orbit.equitorial() and not orbit.circular():
+
+            # unit vectors
+            ehat = orbit.e_vec.inertial().unit()
+            hhat = orbit.angular_momentum.inertial().unit()
+            phat = np.cross(hhat, ehat)
+
+            r = state.position.inertial().unit()
+            y = r.dot(phat)
+            x = r.dot(ehat)
+
+            self.value = np.arctan2(y, x)
 
 class PositionMagnitude(StateValue):
     symbol = 'r'
@@ -281,11 +306,11 @@ class ArgumentOfLatitude(StateValue):
 
             # special case i=0
             if orbit.inclination == 0 * units.rad:
-                self.value = 0 * units.rad
+                self.value = 0
             else:
                 sin_val = np.arcsin(rhat[2] / np.sin(orbit.inclination.to(units.rad)))
                 cos_val = np.arccos(theta_hat[2] / np.sin(orbit.inclination.to(units.rad)))
-                self.value = conics_utils.common_val(sin_val, cos_val) * units.rad
+                self.value = conics_utils.common_val(sin_val, cos_val)
 
 
 class FlightPathAngle(StateValue):
