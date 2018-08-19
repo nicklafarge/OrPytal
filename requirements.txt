@@ -8,6 +8,13 @@ matplotlib
 seaborn
 matlab
 
+# -------- Plotly Plotting --------
+plotly
+dash
+dash-renderer
+dash-html-components
+dash-core-components
+
 # -------- Pycharm --------
 ipython
 

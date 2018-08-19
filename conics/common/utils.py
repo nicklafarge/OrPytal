@@ -56,25 +56,15 @@ def load_pickle(filename):
         return pickle.load(file_object, encoding='latin1')
 
 
-def hr2sec(hr):
-    return hr * 3600.0
-
-
-def day2sec(day):
-    return hr2sec(day * 24.0)
-
-
-def year2sec(year):
-    return day2sec(year * 365.2422)
-
-
-def sec2hr(s):
-    return s / 3600.0
-
-
-def sec2day(s):
-    return sec2hr(s) / 24.0
-
-
-def sec2yr(s):
-    return sec2day(s) / 365.2422
+def copydoc(fromfunc, sep="\n"):
+    """
+    Decorator: Copy the docstring of `fromfunc`
+    """
+    def _decorator(func):
+        sourcedoc = fromfunc.__doc__
+        if func.__doc__ == None:
+            func.__doc__ = sourcedoc
+        else:
+            func.__doc__ = sep.join([sourcedoc, func.__doc__])
+        return func
+    return _decorator
