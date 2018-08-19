@@ -138,16 +138,23 @@ class Orbit(object):
         for var in self.vars:
             if var.evaluated and hasattr(orbit, var.symbol):
                 if isinstance(var.value, units.Quantity):
-                    assert np.isclose(var.value, getattr(orbit, var.symbol))
+                    same = np.isclose(var.value, getattr(orbit, var.symbol))
                 elif isinstance(var.value, frames.Vector):
 
                     vec1 = var.value
                     vec2 = getattr(orbit, var.symbol)
-                    assert vec1 == vec2
+                    same = vec1 == vec2
                 else:
-                    assert False
+                    same = False
 
-            logging.debug('Checked {} [✓]'.format(var.symbol))
+            if same:
+                logging.debug('Checked {} [✓]'.format(var.symbol))
+            else:
+                logging.warning('Error Found for {} [x]'.format(var.symbol))
+                logging.warning('My value: {}'.format(var.value))
+                logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
+
+
 
     @property
     def a(self):
@@ -279,7 +286,7 @@ class Orbit(object):
     def ascending_node_vec(self, ascending_node_vec):
         self._ascending_node_vec.value = ascending_node_vec
         self.set_vars()
-        
+
     @property
     def i(self):
         return self.inclination

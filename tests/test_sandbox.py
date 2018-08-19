@@ -5,6 +5,7 @@ import unittest
 ########### Local ###########
 from conics import Orbit, KeplarianState, plotting, frames, bodies
 from common import units, Q_
+import matlab_plotting
 
 ########### External ###########
 import matplotlib.pyplot as plt
@@ -22,41 +23,36 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
-    # state2.position = frames.Vector(orbit2, state, np.array([106780, -152498, 0])*units.km, frames.InertialFrame)
-    # state2.velocity = frames.Vector(orbit2, state, np.array([0.4102, 0.5637, 0])*units('km/s'), frames.InertialFrame)
+    # state.position = frames.Vector(orbit2, state, np.array([106780, -152498, 0])*units.km, frames.InertialFrame)
+    # state.velocity = frames.Vector(orbit2, state, np.array([0.4102, 0.5637, 0])*units('km/s'), frames.InertialFrame)
 
     orbit.e = 0.8
     orbit.p = 37800 * units.km
-    orbit.inclination = 2 * units.deg
+    orbit.inclination = 45 * units.deg
     orbit.ascending_node = 75 * units.deg
     orbit.arg_periapsis = 30 * units.deg
-    state.ta = -175 * units.deg
+    # state.ta = -175 * units.deg
 
+    # state.r = 37800 * units.km
     print('------------ Orbit 1 ------------')
     print(orbit)
 
     print('------------ State 1 ------------')
     print(state)
-    print('r: ', state.position.to(frames.InertialFrame))
-    print('v: ', state.velocity.to(frames.InertialFrame))
 
-    state2.position = frames.Vector.from_vector(orbit2, state2, state.position.inertial())
-    state2.velocity = frames.Vector.from_vector(orbit2, state2, state.velocity.inertial())
-    print('------------ Orbit 2 ------------')
-    print(orbit2)
-    print('------------ State 2 ------------')
-    print(state2)
-
-    orbit.compare(orbit2)
-    state.compare(state2)
-
-    # plt.figure(1)
-    # frame = 'inertial'
-    # plotting.plot_orbit(orbit, frame=frame)
+    orbit2.e = orbit.e
+    orbit2.p = orbit.p
+    orbit2.inclination = orbit.inclination
+    orbit2.arg_periapsis = orbit.arg_periapsis
+    orbit2.ascending_node = 120 * units.deg
+    plt.figure(1)
+    frame = 'inertial'
+    plotting.plot_orbit(orbit, frame=frame, planar=False)
+    plotting.plot_orbit(orbit2, frame=frame, planar=False)
     # plotting.plot_state(state, frame=frame)
-    # plt.show(block=False)
+    plt.show(block=False)
     #
-    state.position.inertial()
+    # state.position.inertial()
     # plt.figure(2)
     # plotting.animate_orbit_fixed(orbit)
 
