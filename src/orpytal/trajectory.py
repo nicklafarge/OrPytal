@@ -1,4 +1,4 @@
-import frames
+import orpytal.frames
 
 
 class Trajectory(object):

@@ -2,14 +2,11 @@
 import logging
 
 ########### Local ###########
-from conics import Orbit, KeplarianState, state
-from common import units, Q_
+from src.orpytal import KeplarianState
+from orpytal.common import units
 
 ########### External ###########
 import matplotlib.animation as animation
-import matplotlib.cm as cmx
-import matplotlib.colors as colors
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 

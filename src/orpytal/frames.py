@@ -1,8 +1,8 @@
 ########### Standard ###########
 
 ########### Local ###########
-import conics_utils
-from errors import ParameterUnavailableError
+import orpytal.conics_utils
+from orpytal.errors import ParameterUnavailableError
 
 ########### External ###########
 import numpy as np

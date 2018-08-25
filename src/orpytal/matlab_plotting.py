@@ -2,14 +2,12 @@
 import logging
 
 ########### Local ###########
-import orbit
-import planet_constants
-from common import units
+import orpytal.orbit
+import orpytal.planet_constants
+from orpytal.common import units
 
 ########### External ###########
 import matlab.engine
-import numpy as np
-import seaborn as sns
 
 logging.info("Starting Matlab Engine....")
 eng = matlab.engine.start_matlab()

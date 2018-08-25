@@ -2,7 +2,7 @@
 import math
 
 ########### Local ###########
-from utils import conics_utils
+from orpytal.common.utils import conics_utils
 
 ########### External ###########
 import numpy as np

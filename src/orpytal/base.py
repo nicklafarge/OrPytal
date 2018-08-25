@@ -1,13 +1,12 @@
 ########### Standard ###########
 
 ########### Local ###########
-from common import units, Q_
-import frames
-import conics_utils
+from orpytal.common import units
+import orpytal.frames
+import orpytal.conics_utils
 
 ########### External ###########
 import numpy as np
-import scipy as sp
 
 
 class OrbitBase(object):

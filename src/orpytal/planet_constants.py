@@ -3,12 +3,11 @@ import os
 import sys
 
 ########### Local ###########
-from common import units, Q_
-from conics import Orbit
-import utils
+from orpytal.common import units
+from src.orpytal import Orbit
+import orpytal.utils
 
 ########### External ###########
-import pickle
 import untangle
 
 ##########################################################

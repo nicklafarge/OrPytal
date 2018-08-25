@@ -4,16 +4,12 @@
 
 
 ########### Standard ###########
-import os
 
 ########### Local ###########
-from common import units, Q_
-import utils
+from common import units
 from planet_constants import CentralBody
 
 ########### External ###########
-import pickle
-import untangle
 
 ##########################################################
 # Values

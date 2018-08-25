@@ -2,15 +2,14 @@
 import logging
 
 ########### Local ###########
-from base import OrbitBase
-from common import units, Q_, orbit_setter
-import conics_utils
-from errors import ParameterUnavailableError
-import frames
+from orpytal.base import OrbitBase
+from orpytal.common import units, orbit_setter
+import orpytal.conics_utils
+from orpytal.errors import ParameterUnavailableError
+import orpytal.frames
 
 ########### External ###########
 import numpy as np
-import scipy as sp
 
 
 class KeplarianState(object):

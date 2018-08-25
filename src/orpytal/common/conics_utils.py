@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-from errors import ParameterUnavailableError
+from orpytal.errors import ParameterUnavailableError
 
 def loc(v1, v2, theta):
     return np.sqrt(v1 ** 2 + v2 ** 2 - 2 * v1 * v2 * np.cos(theta))

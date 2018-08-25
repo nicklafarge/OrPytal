@@ -2,8 +2,8 @@
 import unittest
 
 ########### Local ###########
-from conics import Orbit, KeplarianState
-from common import units, Q_
+from src.orpytal import Orbit, KeplarianState
+from common import units
 
 ########### External ###########
 import numpy as np

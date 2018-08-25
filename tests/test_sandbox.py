@@ -1,11 +1,10 @@
 ########### Standard ###########
 import logging
-import unittest
 
 ########### Local ###########
-from conics import Orbit, KeplarianState, plotting, frames, bodies
-from common import units, Q_
-import matlab_plotting
+from src.orpytal import Orbit, KeplarianState, bodies
+import plotting
+from common import units
 
 ########### External ###########
 import matplotlib.pyplot as plt
