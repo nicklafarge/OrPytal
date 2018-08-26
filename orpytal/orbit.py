@@ -80,15 +80,25 @@ class Orbit(object):
 
         return '\n'.join(x)
 
-    def propagate_full_orbit(self, step=0.1):
+    def propagate_full_orbit(self, n=150):
         # t_range = list(np.arange(0, self.period.m, step))
-        t_range = np.linspace(start=0, stop=self.period.m, num=150)
+        t_range = np.linspace(start=0, stop=self.period.m, num=n)
 
 
         st_list = []
         for t in t_range:
             st = KeplarianState(self)
+            logging.warning('-------------------------')
             st.t_since_rp = t
+            st._t_since_rp.value = t
+            st._M.set(st, self)
+            st._E.set(st, self)
+            st._r.set(st, self)
+            st._ta.set(st, self)
+            st._arg_latitude.set(st, self)
+            st._position.set(st, self)
+            st._velocity.set(st, self)
+
             st_list.append(st)
 
         return Trajectory(st_list)

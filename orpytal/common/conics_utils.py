@@ -50,9 +50,6 @@ def orbit_setter(setter_function):
         if value_before != value_after:
             logging.debug('Set {} to {}'.format(orbit_value.symbol, orbit_value.value))
 
-        # if value_after and isinstance(value_after, float) and np.isnan(value_after.m):
-        #     logging.warning('Something went wrong setting {} (setting this value to zero now).'.format(orbit_value.symbol))
-        #     orbit_value.value = 0
 
         # Return true if the value of the parameter has changed as as result of the function call
         return value_before != value_after
@@ -63,6 +60,7 @@ def attribute_setter(setter_function):
     def wrapper(*args):
         orbit_or_state = args[0]
         val = args[1]
+        var_name = setter_function.__name__
 
         if isinstance(val, tuple) and \
                 orbit_or_state.__class__.__name__ == 'KeplarianState' and \
@@ -71,6 +69,7 @@ def attribute_setter(setter_function):
             val = frames.Vector(orbit_or_state.orbit, orbit_or_state, val[0], val[1])
 
         setter_function(orbit_or_state, val)
+        logging.debug('Set {} to {}'.format(var_name, val))
 
         orbit_or_state.set_vars()
 

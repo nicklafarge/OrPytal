@@ -46,6 +46,7 @@ if __name__ == '__main__':
     frame = 'inertial'
     plotting.plot_orbit(orbit, frame=frame, planar=False)
     plotting.plot_orbit(orbit2, frame=frame, planar=False)
+    plotting.plot_primary(orbit)
     # plotting.plot_state(state, frame=frame)
     plt.show(block=False)
     #
