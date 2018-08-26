@@ -2,9 +2,7 @@
 import logging
 
 ########### Local ###########
-from orpytal import Orbit, KeplarianState, bodies
-import plotting
-from common import units
+from orpytal import units, Orbit, KeplarianState, bodies, plotting
 
 ########### External ###########
 import matplotlib.pyplot as plt

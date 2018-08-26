@@ -376,6 +376,8 @@ class FlightPathAngle(StateValue):
             fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)
 
+        if self.value and np.isnan(self.value):
+            self.value = 0
 
 class VelocityMagnitude(StateValue):
     symbol = 'v'
@@ -507,8 +509,9 @@ class EccentricAnomaly(StateValue):
             else:
                 self.value = state.ascending_sign * np.arccos(
                     (orbit.a - state.r) / (orbit.a * orbit.e))
-        if self.satisfied(state, orbit, self.orbit_requirements[1]):
-            self._iterative_eccentric_anomaly(state)
+
+        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
+            self.value = self._iterative_eccentric_anomaly(state, orbit)
 
     def _iterative_eccentric_anomaly(self, state, orbit, **kwargs):
         return self._find_eccentric_anomaly_recursively(orbit, state.M, state.M, **kwargs)

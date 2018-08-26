@@ -45,8 +45,8 @@ def orbit_setter(setter_function):
         except ParameterUnavailableError as e:
             logging.debug('Assertion Error: {}'.format(e))
             pass
-        value_after = orbit_value.value
 
+        value_after = orbit_value.value
         if value_before != value_after:
             logging.debug('Set {} to {}'.format(orbit_value.symbol, orbit_value.value))
 

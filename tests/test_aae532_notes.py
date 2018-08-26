@@ -2,13 +2,12 @@
 import unittest
 
 ########### Local ###########
-from orpytal import Orbit, KeplarianState
-from common import units
-import frames
+from orpytal import Orbit, KeplarianState,frames
+from orpytal.common import units
+from orpytal.planet_constants import BODIES_532
 
 ########### External ###########
 import numpy as np
-from planet_constants import BODIES_532
 
 earth = BODIES_532['EARTH']
 earth.radius = 6378.137 * units.km

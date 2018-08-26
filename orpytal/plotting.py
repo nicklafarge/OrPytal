@@ -28,7 +28,8 @@ def plot_orbit(orbit, frame=frames.OrbitFixedFrame.fn_name, planar=True, **kwarg
 
     start_st = KeplarianState(orbit)
     start_st.ta = 0 * units.rad
-    traj = orbit.propagate_full_orbit(start_st)
+    traj = orbit.propagate_full_orbit()
+    # traj = orbit.propagate_full_orbit(start_st)
 
     if hasattr(frame, 'fn_name'):
         frame = frame.fn_name
@@ -58,7 +59,7 @@ def plot_orbit(orbit, frame=frames.OrbitFixedFrame.fn_name, planar=True, **kwarg
         plt.ylabel("{} [{}]".format('$\hat{%s}$' % yaxis, 'km'))
         plt.legend()
     else:
-        import matlab_plotting as mplt
+        from orpytal import matlab_plotting as mplt
         mplt.init_cr3bp_3d_plot(1)
         mplt.title(orbit.name)
         mplt.default_3d_axes()
