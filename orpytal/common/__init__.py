@@ -1,6 +1,6 @@
 # Initialize Units
 from pint import UnitRegistry, set_application_registry
-from orpytal.common.conics_utils import orbit_setter
+from orpytal.common.conics_utils import orbit_setter, attribute_setter
 
 import logging
 

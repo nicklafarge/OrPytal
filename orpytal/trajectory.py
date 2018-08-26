@@ -1,5 +1,4 @@
-import orpytal.frames
-
+from orpytal import frames
 
 class Trajectory(object):
     name = None

@@ -2,7 +2,7 @@
 import logging
 
 ########### Local ###########
-from src.orpytal import Orbit, KeplarianState, bodies
+from orpytal import Orbit, KeplarianState, bodies
 import plotting
 from common import units
 

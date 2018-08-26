@@ -1,9 +1,8 @@
 ########### Standard ###########
 
 ########### Local ###########
-from orpytal.common import units
-import orpytal.frames
-import orpytal.conics_utils
+from orpytal.common import units, conics_utils
+from orpytal import frames
 
 ########### External ###########
 import numpy as np

@@ -5,8 +5,8 @@ from setuptools import setup, find_packages
 # https://blog.ionelmc.ro/2014/05/25/python-packaging/
 setup(
     name="orpytal",
-    version="0.0.2",
-    description="Python package for Orbital Mechanics",
+    version="0.0.3",
+    description="Python Package for Two-Body Orbital Mechanics",
     author="Nick LaFarge",
     author_email="nick.lafarge@gmail.com",
     url="http://nicklafarge.space/orpytal",
@@ -29,8 +29,7 @@ setup(
     extras_require={
 
     },
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
+    packages=[],
     entry_points={
         'console_scripts': [
             'orpytal = orpytal.cli:main'

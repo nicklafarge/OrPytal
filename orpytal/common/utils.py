@@ -54,27 +54,3 @@ def load_pickle(filename):
     except UnicodeDecodeError as ude:
         file_object = open(filename_bytes, 'rb')
         return pickle.load(file_object, encoding='latin1')
-
-
-def hr2sec(hr):
-    return hr * 3600.0
-
-
-def day2sec(day):
-    return hr2sec(day * 24.0)
-
-
-def year2sec(year):
-    return day2sec(year * 365.2422)
-
-
-def sec2hr(s):
-    return s / 3600.0
-
-
-def sec2day(s):
-    return sec2hr(s) / 24.0
-
-
-def sec2yr(s):
-    return sec2day(s) / 365.2422

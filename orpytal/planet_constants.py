@@ -4,8 +4,7 @@ import sys
 
 ########### Local ###########
 from orpytal.common import units
-from src.orpytal import Orbit
-import orpytal.utils
+from orpytal import Orbit
 
 ########### External ###########
 import untangle

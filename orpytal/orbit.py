@@ -3,9 +3,9 @@ import logging
 
 ########### Local ###########
 from orpytal.base import OrbitBase
-from orpytal.common import units, orbit_setter
+from orpytal.common import units, orbit_setter, attribute_setter
 from orpytal.errors import ParameterUnavailableError
-import orpytal.frames
+from orpytal import frames
 from orpytal.state import KeplarianState
 from orpytal.trajectory import Trajectory
 
@@ -153,75 +153,75 @@ class Orbit(object):
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
 
 
-
     @property
     def a(self):
         return self._a.value
 
     @a.setter
+    @attribute_setter
     def a(self, a):
         self._a.value = a
-        self.set_vars()
 
     @property
     def b(self):
         return self._b.value
 
     @b.setter
+    @attribute_setter
     def b(self, b):
         self._b.value = b
-        self.set_vars()
 
     @property
     def period(self):
         return self._period.value
 
     @period.setter
+    @attribute_setter
     def period(self, period):
         self._period.value = period
-        self.set_vars()
 
     @property
     def n(self):
         return self._n.value
 
     @n.setter
+    @attribute_setter
     def n(self, n):
         self._n.value = n
-        self.set_vars()
 
     @property
     def se(self):
         return self._se.value
 
     @se.setter
+    @attribute_setter
     def se(self, se):
         self._se.value = se
-        self.set_vars()
 
     @property
     def rp(self):
         return self._rp.value
 
     @rp.setter
+    @attribute_setter
     def rp(self, rp):
         self._rp.value = rp
-        self.set_vars()
 
     @property
     def ra(self):
         return self._ra.value
 
     @ra.setter
+    @attribute_setter
     def ra(self, ra):
         self._ra.value = ra
-        self.set_vars()
 
     @property
     def e(self):
         return self._e.value
 
     @e.setter
+    @attribute_setter
     def e(self, e):
         self._e.value = e
 
@@ -230,6 +230,7 @@ class Orbit(object):
         return self._e_vec.value
 
     @e_vec.setter
+    @attribute_setter
     def e_vec(self, e_vec):
         self._e_vec.value = e_vec
 
@@ -238,6 +239,7 @@ class Orbit(object):
         return self._p.value
 
     @p.setter
+    @attribute_setter
     def p(self, p):
         self._p.value = p
 
@@ -246,6 +248,7 @@ class Orbit(object):
         return self._h.value
 
     @h.setter
+    @attribute_setter
     def h(self, h):
         self._h.value = h
 
@@ -254,36 +257,36 @@ class Orbit(object):
         return self._angular_momentum.value
 
     @angular_momentum.setter
+    @attribute_setter
     def angular_momentum(self, angular_momentum):
         self._angular_momentum.value = angular_momentum
-        self.set_vars()
 
     @property
     def arg_periapsis(self):
         return self._arg_periapsis.value
 
     @arg_periapsis.setter
+    @attribute_setter
     def arg_periapsis(self, arg_periapsis):
         self._arg_periapsis.value = arg_periapsis
-        self.set_vars()
 
     @property
     def ascending_node(self):
         return self._ascending_node.value
 
     @ascending_node.setter
+    @attribute_setter
     def ascending_node(self, ascending_node):
         self._ascending_node.value = ascending_node
-        self.set_vars()
 
     @property
     def ascending_node_vec(self):
         return self._ascending_node_vec.value
 
     @ascending_node_vec.setter
+    @attribute_setter
     def ascending_node_vec(self, ascending_node_vec):
         self._ascending_node_vec.value = ascending_node_vec
-        self.set_vars()
 
     @property
     def i(self):
@@ -298,9 +301,9 @@ class Orbit(object):
         return self._inclination.value
 
     @inclination.setter
+    @attribute_setter
     def inclination(self, inclination):
         self._inclination.value = inclination
-        self.set_vars()
 
 
 class OrbitValue(OrbitBase):
@@ -551,6 +554,7 @@ class AscendingNodeVector(OrbitValue):
             h_xyz = orbit.angular_momentum.inertial().unit()
             value = np.cross([0, 0, 1], h_xyz)
             self.value = frames.Vector(orbit, state, value, frames.InertialFrame)
+
 
 class Inclination(OrbitValue):
     symbol = 'inclination'

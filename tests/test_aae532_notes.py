@@ -2,7 +2,7 @@
 import unittest
 
 ########### Local ###########
-from src.orpytal import Orbit, KeplarianState
+from orpytal import Orbit, KeplarianState
 from common import units
 import frames
 

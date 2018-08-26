@@ -1,7 +1,7 @@
-import ksp_planet_constants
-import plotting
+from orpytal.ksp import ksp_planet_constants
+from orpytal import plotting
 from matplotlib import pyplot as plt
-import matlab_plotting as mplt
+from orpytal import matlab_plotting as mplt
 
 kerbin = ksp_planet_constants.kerbin
 mun = ksp_planet_constants.mun

@@ -2,7 +2,7 @@
 import logging
 
 ########### Local ###########
-from src.orpytal import KeplarianState
+from orpytal import KeplarianState, frames
 from orpytal.common import units
 
 ########### External ###########
@@ -23,12 +23,15 @@ def plot_orbit_inertial_3d(orbit, **kwargs):
     return plot_orbit(orbit, frame='inertial', planar=False, **kwargs)
 
 
-def plot_orbit(orbit, frame='orbit_fixed', planar=True, **kwargs):
+def plot_orbit(orbit, frame=frames.OrbitFixedFrame.fn_name, planar=True, **kwargs):
     logging.info('Propagating and plotting {}'.format(orbit.name))
 
     start_st = KeplarianState(orbit)
     start_st.ta = 0 * units.rad
     traj = orbit.propagate_full_orbit(start_st)
+
+    if hasattr(frame, 'fn_name'):
+        frame = frame.fn_name
 
     x_list, y_list, z_list = getattr(traj, frame)()
 
@@ -70,6 +73,8 @@ def plot_state_inertial(state):
     return plot_state(state, 'inertial')
 
 def plot_state(state, frame):
+    if hasattr(frame, 'fn_name'):
+        frame = frame.fn_name
     pos = getattr(state.position, frame)()
     return plt.plot(pos[0], pos[1],
                     marker='o',
