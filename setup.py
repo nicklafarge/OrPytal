@@ -2,10 +2,14 @@
 import os
 from setuptools import setup, find_packages
 
+print('-----------------------------------------')
+print(find_packages(exclude=['tests']))
+print('-----------------------------------------')
+
 # https://blog.ionelmc.ro/2014/05/25/python-packaging/
 setup(
     name="orpytal",
-    version="0.0.3",
+    version="0.0.12",
     description="Python Package for Two-Body Orbital Mechanics",
     author="Nick LaFarge",
     author_email="nick.lafarge@gmail.com",
@@ -26,15 +30,10 @@ setup(
         "untangle",
         "pint"
     ],
-    extras_require={
-
-    },
-    packages=[],
-    entry_points={
-        'console_scripts': [
-            'orpytal = orpytal.cli:main'
-        ]
-    },
+    packages=find_packages(exclude=['tests']),
+    # packages=['orpytal'],
+    package_data={'': ['body_data.xml']},
+    include_package_data=True,
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Education",
@@ -50,6 +49,5 @@ setup(
         "Topic :: Scientific/Engineering :: Astronomy",
     ],
     long_description=open('README.md').read(),
-    include_package_data=True,
     zip_safe=False,
 )

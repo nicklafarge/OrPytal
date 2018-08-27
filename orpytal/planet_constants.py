@@ -3,7 +3,7 @@ import os
 import sys
 
 ########### Local ###########
-from orpytal.common import units
+from orpytal.common import units, utils
 from orpytal import Orbit
 
 ########### External ###########
@@ -203,7 +203,7 @@ class BodiesDict(object):
     def __iter__(self):
         return iter(self.__dict__)
 
-BODIES = BodiesDict(os.path.join(os.path.dirname(__file__), 'common/body_data.xml'))
+BODIES = BodiesDict(os.path.join(os.path.dirname(__file__), 'data/body_data.xml'))
 
 # Add periods
 BODIES['MERCURY'].period = 7600531.965 * units.seconds

@@ -4,7 +4,6 @@ from orpytal.common.conics_utils import orbit_setter, attribute_setter
 
 import logging
 
-print('Initializing Unit Registry')
 units = UnitRegistry()
 Q_ = units.Quantity
 set_application_registry(units)

@@ -1,4 +1,4 @@
-__version__ = '0.0.4'
+name = "orpytal"
 
 from orpytal.orbit import Orbit
 from orpytal.state import KeplarianState
