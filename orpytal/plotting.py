@@ -58,6 +58,7 @@ def plot_orbit(orbit, frame=frames.OrbitFixedFrame.fn_name, planar=True, **kwarg
         plt.xlabel("{} [{}]".format('$\hat{%s}$' % xaxis, 'km'))
         plt.ylabel("{} [{}]".format('$\hat{%s}$' % yaxis, 'km'))
         plt.legend()
+        plt.show(block=False)
     else:
         from orpytal import matlab_plotting as mplt
         mplt.init_cr3bp_3d_plot(1)
@@ -142,8 +143,8 @@ class TrajectoryAnimator(object):
 
         # For the axes....
         self.orbit_fixed_pos = [st.position.orbit_fixed() for st in self.traj]
-        plt.plot([st[0] for st in self.orbit_fixed_pos],
-                 [st[1] for st in self.orbit_fixed_pos],
+        plt.plot([st[0].m for st in self.orbit_fixed_pos],
+                 [st[1].m for st in self.orbit_fixed_pos],
                  c='0.85', ls='dashed')
 
     def _init(self):
