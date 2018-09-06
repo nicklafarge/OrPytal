@@ -603,7 +603,8 @@ class SemimajorAxis(OrbitValue):
         self.orbit_requirements = [
             ('ra', 'rp'),
             ('se'),
-            ('p', 'e')
+            ('p', 'e'),
+            ('rp', 'e')
         ]
         self.orbit_state_requirements = [
         ]
@@ -619,6 +620,9 @@ class SemimajorAxis(OrbitValue):
 
         elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = orbit.p / (1. - orbit.e ** 2)
+
+        elif self.satisfied(orbit, self.orbit_requirements[3]):
+            self.value = orbit.rp / (1 - orbit.e)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
