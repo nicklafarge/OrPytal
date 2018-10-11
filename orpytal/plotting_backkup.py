@@ -16,14 +16,14 @@ def plot_orbit_fixed(orbit, **kwargs):
 
 
 def plot_orbit_inertial(orbit, **kwargs):
-    return plot_orbit(orbit, frame='inertial', **kwargs)
+    return plot_orbit(orbit, frame=frames.InertialFrame, **kwargs)
 
 
 def plot_orbit_inertial_3d(orbit, **kwargs):
-    return plot_orbit(orbit, frame='inertial', planar=False, **kwargs)
+    return plot_orbit(orbit, frame=frames.InertialFrame, planar=False, **kwargs)
 
 
-def plot_orbit(orbit, frame=frames.OrbitFixedFrame.fn_name, planar=True, **kwargs):
+def plot_orbit(orbit, frame=frames.OrbitFixedFrame, planar=True, **kwargs):
     logging.info('Propagating and plotting {}'.format(orbit.name))
 
     start_st = KeplarianState(orbit)

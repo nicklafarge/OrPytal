@@ -503,7 +503,7 @@ class ArgumentOfPeriapsis(OrbitValue):
         self.orbit_requirements = [
             ('e'),
             ('e_vec', 'e'),
-            ('angular_momentum', 'ascending_node_vec')
+            ('e_vec', 'angular_momentum', 'ascending_node_vec')
 
         ]
         self.orbit_state_requirements = [

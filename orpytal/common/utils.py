@@ -54,3 +54,17 @@ def load_pickle(filename):
     except UnicodeDecodeError as ude:
         file_object = open(filename_bytes, 'rb')
         return pickle.load(file_object, encoding='latin1')
+
+
+def copydoc(fromfunc, sep="\n"):
+    """
+    Decorator: Copy the docstring of `fromfunc`
+    """
+    def _decorator(func):
+        sourcedoc = fromfunc.__doc__
+        if func.__doc__ == None:
+            func.__doc__ = sourcedoc
+        else:
+            func.__doc__ = sep.join([sourcedoc, func.__doc__])
+        return func
+    return _decorator
