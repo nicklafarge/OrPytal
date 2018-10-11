@@ -6,8 +6,8 @@
 ########### Standard ###########
 
 ########### Local ###########
-from common import units
-from planet_constants import CentralBody
+from orpytal import units
+from orpytal.planet_constants import CentralBody
 
 ########### External ###########
 

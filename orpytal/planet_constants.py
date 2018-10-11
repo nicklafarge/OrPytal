@@ -8,6 +8,7 @@ from orpytal import Orbit
 
 ########### External ###########
 import untangle
+import numpy as np
 
 ##########################################################
 # Values
@@ -44,21 +45,27 @@ class CentralBody(object):
 
         self.mu = mu * mu_units if not isinstance(mu, units.Quantity) else mu.to(mu_units)
 
-        if a:
+        self.a = None
+        self.period = None
+        self.e = None
+        self.id = None
+        self.notes = None
+
+        if a is not None and a != np.nan:
             self.a = a * units.km if not isinstance(a, units.Quantity) else a.to(units.km)
 
-        if period:
+        if period is not None and a != np.nan:
             self.period = period * units.s if not isinstance(period, units.Quantity) else period.to(units.s)
 
-        if e is not None:
+        if e is not None and a != np.nan:
             self.e = e * units.dimensionless if not isinstance(e, units.Quantity) else e.to(units.dimensionless)
 
-        if i is not None:
+        if i is not None and a != np.nan:
             self.i = i * units.radians if not isinstance(i, units.Quantity) else i.to(units.radians)
 
         self.parent = parent
 
-        if self.parent and isinstance(self.parent, CentralBody):
+        if self.parent and isinstance(self.parent, CentralBody) and self.parent.a is not None:
             self.orbit = Orbit(self.parent, '{}'.format(self.name),
                                a=self.a,
                                period=self.period,
@@ -97,14 +104,20 @@ class CentralBody(object):
 
     @classmethod
     def from_dict(cls, dict):
+        # parent = None
+        # if 'parent' in dict:
+        #     parent = dict['parent']
+        #     if not isinstance(parent, cls):
+        #         parent = cls.from_dict(parent)
+
         return cls(name=dict['name'],
                    radius=dict['radius'],
                    mu=dict['mu'],
-                   a=None if 'iad' not in dict else dict['a'],
+                   a=None if 'a' not in dict else dict['a'],
                    period=None if 'period' not in dict else dict['period'],
                    e=None if 'e' not in dict else dict['e'],
                    i=None if 'i' not in dict else dict['i'],
-                   parent=None if 'parent' not in dict else dict['parent'],
+                   parent=None if 'parent' not in dict else cls.from_dict(dict['parent']),
                    id=None if 'id' not in dict else dict['id'],
                    notes=None if 'notes' not in dict else dict['notes'],
                    )
@@ -114,25 +127,25 @@ class CentralBody(object):
         return cls.from_dict(utils.load_pickle(filename))
 
     def pickle(self, filename):
-        utils.pickle_dict(filename, self.to_pickle_dict())
+        utils.pickle_dict(filename, self.to_dict())
 
-    def to_pickle_dict(self):
+    def to_dict(self):
         dict = {
             'name': self.name,
-            'radius': self.radius,
-            'mu': self.mu
+            'radius': self.radius.m,
+            'mu': self.mu.m
         }
 
         if self.a:
-            dict['a'] = self.a
+            dict['a'] = self.a.m
         if self.period:
-            dict['period'] = self.period
+            dict['period'] = self.period.m
         if self.e:
-            dict['e'] = self.e
+            dict['e'] = self.e.m
         if self.i:
-            dict['i'] = self.i
+            dict['i'] = self.i.m
         if self.parent:
-            dict['parent'] = self.parent
+            dict['parent'] = self.parent.to_dict()
         if self.id:
             dict['id'] = self.id
         if self.notes:
@@ -202,6 +215,7 @@ class BodiesDict(object):
 
     def __iter__(self):
         return iter(self.__dict__)
+
 
 BODIES = BodiesDict(os.path.join(os.path.dirname(__file__), 'data/body_data.xml'))
 
@@ -505,3 +519,8 @@ BODIES_532['CERES'] = CentralBody(
 
 for k, b in BODIES.items():
     setattr(sys.modules[__name__], b.name.lower(), b)
+
+
+if __name__ == '__main__':
+    moon2 = CentralBody.from_dict(moon.to_dict())
+    moon2.to_dict()
