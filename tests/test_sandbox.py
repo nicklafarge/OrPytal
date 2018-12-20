@@ -44,7 +44,7 @@ if __name__ == '__main__':
     orbit2.ascending_node = 120 * units.deg
     plt.figure(1)
     frame = 'inertial'
-    
+
     oplt = plotting.get_plot_utils('plotly')
     oplt.plot_orbit(orbit, frame=frame, planar=False)
     oplt.plot_orbit(orbit2, frame=frame, planar=False)    # plotting.plot_state(state, frame=frame)
