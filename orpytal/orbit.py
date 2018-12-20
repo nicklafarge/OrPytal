@@ -83,7 +83,6 @@ class Orbit(object):
     def propagate_full_orbit(self, n=150):
         t_range = np.linspace(start=0, stop=self.period.m, num=n)
 
-
         st_list = []
         for t in t_range:
             st = KeplarianState(self)
@@ -172,7 +171,6 @@ class Orbit(object):
                 logging.warning('Error Found for {} [x]'.format(var.symbol))
                 logging.warning('My value: {}'.format(var.value))
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
-
 
     @property
     def a(self):
@@ -343,6 +341,7 @@ class OrbitValue(OrbitBase):
 
 class SemiLatusRectum(OrbitValue):
     symbol = 'p'
+    name = "Semilatus Rectum"
 
     def __init__(self):
         super().__init__(units.km)
@@ -375,6 +374,7 @@ class SemiLatusRectum(OrbitValue):
 
 class Eccentricity(OrbitValue):
     symbol = 'e'
+    name = "Eccentricity"
 
     def __init__(self):
         super().__init__(units.dimensionless)
@@ -412,6 +412,7 @@ class Eccentricity(OrbitValue):
 
 class EccentricityVector(OrbitValue):
     symbol = 'e_vec'
+    name = "Eccentricity Vector"
 
     def __init__(self):
         super().__init__(units.dimensionless)
@@ -437,6 +438,7 @@ class EccentricityVector(OrbitValue):
 
 class AngularMomentumMagnitude(OrbitValue):
     symbol = 'h'
+    name = "Angular Momentum"
 
     def __init__(self):
         super().__init__(units.km ** 2 / units.s)
@@ -468,6 +470,7 @@ class AngularMomentumMagnitude(OrbitValue):
 
 class AngularMomentumVector(OrbitValue):
     symbol = 'angular_momentum'
+    name = "Angular Momentum Vector"
 
     def __init__(self):
         super().__init__(units.km ** 2 / units.s)
@@ -497,6 +500,7 @@ class AngularMomentumVector(OrbitValue):
 
 class ArgumentOfPeriapsis(OrbitValue):
     symbol = 'arg_periapsis'
+    name = "Arg of Periapsis"
 
     def __init__(self):
         super().__init__(units.rad)
@@ -533,6 +537,7 @@ class ArgumentOfPeriapsis(OrbitValue):
 
 class LongitudeOfAscendingNode(OrbitValue):
     symbol = 'ascending_node'
+    name = "Ascending Node"
 
     def __init__(self):
         super().__init__(units.rad)
@@ -556,6 +561,7 @@ class LongitudeOfAscendingNode(OrbitValue):
 
 class AscendingNodeVector(OrbitValue):
     symbol = 'ascending_node_vec'
+    name = "Ascending Node Vector"
 
     def __init__(self):
         super().__init__(units.dimensionless)
@@ -579,6 +585,7 @@ class AscendingNodeVector(OrbitValue):
 
 class Inclination(OrbitValue):
     symbol = 'inclination'
+    name = "Inclination"
 
     def __init__(self):
         super().__init__(units.rad)
@@ -597,6 +604,7 @@ class Inclination(OrbitValue):
 
 class SemimajorAxis(OrbitValue):
     symbol = 'a'
+    name = "Semimajor Axis"
 
     def __init__(self):
         super().__init__(units.km)
@@ -631,6 +639,7 @@ class SemimajorAxis(OrbitValue):
 
 class SemiminorAxis(OrbitValue):
     symbol = 'b'
+    name = "Semiminor Axis"
 
     def __init__(self):
         super().__init__(units.km)
@@ -657,6 +666,7 @@ class SemiminorAxis(OrbitValue):
 
 class OrbitalPeriod(OrbitValue):
     symbol = 'period'
+    name = "Orbital Period"
 
     def __init__(self):
         super().__init__(units.seconds)
@@ -678,6 +688,7 @@ class OrbitalPeriod(OrbitValue):
 
 class MeanMotion(OrbitValue):
     symbol = 'n'
+    name = "Mean Motion"
 
     def __init__(self):
         super().__init__(units.rad / units.second)
@@ -699,6 +710,7 @@ class MeanMotion(OrbitValue):
 
 class SpecificEnergy(OrbitValue):
     symbol = 'se'
+    name = "Specific Energy"
 
     def __init__(self):
         super().__init__(units.km ** 2 / units.s ** 2)
@@ -726,6 +738,7 @@ class SpecificEnergy(OrbitValue):
 
 class Apoapsis(OrbitValue):
     symbol = 'ra'
+    name = "Apoapsis"
 
     def __init__(self):
         super().__init__(units.km)
@@ -754,6 +767,7 @@ class Apoapsis(OrbitValue):
 
 class Periapsis(OrbitValue):
     symbol = 'rp'
+    name = "Periapsis"
 
     def __init__(self):
         super().__init__(units.km)
