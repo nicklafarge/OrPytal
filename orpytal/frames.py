@@ -1,8 +1,8 @@
 ########### Standard ###########
 
 ########### Local ###########
-import conics_utils
-from errors import ParameterUnavailableError
+from orpytal.common import conics_utils
+from orpytal.errors import ParameterUnavailableError
 
 ########### External ###########
 import numpy as np
@@ -110,6 +110,7 @@ class Vector(object):
 
 class CoordinateFrame(object):
     name = None
+    fn_name = None
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -127,9 +128,15 @@ class CoordinateFrame(object):
     def vnc_dcm(cls, orbit, state):
         raise NotImplementedError()
 
+    def __mul__(self, other):
+        return (self, other)
+
+    # def __rmul__(self, other):
+    #     self.__mul__(other)
 
 class RotatingFrame(CoordinateFrame):
     name = 'Rotating Frame'
+    fn_name = 'rotating'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -172,6 +179,7 @@ class RotatingFrame(CoordinateFrame):
 
 class VncFrame(CoordinateFrame):
     name = 'Vnc Frame'
+    fn_name = 'vnc'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -196,6 +204,7 @@ class VncFrame(CoordinateFrame):
 
 class OrbitFixedFrame(CoordinateFrame):
     name = 'Orbit Fixed Frame'
+    fn_name = 'orbit_fixed'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -226,6 +235,7 @@ class OrbitFixedFrame(CoordinateFrame):
 
 class InertialFrame(CoordinateFrame):
     name = 'Inertial Frame'
+    fn_name = 'inertial'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):

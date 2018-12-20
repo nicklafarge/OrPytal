@@ -2,15 +2,13 @@
 import logging
 
 ########### Local ###########
-from base import OrbitBase
-from common import units, Q_, orbit_setter
-import conics_utils
-from errors import ParameterUnavailableError
-import frames
+from orpytal.base import OrbitBase
+from orpytal.common import units, conics_utils, orbit_setter, attribute_setter
+from orpytal.errors import ParameterUnavailableError
+from orpytal import frames
 
 ########### External ###########
 import numpy as np
-import scipy as sp
 
 
 class KeplarianState(object):
@@ -28,6 +26,8 @@ class KeplarianState(object):
         self._t_since_rp = TimeSincePeriapsis()
         self._M = MeanAnomaly()
         self._E = EccentricAnomaly()
+
+        self._is_ascending = None
 
         self.vars = [
             self._r,
@@ -91,96 +91,107 @@ class KeplarianState(object):
         return self._r.value
 
     @r.setter
+    @attribute_setter
     def r(self, r):
         self._r.value = r
-        self.set_vars()
 
     @property
     def ta(self):
         return self._ta.value
 
     @ta.setter
+    @attribute_setter
     def ta(self, ta):
         self._ta.value = ta
-        self.set_vars()
 
     @property
     def arg_latitude(self):
         return self._arg_latitude.value
 
     @arg_latitude.setter
+    @attribute_setter
     def arg_latitude(self, arg_latitude):
         self._arg_latitude.value = arg_latitude
-        self.set_vars()
 
     @property
     def v(self):
         return self._v.value
 
     @v.setter
+    @attribute_setter
     def v(self, v):
         self._v.value = v
-        self.set_vars()
 
     @property
     def position(self):
         return self._position.value
 
     @position.setter
+    @attribute_setter
     def position(self, position):
         self._position.value = position
-        self.set_vars()
 
     @property
     def velocity(self):
         return self._velocity.value
 
     @velocity.setter
+    @attribute_setter
     def velocity(self, velocity):
         self._velocity.value = velocity
-        self.set_vars()
 
     @property
     def fpa(self):
         return self._fpa.value
 
     @fpa.setter
+    @attribute_setter
     def fpa(self, fpa):
         self._fpa.value = fpa
-        self.set_vars()
 
     @property
     def M(self):
         return self._M.value
 
     @M.setter
+    @attribute_setter
     def M(self, M):
         self._M.value = M
-        self.set_vars()
 
     @property
     def E(self):
         return self._E.value
 
     @E.setter
+    @attribute_setter
     def E(self, E):
         self._E.value = E
-        self.set_vars()
 
     @property
     def t_since_rp(self):
         return self._t_since_rp.value
 
     @t_since_rp.setter
+    @attribute_setter
     def t_since_rp(self, t_since_rp):
         self._t_since_rp.value = t_since_rp
-        self.set_vars()
 
     @property
     def ascending_sign(self):
         return 1 if self.is_ascending() else -1
 
+    @property
+    def ascending(self):
+        return self._is_ascending
+
+    @ascending.setter
+    @attribute_setter
+    def ascending(self, ascending):
+        self._is_ascending = ascending
+
     def is_ascending(self):
+
+        angle_to_check = None
 
         if self._ta.evaluated:
             angle_to_check = self.ta
@@ -188,10 +199,15 @@ class KeplarianState(object):
             angle_to_check = self.fpa
         elif self._E.evaluated:
             angle_to_check = self.E
-        else:
+        elif self._velocity.evaluated:
+            self._is_ascending = self.velocity.rotating().value[0].m > 0
+        elif self.ascending is None:
             raise ParameterUnavailableError("Need either ta, fpa or E to check ascending")
 
-        return 0 <= angle_to_check <= np.pi
+        if angle_to_check is not None:
+            self._is_ascending = 0 <= angle_to_check <= np.pi
+
+        return self.ascending
 
     def angle_check_tan(self, tan_val):
         if (self.is_ascending() and tan_val >= 0) or (not self.is_ascending() and tan_val < 0):
@@ -344,7 +360,7 @@ class FlightPathAngle(StateValue):
         super().__init__(units.rad)
         self.orbit_requirements = [
             ('h', 'r', 'v'),
-            ('velocity', 'ta')
+            ('velocity')
         ]
 
     @orbit_setter
@@ -353,14 +369,15 @@ class FlightPathAngle(StateValue):
         # acos(h/(rv))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
-            return
 
         # atan(vr/vt)
-        if self.satisfied(state, orbit, self.orbit_requirements[1]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
             v = state.velocity.orbit_fixed()
             fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)
 
+        if self.value and np.isnan(self.value):
+            self.value = 0
 
 class VelocityMagnitude(StateValue):
     symbol = 'v'
@@ -492,8 +509,9 @@ class EccentricAnomaly(StateValue):
             else:
                 self.value = state.ascending_sign * np.arccos(
                     (orbit.a - state.r) / (orbit.a * orbit.e))
-        if self.satisfied(state, orbit, self.orbit_requirements[1]):
-            self._iterative_eccentric_anomaly(state)
+
+        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
+            self.value = self._iterative_eccentric_anomaly(state, orbit)
 
     def _iterative_eccentric_anomaly(self, state, orbit, **kwargs):
         return self._find_eccentric_anomaly_recursively(orbit, state.M, state.M, **kwargs)

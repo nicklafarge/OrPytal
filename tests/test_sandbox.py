@@ -1,11 +1,8 @@
 ########### Standard ###########
 import logging
-import unittest
 
 ########### Local ###########
-from conics import Orbit, KeplarianState, plotting, frames, bodies
-from common import units, Q_
-import matlab_plotting
+from orpytal import units, Orbit, KeplarianState, bodies, plotting
 
 ########### External ###########
 import matplotlib.pyplot as plt
@@ -47,10 +44,10 @@ if __name__ == '__main__':
     orbit2.ascending_node = 120 * units.deg
     plt.figure(1)
     frame = 'inertial'
+    
     oplt = plotting.get_plot_utils('plotly')
     oplt.plot_orbit(orbit, frame=frame, planar=False)
-    oplt.plot_orbit(orbit2, frame=frame, planar=False)
-    # plotting.plot_state(state, frame=frame)
+    oplt.plot_orbit(orbit2, frame=frame, planar=False)    # plotting.plot_state(state, frame=frame)
     plt.show(block=False)
     #
     # state.position.inertial()

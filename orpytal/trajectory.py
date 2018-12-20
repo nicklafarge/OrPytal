@@ -1,8 +1,6 @@
-import frames
-
+from orpytal import frames
 
 class Trajectory(object):
-    name = None
 
     def __init__(self, states, name=None):
         self.states = states
@@ -11,6 +9,7 @@ class Trajectory(object):
         self.metadata = {}
         self.name = name
         self.frame = states[0].position.frame
+        self.central_body =states[0].orbit.central_body
 
     def x_vals(self, frame='orbit_fixed'):
         x_vals = []
@@ -20,13 +19,18 @@ class Trajectory(object):
 
         return x_vals
 
-    def vals(self, frame):
+    def vals(self, frame_fn):
         x_vals = []
         y_vals = []
         z_vals = []
 
+        if issubclass(frame_fn, frames.CoordinateFrame):
+            frame_fn_name = frame_fn.fn_name
+        else:
+            frame_fn_name = frame_fn
+
         for st in self.states:
-            frame_fn = getattr(st.position, frame)
+            frame_fn = getattr(st.position, frame_fn_name)
             pos = frame_fn().value
             x_vals.append(pos[0].m)
             y_vals.append(pos[1].m)
@@ -35,16 +39,19 @@ class Trajectory(object):
         return x_vals, y_vals, z_vals
 
     def inertial(self):
-        self.frame = frames.InertialFrame
-        return self.in_frame('inertial')
+        return self.in_frame(frames.InertialFrame)
 
     def orbit_fixed(self):
-        self.frame = frames.OrbitFixedFrame
-        return self.in_frame('orbit_fixed')
+        return self.in_frame(frames.OrbitFixedFrame)
 
     def in_frame(self, frame_name):
+        self.frame = frame_name
+
         self.x_vals, self.y_vals, self.z_vals = self.vals(frame_name)
         return self.x_vals, self.y_vals, self.z_vals
+
+    def to(self, frame_name):
+        return self.vals(frame_name)
 
     def start(self):
         return self.states[0]

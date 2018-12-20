@@ -2,13 +2,12 @@
 import unittest
 
 ########### Local ###########
-from conics import Orbit, KeplarianState
-from common import units, Q_
-import frames
+from orpytal import Orbit, KeplarianState, frames
+from orpytal.common import units
 
 ########### External ###########
 import numpy as np
-from planet_constants import BODIES_532
+from orpytal.planet_constants import BODIES_532, BODIES
 
 earth = BODIES_532['EARTH']
 
@@ -22,11 +21,17 @@ class TestOrbit(unittest.TestCase):
 
         state.r = orbit.central_body.radius + 2000 * units.km
         vel_vector = np.array([-1.2, 6.7, 0.0]) * units.km / units.s
-        state.velocity = frames.Vector(orbit, state, vel_vector, frames.RotatingFrame)
+        state.velocity = vel_vector, frames.RotatingFrame
 
         print(orbit)
         print()
         print(state)
+
+        from orpytal import plotting
+        from matplotlib import pyplot as plt
+        plotting.plot_orbit(orbit, frames.OrbitFixedFrame)
+        plotting.plot_state(state, frames.OrbitFixedFrame)
+        plt.show(block=False)
 
         # Assert Orbit Quantities
         assert (np.isclose(orbit.p, 7891.62633))
@@ -40,7 +45,7 @@ class TestOrbit(unittest.TestCase):
         assert (np.isclose(orbit.rp, 9603.961874))
         assert (np.isclose(orbit.ra, 6697.497928))
 
-        # Assert State Quanitites
+        # Assert State Quantities
         assert (np.isclose(state.ta, -1.8977792920))
         assert (np.isclose(state.v, 6.80661443))
         assert (np.isclose(state.fpa, -0.17722538))

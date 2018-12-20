@@ -4,16 +4,12 @@
 
 
 ########### Standard ###########
-import os
 
 ########### Local ###########
-from common import units, Q_
-import utils
-from planet_constants import CentralBody
+from orpytal import units
+from orpytal.planet_constants import CentralBody
 
 ########### External ###########
-import pickle
-import untangle
 
 ##########################################################
 # Values

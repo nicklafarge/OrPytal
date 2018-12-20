@@ -1,29 +1,37 @@
 ########### Standard ###########
 import unittest
+import logging
 
 ########### Local ###########
-from conics import Orbit, KeplarianState
-from common import units, Q_
+from orpytal import Orbit, KeplarianState
+from orpytal.common import units
+from orpytal.planet_constants import earth
 
 ########### External ###########
 import numpy as np
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 class TestOrbit(unittest.TestCase):
     def test_ta(self):
-        orbit = Orbit('earth')
+        orbit = Orbit(earth)
         state = KeplarianState(orbit)
 
         orbit.e = 0.1
         orbit.p = 18400000 * units.m
 
         state.r = 18500 * units.km
+        state.ascending = True
 
-        ta_val = 1.6248767384090719
+        print(orbit)
+        print(state)
+
+        ta_val = 1.6248767384090719 * units.rad
         assert (np.isclose(state.ta, ta_val))
 
     def test_from_state(self):
-        orbit = Orbit('earth')
+        orbit = Orbit(earth)
         state = KeplarianState(orbit)
 
         orbit.e = 0.1

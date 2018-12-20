@@ -2,17 +2,15 @@
 import logging
 
 ########### Local ###########
-from base import OrbitBase
-from common import units, Q_, orbit_setter
-import conics_utils
-from errors import ParameterUnavailableError
-import frames
-from state import KeplarianState
-from trajectory import Trajectory
+from orpytal.base import OrbitBase
+from orpytal.common import units, orbit_setter, attribute_setter
+from orpytal.errors import ParameterUnavailableError
+from orpytal import frames
+from orpytal.state import KeplarianState
+from orpytal.trajectory import Trajectory
 
 ########### External ###########
 import numpy as np
-import scipy as sp
 
 
 class Orbit(object):
@@ -82,7 +80,28 @@ class Orbit(object):
 
         return '\n'.join(x)
 
-    def propagate_full_orbit(self, state, step=0.1):
+    def propagate_full_orbit(self, n=150):
+        t_range = np.linspace(start=0, stop=self.period.m, num=n)
+
+
+        st_list = []
+        for t in t_range:
+            st = KeplarianState(self)
+            st.t_since_rp = t
+            st._t_since_rp.value = t
+            st._M.set(st, self)
+            st._E.set(st, self)
+            st._r.set(st, self)
+            st._ta.set(st, self)
+            st._arg_latitude.set(st, self)
+            st._position.set(st, self)
+            st._velocity.set(st, self)
+
+            st_list.append(st)
+
+        return Trajectory(st_list)
+
+    def propagate_full_orbit_ta(self, state, step=0.1):
         ta_range = list(np.arange(state.ta, state.ta + 2 * np.pi, step))
         ta_range.append(state.ta.m + 2 * np.pi)
 
@@ -155,75 +174,75 @@ class Orbit(object):
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
 
 
-
     @property
     def a(self):
         return self._a.value
 
     @a.setter
+    @attribute_setter
     def a(self, a):
         self._a.value = a
-        self.set_vars()
 
     @property
     def b(self):
         return self._b.value
 
     @b.setter
+    @attribute_setter
     def b(self, b):
         self._b.value = b
-        self.set_vars()
 
     @property
     def period(self):
         return self._period.value
 
     @period.setter
+    @attribute_setter
     def period(self, period):
         self._period.value = period
-        self.set_vars()
 
     @property
     def n(self):
         return self._n.value
 
     @n.setter
+    @attribute_setter
     def n(self, n):
         self._n.value = n
-        self.set_vars()
 
     @property
     def se(self):
         return self._se.value
 
     @se.setter
+    @attribute_setter
     def se(self, se):
         self._se.value = se
-        self.set_vars()
 
     @property
     def rp(self):
         return self._rp.value
 
     @rp.setter
+    @attribute_setter
     def rp(self, rp):
         self._rp.value = rp
-        self.set_vars()
 
     @property
     def ra(self):
         return self._ra.value
 
     @ra.setter
+    @attribute_setter
     def ra(self, ra):
         self._ra.value = ra
-        self.set_vars()
 
     @property
     def e(self):
         return self._e.value
 
     @e.setter
+    @attribute_setter
     def e(self, e):
         self._e.value = e
 
@@ -232,6 +251,7 @@ class Orbit(object):
         return self._e_vec.value
 
     @e_vec.setter
+    @attribute_setter
     def e_vec(self, e_vec):
         self._e_vec.value = e_vec
 
@@ -240,6 +260,7 @@ class Orbit(object):
         return self._p.value
 
     @p.setter
+    @attribute_setter
     def p(self, p):
         self._p.value = p
 
@@ -248,6 +269,7 @@ class Orbit(object):
         return self._h.value
 
     @h.setter
+    @attribute_setter
     def h(self, h):
         self._h.value = h
 
@@ -256,36 +278,36 @@ class Orbit(object):
         return self._angular_momentum.value
 
     @angular_momentum.setter
+    @attribute_setter
     def angular_momentum(self, angular_momentum):
         self._angular_momentum.value = angular_momentum
-        self.set_vars()
 
     @property
     def arg_periapsis(self):
         return self._arg_periapsis.value
 
     @arg_periapsis.setter
+    @attribute_setter
     def arg_periapsis(self, arg_periapsis):
         self._arg_periapsis.value = arg_periapsis
-        self.set_vars()
 
     @property
     def ascending_node(self):
         return self._ascending_node.value
 
     @ascending_node.setter
+    @attribute_setter
     def ascending_node(self, ascending_node):
         self._ascending_node.value = ascending_node
-        self.set_vars()
 
     @property
     def ascending_node_vec(self):
         return self._ascending_node_vec.value
 
     @ascending_node_vec.setter
+    @attribute_setter
     def ascending_node_vec(self, ascending_node_vec):
         self._ascending_node_vec.value = ascending_node_vec
-        self.set_vars()
 
     @property
     def i(self):
@@ -300,9 +322,9 @@ class Orbit(object):
         return self._inclination.value
 
     @inclination.setter
+    @attribute_setter
     def inclination(self, inclination):
         self._inclination.value = inclination
-        self.set_vars()
 
 
 class OrbitValue(OrbitBase):
@@ -481,7 +503,7 @@ class ArgumentOfPeriapsis(OrbitValue):
         self.orbit_requirements = [
             ('e'),
             ('e_vec', 'e'),
-            ('angular_momentum', 'ascending_node_vec')
+            ('e_vec', 'angular_momentum', 'ascending_node_vec')
 
         ]
         self.orbit_state_requirements = [
@@ -554,6 +576,7 @@ class AscendingNodeVector(OrbitValue):
             value = np.cross([0, 0, 1], h_xyz)
             self.value = frames.Vector(orbit, state, value, frames.InertialFrame)
 
+
 class Inclination(OrbitValue):
     symbol = 'inclination'
 
@@ -580,7 +603,8 @@ class SemimajorAxis(OrbitValue):
         self.orbit_requirements = [
             ('ra', 'rp'),
             ('se'),
-            ('p', 'e')
+            ('p', 'e'),
+            ('rp', 'e')
         ]
         self.orbit_state_requirements = [
         ]
@@ -596,6 +620,9 @@ class SemimajorAxis(OrbitValue):
 
         elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = orbit.p / (1. - orbit.e ** 2)
+
+        elif self.satisfied(orbit, self.orbit_requirements[3]):
+            self.value = orbit.rp / (1 - orbit.e)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
