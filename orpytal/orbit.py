@@ -70,16 +70,6 @@ class Orbit(object):
 
     def __str__(self):
         return output.output_orbit(self)
-        # x = ['%s Orbit Info' % self.name]
-        # if self.e is not None:
-        #     x.append('Circular: {}'.format(self.circular()))
-        # if self.i is not None:
-        #     x.append('Equitorial: {}'.format(self.equitorial()))
-        # for var in self.vars:
-        #     if var.evaluated:
-        #         x.append(str(var))
-        #
-        # return '\n'.join(x)
 
     def propagate_full_orbit(self, n=150):
         t_range = np.linspace(start=0, stop=self.period.m, num=n)
@@ -147,11 +137,16 @@ class Orbit(object):
             raise ParameterUnavailableError('Need eccentricity to see if circular')
 
     def compare(self, orbit):
+        all_same = True
+
         # Compare which vars are evaluated
         evaluated_vars = sorted([v.symbol for v in self.vars if v.evaluated])
         other_evaluated_vars = sorted([v.symbol for v in orbit.vars if v.evaluated])
         for i, var in enumerate(evaluated_vars):
-            assert var == other_evaluated_vars[i]
+            if var != other_evaluated_vars[i]:
+                logging.warning('Different Evaluated Variables!')
+                return False
+            # assert var == other_evaluated_vars[i]
 
         # Compare values of evaluated variables
         for var in self.vars:
@@ -169,9 +164,12 @@ class Orbit(object):
             if same:
                 logging.debug('Checked {} [✓]'.format(var.symbol))
             else:
+                all_same = False
                 logging.warning('Error Found for {} [x]'.format(var.symbol))
                 logging.warning('My value: {}'.format(var.value))
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
+
+        return all_same
 
     @property
     def a(self):
@@ -348,7 +346,8 @@ class SemiLatusRectum(OrbitValue):
         super().__init__(units.km)
         self.orbit_requirements = [
             ('a', 'e'),
-            ('h')
+            ('h'),
+            ('ra', 'e')
         ]
         self.orbit_state_requirements = [
             ('r', 'e', 'ta')
@@ -364,6 +363,11 @@ class SemiLatusRectum(OrbitValue):
         # h^2/mu
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.h ** 2 / orbit.central_body.mu
+
+        # ra * (1 - e)
+        elif self.satisfied(orbit, self.orbit_requirements[2]):
+            self.value = orbit.ra * (1 - orbit.e)
+
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -382,7 +386,10 @@ class Eccentricity(OrbitValue):
         self.orbit_requirements = [
             ('se', 'h'),
             ('a', 'rp'),
-            ('e_vec')
+            ('e_vec'),
+            ('p', 'ra'),
+            ('a', 'ra'),
+            ('p', 'rp')
         ]
         self.orbit_state_requirements = [
             ('r', 'v', 'fpa')
@@ -393,15 +400,27 @@ class Eccentricity(OrbitValue):
 
         # sqrt(1 + (2 se h^2) / (mu ^ 2) )
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = np.sqrt(1 + (2 * orbit.se * orbit.h ** 2) / (orbit.central_body.mu ** 2))
+            self.value = np.sqrt(1. + (2. * orbit.se * orbit.h ** 2.) / (orbit.central_body.mu ** 2.))
 
         # 1 - rp/a
         elif self.satisfied(orbit, self.orbit_requirements[1]):
-            self.value = 1.0 - orbit.rp / orbit.a
+            self.value = 1. - orbit.rp / orbit.a
 
         # |e|
-        elif self.satisfied(orbit, self.orbit_requirements[1]):
+        elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = np.linalg.norm(orbit.e_vec)
+
+        # 1 - p/ra
+        elif self.satisfied(orbit, self.orbit_requirements[3]):
+            self.value = 1. - orbit.p / orbit.ra
+
+        # ra/a - 1
+        elif self.satisfied(orbit, self.orbit_requirements[4]):
+            self.value = orbit.ra/orbit.a - 1.
+
+        # p / rp - 1
+        elif self.satisfied(orbit, self.orbit_requirements[5]):
+            self.value = orbit.p / orbit.rp - 1.
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -613,7 +632,8 @@ class SemimajorAxis(OrbitValue):
             ('ra', 'rp'),
             ('se'),
             ('p', 'e'),
-            ('rp', 'e')
+            ('rp', 'e'),
+            ('n')
         ]
         self.orbit_state_requirements = [
         ]
@@ -621,17 +641,25 @@ class SemimajorAxis(OrbitValue):
     @orbit_setter
     def set(self, orbit):
 
+        # (ra+rp)/2
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 0.5 * (orbit.ra + orbit.rp)
 
+        # -mu/(2*se)
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = -orbit.central_body.mu / (2. * orbit.se)
 
+        # p / (1 - e^2)
         elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = orbit.p / (1. - orbit.e ** 2)
 
+        # rp / (1 - e)
         elif self.satisfied(orbit, self.orbit_requirements[3]):
             self.value = orbit.rp / (1 - orbit.e)
+
+        # (mu / n^2) ^ (1/3)
+        elif self.satisfied(orbit, self.orbit_requirements[4]):
+            self.value = (orbit.central_body.mu / orbit.n ** 2) ** (1./3.)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -679,6 +707,8 @@ class OrbitalPeriod(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
+
+        # 2pi / n
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 2.0 * np.pi / orbit.n
 
@@ -694,15 +724,23 @@ class MeanMotion(OrbitValue):
     def __init__(self):
         super().__init__(units.rad / units.second)
         self.orbit_requirements = [
-            ('a')
+            ('a'),
+            ('period')
         ]
         self.orbit_state_requirements = [
         ]
 
     @orbit_setter
     def set(self, orbit):
+
+        # sqrt(mu / a^3)
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.sqrt(orbit.central_body.mu / (orbit.a ** 3))
+
+        # 2pi / period
+        if self.satisfied(orbit, self.orbit_requirements[1]):
+            self.value = 2 * np.pi / orbit.period
+
 
     @orbit_setter
     def set_from_state(self, state, orbit):

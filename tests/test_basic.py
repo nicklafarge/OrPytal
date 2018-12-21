@@ -11,7 +11,8 @@ from orpytal.planet_constants import earth
 import numpy as np
 
 logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
+
 
 class TestOrbit(unittest.TestCase):
     def test_ta(self):
