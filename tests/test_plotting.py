@@ -19,7 +19,7 @@ state = KeplarianState(orbit)
 
 orbit.e = 0.1
 orbit.p = 18400000 * units.m
-orbit.ascending_node = 10 * units.deg
+orbit.raan = 10 * units.deg
 orbit.i = 75 * units.deg
 
 state.r = 18500 * units.km

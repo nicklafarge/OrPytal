@@ -5,7 +5,7 @@ import logging
 from orpytal.base import OrbitBase
 from orpytal.common import units, orbit_setter, attribute_setter
 from orpytal.errors import ParameterUnavailableError
-from orpytal import frames
+from orpytal import frames, output
 from orpytal.state import KeplarianState
 from orpytal.trajectory import Trajectory
 
@@ -26,9 +26,9 @@ class Orbit(object):
 
         # Orientation angles
         self._arg_periapsis = ArgumentOfPeriapsis()
-        self._ascending_node = LongitudeOfAscendingNode()
+        self._raan = LongitudeOfAscendingNode()
         self._inclination = Inclination()
-        self._ascending_node_vec = AscendingNodeVector()
+        self._raan_vec = AscendingNodeVector()
         self._i = self._inclination
 
         self._a = SemimajorAxis()
@@ -53,8 +53,8 @@ class Orbit(object):
             self._rp,
             self._ra,
             self._arg_periapsis,
-            self._ascending_node,
-            self._ascending_node_vec,
+            self._raan,
+            self._raan_vec,
             self._inclination
         ]
 
@@ -69,16 +69,17 @@ class Orbit(object):
         self.set_vars()
 
     def __str__(self):
-        x = ['%s Orbit Info' % self.name]
-        if self.e is not None:
-            x.append('Circular: {}'.format(self.circular()))
-        if self.i is not None:
-            x.append('Equitorial: {}'.format(self.equitorial()))
-        for var in self.vars:
-            if var.evaluated:
-                x.append(str(var))
-
-        return '\n'.join(x)
+        return output.output_orbit(self)
+        # x = ['%s Orbit Info' % self.name]
+        # if self.e is not None:
+        #     x.append('Circular: {}'.format(self.circular()))
+        # if self.i is not None:
+        #     x.append('Equitorial: {}'.format(self.equitorial()))
+        # for var in self.vars:
+        #     if var.evaluated:
+        #         x.append(str(var))
+        #
+        # return '\n'.join(x)
 
     def propagate_full_orbit(self, n=150):
         t_range = np.linspace(start=0, stop=self.period.m, num=n)
@@ -290,22 +291,22 @@ class Orbit(object):
         self._arg_periapsis.value = arg_periapsis
 
     @property
-    def ascending_node(self):
-        return self._ascending_node.value
+    def raan(self):
+        return self._raan.value
 
-    @ascending_node.setter
+    @raan.setter
     @attribute_setter
-    def ascending_node(self, ascending_node):
-        self._ascending_node.value = ascending_node
+    def raan(self, raan):
+        self._raan.value = raan
 
     @property
-    def ascending_node_vec(self):
-        return self._ascending_node_vec.value
+    def raan_vec(self):
+        return self._raan_vec.value
 
-    @ascending_node_vec.setter
+    @raan_vec.setter
     @attribute_setter
-    def ascending_node_vec(self, ascending_node_vec):
-        self._ascending_node_vec.value = ascending_node_vec
+    def raan_vec(self, raan_vec):
+        self._raan_vec.value = raan_vec
 
     @property
     def i(self):
@@ -477,7 +478,7 @@ class AngularMomentumVector(OrbitValue):
         self.orbit_requirements = [
         ]
         self.orbit_state_requirements = [
-            ('ascending_node', 'inclination', 'h'),
+            ('raan', 'inclination', 'h'),
             ('position', 'velocity')
         ]
 
@@ -488,8 +489,8 @@ class AngularMomentumVector(OrbitValue):
     @orbit_setter
     def set_from_state(self, state, orbit):
         if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
-            h_vector = orbit.h * np.array([np.sin(orbit.ascending_node) * np.sin(orbit.inclination),
-                                           -np.cos(orbit.ascending_node) * np.sin(orbit.inclination),
+            h_vector = orbit.h * np.array([np.sin(orbit.raan) * np.sin(orbit.inclination),
+                                           -np.cos(orbit.raan) * np.sin(orbit.inclination),
                                            np.cos(orbit.inclination)
                                            ])
             self.value = frames.Vector(orbit, state, h_vector, frames.InertialFrame)
@@ -507,7 +508,7 @@ class ArgumentOfPeriapsis(OrbitValue):
         self.orbit_requirements = [
             ('e'),
             ('e_vec', 'e'),
-            ('e_vec', 'angular_momentum', 'ascending_node_vec')
+            ('e_vec', 'angular_momentum', 'raan_vec')
 
         ]
         self.orbit_state_requirements = [
@@ -525,7 +526,7 @@ class ArgumentOfPeriapsis(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[2]) and not orbit.equitorial() and not orbit.circular():
             e = orbit.e_vec.inertial().value.m
             h_xyz = orbit.angular_momentum.inertial().unit()
-            line_of_nodes = orbit.ascending_node_vec
+            line_of_nodes = orbit.raan_vec
             self.value = np.arctan2(e.dot(np.cross(h_xyz, line_of_nodes)), e.dot(line_of_nodes))
 
     @orbit_setter
@@ -536,14 +537,14 @@ class ArgumentOfPeriapsis(OrbitValue):
 
 
 class LongitudeOfAscendingNode(OrbitValue):
-    symbol = 'ascending_node'
+    symbol = 'raan'
     name = "Ascending Node"
 
     def __init__(self):
         super().__init__(units.rad)
         self.orbit_requirements = [
             ('inclination'),
-            ('ascending_node_vec')
+            ('raan_vec')
         ]
         self.orbit_state_requirements = [
         ]
@@ -556,11 +557,11 @@ class LongitudeOfAscendingNode(OrbitValue):
 
         # Angle from line of nodes
         elif self.satisfied(orbit, self.orbit_requirements[1]):
-            self.value = np.arctan2(orbit.ascending_node_vec[1], orbit.ascending_node_vec[0])
+            self.value = np.arctan2(orbit.raan_vec[1], orbit.raan_vec[0])
 
 
 class AscendingNodeVector(OrbitValue):
-    symbol = 'ascending_node_vec'
+    symbol = 'raan_vec'
     name = "Ascending Node Vector"
 
     def __init__(self):
@@ -738,7 +739,7 @@ class SpecificEnergy(OrbitValue):
 
 class Apoapsis(OrbitValue):
     symbol = 'ra'
-    name = "Apoapsis"
+    name = "Rad. Apoapsis"
 
     def __init__(self):
         super().__init__(units.km)
@@ -767,7 +768,7 @@ class Apoapsis(OrbitValue):
 
 class Periapsis(OrbitValue):
     symbol = 'rp'
-    name = "Periapsis"
+    name = "Rad. Periapsis"
 
     def __init__(self):
         super().__init__(units.km)

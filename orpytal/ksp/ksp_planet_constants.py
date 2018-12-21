@@ -45,7 +45,7 @@ BODIES['MOHO'] = CentralBody(
     i=7 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=15 * units.deg,
-    ascending_node=70 * units.deg
+    raan=70 * units.deg
 
 )
 ################## Eve ##################
@@ -60,7 +60,7 @@ BODIES['EVE'] = CentralBody(
     i=2.1 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=15 * units.deg
+    raan=15 * units.deg
 )
 
 BODIES['GILLY'] = CentralBody(
@@ -73,7 +73,7 @@ BODIES['GILLY'] = CentralBody(
     i=12 * units.degrees,
     parent=BODIES['EVE'],
     arg_periapsis=10 * units.deg,
-    ascending_node=80 * units.deg
+    raan=80 * units.deg
 )
 
 ################## Kerbin ##################
@@ -88,7 +88,7 @@ BODIES['KERBIN'] = CentralBody(
     i=0 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=0 * units.deg
+    raan=0 * units.deg
 )
 
 BODIES['MUN'] = CentralBody(
@@ -101,7 +101,7 @@ BODIES['MUN'] = CentralBody(
     i=0 * units.degrees,
     parent=BODIES['KERBIN'],
     arg_periapsis=0 * units.deg,
-    ascending_node=0 * units.deg
+    raan=0 * units.deg
 )
 
 BODIES['MINIMUS'] = CentralBody(
@@ -114,7 +114,7 @@ BODIES['MINIMUS'] = CentralBody(
     i=6 * units.degrees,
     parent=BODIES['KERBIN'],
     arg_periapsis=38 * units.deg,
-    ascending_node=78 * units.deg
+    raan=78 * units.deg
 )
 
 ################## Duna ##################
@@ -129,7 +129,7 @@ BODIES['DUNA'] = CentralBody(
     i=0.06 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=135.5 * units.deg
+    raan=135.5 * units.deg
 )
 
 BODIES['IKE'] = CentralBody(
@@ -142,7 +142,7 @@ BODIES['IKE'] = CentralBody(
     i=0.2 * units.degrees,
     parent=BODIES['DUNA'],
     arg_periapsis=0 * units.deg,
-    ascending_node=0 * units.deg
+    raan=0 * units.deg
 )
 
 ################## Dres ##################
@@ -157,7 +157,7 @@ BODIES['DRES'] = CentralBody(
     i=5 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=90 * units.deg,
-    ascending_node=280 * units.deg
+    raan=280 * units.deg
 )
 
 ################## Jool ##################
@@ -172,7 +172,7 @@ BODIES['JOOL'] = CentralBody(
     i=1.304 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=52 * units.deg
+    raan=52 * units.deg
 )
 
 BODIES['LAYTHE'] = CentralBody(
@@ -185,7 +185,7 @@ BODIES['LAYTHE'] = CentralBody(
     i=0 * units.deg,
     parent=BODIES['JOOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=0 * units.deg
+    raan=0 * units.deg
 )
 BODIES['VALL'] = CentralBody(
     name='Vall',
@@ -197,7 +197,7 @@ BODIES['VALL'] = CentralBody(
     i=0 * units.deg,
     parent=BODIES['JOOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=0 * units.deg
+    raan=0 * units.deg
 )
 BODIES['TYLO'] = CentralBody(
     name='Jool',
@@ -209,7 +209,7 @@ BODIES['TYLO'] = CentralBody(
     i=0.025 * units.deg,
     parent=BODIES['JOOL'],
     arg_periapsis=0 * units.deg,
-    ascending_node=0 * units.deg
+    raan=0 * units.deg
 )
 BODIES['BOP'] = CentralBody(
     name='Bop',
@@ -221,7 +221,7 @@ BODIES['BOP'] = CentralBody(
     i=15 * units.deg,
     parent=BODIES['JOOL'],
     arg_periapsis=25 * units.deg,
-    ascending_node=10 * units.deg
+    raan=10 * units.deg
 )
 BODIES['POL'] = CentralBody(
     name='Pol',
@@ -233,7 +233,7 @@ BODIES['POL'] = CentralBody(
     i=4.25 * units.deg,
     parent=BODIES['JOOL'],
     arg_periapsis=15 * units.deg,
-    ascending_node=2 * units.deg
+    raan=2 * units.deg
 )
 
 ################## Eeloo ##################
@@ -248,7 +248,7 @@ BODIES['EELOO'] = CentralBody(
     i=6.15 * units.deg,
     parent=BODIES['KERBOL'],
     arg_periapsis=260 * units.deg,
-    ascending_node=50 * units.deg
+    raan=50 * units.deg
 )
 
 ################## Easier Access ##################

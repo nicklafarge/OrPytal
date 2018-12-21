@@ -62,7 +62,7 @@ class TestOrbit(unittest.TestCase):
         orbit.a = 10 * earth.radius
         orbit.e = 0.4
         orbit.i = 30 * units.deg
-        orbit.ascending_node = 45 * units.deg
+        orbit.raan = 45 * units.deg
         orbit.arg_periapsis = -90 * units.deg
         state.ta = 135 * units.deg
 

@@ -8,7 +8,7 @@ from orpytal import units, Orbit, KeplarianState, bodies, plotting
 import matplotlib.pyplot as plt
 import numpy as np
 
-np.set_printoptions(precision=4)
+# np.set_printoptions(precision=4)
 
 orbit = Orbit(bodies.earth, name='Orbit1')
 state = KeplarianState(orbit, name='State1')
@@ -26,30 +26,30 @@ if __name__ == '__main__':
     orbit.e = 0.8
     orbit.p = 37800 * units.km
     orbit.inclination = 45 * units.deg
-    orbit.ascending_node = 75 * units.deg
+    orbit.raan = 75 * units.deg
     orbit.arg_periapsis = 30 * units.deg
-    # state.ta = -175 * units.deg
+    state.ta = -175 * units.deg
 
     # state.r = 37800 * units.km
-    print('------------ Orbit 1 ------------')
+    # print('------------ Orbit 1 ------------')
     print(orbit)
 
-    print('------------ State 1 ------------')
+    # print('------------ State 1 ------------')
     print(state)
 
     orbit2.e = orbit.e
     orbit2.p = orbit.p
     orbit2.inclination = orbit.inclination
     orbit2.arg_periapsis = orbit.arg_periapsis
-    orbit2.ascending_node = 120 * units.deg
-    plt.figure(1)
+    orbit2.raan = 120 * units.deg
+    # plt.figure(1)
     frame = 'inertial'
-
-    oplt = plotting.get_plot_utils('plotly')
-    oplt.plot_orbit(orbit, frame=frame, planar=False)
-    oplt.plot_orbit(orbit2, frame=frame, planar=False)    # plotting.plot_state(state, frame=frame)
-    plt.show(block=False)
     #
+    # oplt = plotting.get_plot_utils('plotly')
+    # oplt.plot_orbit(orbit, frame=frame, planar=False)
+    # oplt.plot_orbit(orbit2, frame=frame, planar=False)    # plotting.plot_state(state, frame=frame)
+    # plt.show(block=False)
+    # #
     # state.position.inertial()
     # plt.figure(2)
     # plotting.animate_orbit_fixed(orbit)

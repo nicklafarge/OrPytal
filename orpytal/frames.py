@@ -141,11 +141,11 @@ class RotatingFrame(CoordinateFrame):
     @classmethod
     def inertial_dcm(cls, orbit, state):
 
-        requirements = ['ascending_node', 'inclination', 'arg_latitude']
+        requirements = ['raan', 'inclination', 'arg_latitude']
         if not conics_utils.state_orbit_satisfied(state, orbit, requirements):
             raise ParameterUnavailableError('Need ascending node, inclination and argument of latitude to convert to xyz')
 
-        Omega = orbit.ascending_node
+        Omega = orbit.raan
         theta = state.arg_latitude
         i = orbit.inclination
         dcm_ri = np.zeros((3, 3))

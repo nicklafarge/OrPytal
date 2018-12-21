@@ -1,6 +1,3 @@
-import orpytal
-from orpytal import Orbit, KeplarianState, units
-
 DEFAULT_LENGTH = 17
 DEFAULT_PRECISION = 10
 DEFAULT_PRECISION_TOTAL_LENGTH = DEFAULT_PRECISION + 7
@@ -63,8 +60,22 @@ def create_key_value_line_params(*orbit_params):
     return create_key_value_line(labels, values)
 
 
+def orbit_parameters_output(orbit):
+    output = []
+    output.append("Orbit Parameters".center(LINE_WIDTH, " ") + "\n")
+    output.append(create_key_value_line_params(orbit._e, orbit._i))
+    output.append(create_key_value_line_params(orbit._a, orbit._raan))
+    output.append(create_key_value_line_params(orbit._b, orbit._arg_periapsis))
+    output.append(create_key_value_line_params(orbit._rp, orbit._ra))
+    output.append(create_key_value_line_params(orbit._p, orbit._h))
+    output.append(create_key_value_line_params(orbit._n, orbit._period))
+    output.append(create_key_value_line_params(orbit._se))
+    return output
+
+
 def output_orbit(orbit):
     output = []
+    output.append(SECTION_DIVIDER)
 
     # Construct Header
     header = []
@@ -72,43 +83,62 @@ def output_orbit(orbit):
     header.append("Orbit Data".center(LINE_WIDTH, " "))
     header.append(SECTION_DIVIDER)
     header.append("Meta Information".center(LINE_WIDTH, " "))
+    header.append("{:>12}: {}".format("Orbit Name", DEFAULT_FILLER if not orbit.name else orbit.name))
     header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
-    if orbit.name:
-        header.append("{:>12}: {}".format("Orbit Name", orbit.name))
+    header.append("{:>12}: {}".format("Circular", DEFAULT_FILLER if orbit.e is None else orbit.circular()))
+    header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
+
+    header.append(SECTION_DIVIDER)
+
+    output.append("\n".join(header))
+    output.append("\n".join(orbit_parameters_output(orbit)))
+    output.append(SECTION_DIVIDER)
+    output.append(SECTION_DIVIDER)
+
+    output_str = "\n".join(output)
+
+    return output_str
+
+
+def output_state(state):
+    orbit = state.orbit
+
+    output = []
+    output.append(SECTION_DIVIDER)
+
+    # Construct Header
+    header = []
+    header.append(SECTION_DIVIDER)
+    header.append("Keplarian State Data".center(LINE_WIDTH, " "))
+    header.append(SECTION_DIVIDER)
+    header.append("Meta Information".center(LINE_WIDTH, " "))
+    header.append("{:>12}: {}".format("Orbit Name", DEFAULT_FILLER if not orbit.name else orbit.name))
+    header.append("{:>12}: {}".format("State Name", DEFAULT_FILLER if not state.name else state.name))
+    header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
+    header.append("{:>12}: {}".format("Circular", DEFAULT_FILLER if orbit.e is None else orbit.circular()))
+    header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
+    header.append("{:>12}: {}".format("Ascending", DEFAULT_FILLER if state._is_ascending is None else state._is_ascending))
 
     header.append(SECTION_DIVIDER)
 
     output.append("\n".join(header))
 
-    # Keplerian Elements
-    output.append("Keplerian Elements".center(LINE_WIDTH, " ") + "\n")
-    output.append(create_key_value_line_params(orbit._e, orbit._i))
-    output.append(create_key_value_line_params(orbit._a, orbit._ascending_node))
-    output.append(create_key_value_line_params(orbit._arg_periapsis))
+    # Keplarian State Data
 
-    # Other Orbit Elements
-    output.append("\n" + "Orbital Distances".center(LINE_WIDTH, " ") + "\n")
-    output.append(create_key_value_line_params(orbit._rp, orbit._ra))
-    output.append(create_key_value_line_params(orbit._p, orbit._b))
-
-    output.append("\n" + "Orbit Rate and Period".center(LINE_WIDTH, " ") + "\n")
-    output.append(create_key_value_line_params(orbit._n, orbit._period))
-
-    output.append("\n" + "Other Orbital Elements".center(LINE_WIDTH, " ") + "\n")
-    output.append(create_key_value_line_params(orbit._se, orbit._h))
+    output.append("State Parameters".center(LINE_WIDTH, " ") + "\n")
+    output.append(create_key_value_line_params(state._r, state._ta))
+    output.append(create_key_value_line_params(state._v, state._E))
+    output.append(create_key_value_line_params(state._fpa, state._M))
+    output.append(create_key_value_line_params(state._t_since_rp, state._arg_latitude))
+    output.append(SECTION_DIVIDER)
     output.append(SECTION_DIVIDER)
 
+    # Orbit
+
+    output.append("\n".join(orbit_parameters_output(orbit)))
+    output.append(SECTION_DIVIDER)
+
+
     output_str = "\n".join(output)
-    print(output_str)
-    pass
 
-
-def output_state(state):
-    pass
-
-
-if __name__ == "__main__":
-    orbit = Orbit(orpytal.bodies.earth, name="My Dope Orbit", a=25000 * units.km, e=0.4, ascending_node=45 * units.deg,
-                  inclination=16 * units.deg)
-    output_orbit(orbit)
-    pass
+    return output_str

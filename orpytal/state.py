@@ -5,14 +5,14 @@ import logging
 from orpytal.base import OrbitBase
 from orpytal.common import units, conics_utils, orbit_setter, attribute_setter
 from orpytal.errors import ParameterUnavailableError
-from orpytal import frames
+from orpytal import frames, output
 
 ########### External ###########
 import numpy as np
 
 
 class KeplarianState(object):
-    def __init__(self, orbit, name=''):
+    def __init__(self, orbit, name='', **kwargs):
         self.orbit = orbit
         self.name = name
 
@@ -42,13 +42,18 @@ class KeplarianState(object):
             self._E
         ]
 
-    def __str__(self):
-        x = ['{} Orbit State {}'.format(self.orbit.name, self.name)]
-        for var in self.vars:
-            if var.evaluated:
-                x.append(str(var))
+        for k, v in kwargs.items():
+            try:
+                attribute = getattr(self, '_' + k)
+                attribute.value = v
+            except AttributeError as e:
+                logging.error('KeplarianState has no parameter named {}.'.format(k))
+                raise e
 
-        return '\n'.join(x)
+        self.set_vars()
+
+    def __str__(self):
+        return output.output_state(self)
 
     def set_vars(self):
         for var in self.vars:
@@ -86,6 +91,7 @@ class KeplarianState(object):
                 logging.debug('Checked {} [✓]'.format(var.symbol))
             else:
                 logging.warning('Error Found for {} [x]'.format(var.symbol))
+
     @property
     def r(self):
         return self._r.value
@@ -217,7 +223,6 @@ class KeplarianState(object):
 
 
 class StateValue(OrbitBase):
-
     def set(self, state, orbit):
         raise NotImplementedError()
 
@@ -227,6 +232,7 @@ class StateValue(OrbitBase):
 
 class TrueAnomaly(StateValue):
     symbol = 'ta'
+    name = 'True Anomaly'
 
     def __init__(self):
         super().__init__(units.radian)
@@ -235,9 +241,9 @@ class TrueAnomaly(StateValue):
             ('e', 'E'),
             ('r', 'v', 'fpa'),
             ('angular_momentum', 'position', 'e_vec', 'e', 'inclination'),
-            ('angular_momentum', 'position', 'ascending_node_vec', 'e', 'inclination'),
+            ('angular_momentum', 'position', 'raan_vec', 'e', 'inclination'),
             ('position', 'e', 'inclination'),
-            ('angular_momentum', 'position', 'e_vec', 'e', 'inclination', 'ascending_node_vec'),
+            ('angular_momentum', 'position', 'e_vec', 'e', 'inclination', 'raan_vec'),
         ]
 
     @orbit_setter
@@ -270,14 +276,15 @@ class TrueAnomaly(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[4]) and not orbit.equitorial() and orbit.circular():
             h = orbit.angular_momentum.inertial().unit()
             r = state.position.inertial()
-            n = orbit.ascending_node_vec.inertial()
+            n = orbit.raan_vec.inertial()
             self.value = np.arctan2(r.dot(np.cross(h, n)), r.dot(n))
 
         elif self.satisfied(state, orbit, self.orbit_requirements[5]) and orbit.equitorial() and orbit.circular():
             r = state.position.inertial()
             self.value = np.arctan2(r[1], r[0])
 
-        elif self.satisfied(state, orbit, self.orbit_requirements[6]) and not orbit.equitorial() and not orbit.circular():
+        elif self.satisfied(state, orbit,
+                            self.orbit_requirements[6]) and not orbit.equitorial() and not orbit.circular():
 
             # unit vectors
             ehat = orbit.e_vec.inertial().unit()
@@ -290,8 +297,10 @@ class TrueAnomaly(StateValue):
 
             self.value = np.arctan2(y, x)
 
+
 class PositionMagnitude(StateValue):
     symbol = 'r'
+    name = 'Pos. Mag. |r|'
 
     def __init__(self):
         super().__init__(units.km)
@@ -324,6 +333,7 @@ class PositionMagnitude(StateValue):
 
 class ArgumentOfLatitude(StateValue):
     symbol = 'arg_latitude'
+    name = 'Arg. of Latitude'
 
     def __init__(self):
         super().__init__(units.rad)
@@ -355,6 +365,7 @@ class ArgumentOfLatitude(StateValue):
 
 class FlightPathAngle(StateValue):
     symbol = 'fpa'
+    name = 'Flight Path Angle'
 
     def __init__(self):
         super().__init__(units.rad)
@@ -379,8 +390,10 @@ class FlightPathAngle(StateValue):
         if self.value and np.isnan(self.value):
             self.value = 0
 
+
 class VelocityMagnitude(StateValue):
     symbol = 'v'
+    name = 'Vel. Mag. |v|'
 
     def __init__(self):
         super().__init__(units.km / units.second)
@@ -406,6 +419,7 @@ class VelocityMagnitude(StateValue):
 
 class PositionVector(StateValue):
     symbol = 'position'
+    name = 'Position'
 
     def __init__(self):
         super().__init__(units.km)
@@ -425,6 +439,7 @@ class PositionVector(StateValue):
 
 class VelocityVector(StateValue):
     symbol = 'velocity'
+    name = 'Velocity'
 
     def __init__(self):
         super().__init__(units.km / units.second)
@@ -454,6 +469,7 @@ class VelocityVector(StateValue):
 
 class TimeSincePeriapsis(StateValue):
     symbol = 't_since_rp'
+    name = 'Time Since Peri.'
 
     def __init__(self):
         super().__init__(units.seconds)
@@ -470,6 +486,7 @@ class TimeSincePeriapsis(StateValue):
 
 class MeanAnomaly(StateValue):
     symbol = 'M'
+    name = 'Mean Anomaly'
 
     def __init__(self):
         super().__init__(units.radians)
@@ -491,6 +508,7 @@ class MeanAnomaly(StateValue):
 
 class EccentricAnomaly(StateValue):
     symbol = 'E'
+    name = 'Eccentric Anomaly'
 
     def __init__(self):
         super().__init__(units.radians)
