@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.DEBUG)
 
 earth = bodies.earth
 
@@ -24,18 +24,5 @@ impossible_pairs = [
     ('period', 'se'),   # Indirect dependency (se <-> a <-> period)
 ]
 
-orbit = Orbit(earth, a=51000 * units.km, e=0)
-
-for pair in two_value_pairs:
-    if pair[0] == pair[1]:
-        continue
-
-    if pair in impossible_pairs:
-        continue
-
-    test_orbit = Orbit(earth)
-    setattr(test_orbit, pair[0], getattr(orbit, pair[0]))
-    setattr(test_orbit, pair[1], getattr(orbit, pair[1]))
-    same = orbit.compare(test_orbit)
-    if not same:
-        print(pair)
+orbit = Orbit(earth, a=51000 * units.km, e=1e-4)
+st = KeplarianState(orbit, r=51000*units.km)

@@ -249,8 +249,11 @@ class TrueAnomaly(StateValue):
     @orbit_setter
     def set(self, state, orbit):
 
+        if orbit.circular():
+            self.value = np.nan
+
         # acos((1/e) (p/r - 1))
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             cos_val = (1. / orbit.e) * (orbit.p / state.r - 1.)
             self.value = state.ascending_sign * np.arccos(cos_val)
 
@@ -376,9 +379,11 @@ class FlightPathAngle(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
+        if orbit.circular():
+            self.value = 0.0 * units.rad
 
         # acos(h/(rv))
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
 
         # atan(vr/vt)
@@ -387,6 +392,7 @@ class FlightPathAngle(StateValue):
             fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)
 
+        # Convert "NaN" into 0
         if self.value and np.isnan(self.value):
             self.value = 0
 
@@ -519,8 +525,11 @@ class EccentricAnomaly(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
+        if orbit.circular():
+            self.value = np.nan
+
         # acos((a-r)/(ae))
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             cos_val = (orbit.a - state.r) / (orbit.a * orbit.e)
             if cos_val > 1 and np.isclose(cos_val, 1):
                 self.value = 0

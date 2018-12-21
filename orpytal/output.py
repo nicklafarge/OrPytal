@@ -37,8 +37,8 @@ def convert_unit_str(unit_str):
 
 
 def create_key_value(label, value):
-    val = DEFAULT_FILLER if not value else VALUE_FMT.format(value.m)
-    u = DEFAULT_UNIT_FILLER if not value else UNIT_FMT.format(convert_unit_str(str(value.u)))
+    val = DEFAULT_FILLER if value is None else VALUE_FMT.format(value.m)
+    u = DEFAULT_UNIT_FILLER if value is None else UNIT_FMT.format(convert_unit_str(str(value.u)))
     return "{}: {} {} |".format(LABEL_FMT.format(label), val, u)
 
 
