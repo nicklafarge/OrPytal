@@ -400,7 +400,10 @@ class Eccentricity(OrbitValue):
 
         # sqrt(1 + (2 se h^2) / (mu ^ 2) )
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = np.sqrt(1. + (2. * orbit.se * orbit.h ** 2.) / (orbit.central_body.mu ** 2.))
+            sqrt_val = 1. + (2. * orbit.se * orbit.h ** 2.) / (orbit.central_body.mu ** 2.)
+            if np.isclose(sqrt_val, 0) and np.sign(sqrt_val) == -1:
+                sqrt_val = 0
+            self.value = np.sqrt(sqrt_val)
 
         # 1 - rp/a
         elif self.satisfied(orbit, self.orbit_requirements[1]):

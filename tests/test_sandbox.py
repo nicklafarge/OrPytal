@@ -1,5 +1,6 @@
 ########### Standard ###########
 import logging
+import itertools
 
 ########### Local ###########
 from orpytal import units, Orbit, KeplarianState, bodies, plotting
@@ -8,50 +9,33 @@ from orpytal import units, Orbit, KeplarianState, bodies, plotting
 import matplotlib.pyplot as plt
 import numpy as np
 
-# np.set_printoptions(precision=4)
-
-orbit = Orbit(bodies.earth, name='Orbit1')
-state = KeplarianState(orbit, name='State1')
-
-orbit2 = Orbit(bodies.earth, name='Orbit1 Check')
-state2 = KeplarianState(orbit2, name='State1 Check')
-
 logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 
-if __name__ == '__main__':
-    # state.position = frames.Vector(orbit2, state, np.array([106780, -152498, 0])*units.km, frames.InertialFrame)
-    # state.velocity = frames.Vector(orbit2, state, np.array([0.4102, 0.5637, 0])*units('km/s'), frames.InertialFrame)
+earth = bodies.earth
 
-    orbit.e = 0.8
-    orbit.p = 37800 * units.km
-    orbit.inclination = 45 * units.deg
-    orbit.raan = 75 * units.deg
-    orbit.arg_periapsis = 30 * units.deg
-    state.ta = -175 * units.deg
+possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se']
+two_value_pairs = [i for i in itertools.combinations(possible_values, 2)]
 
-    # state.r = 37800 * units.km
-    # print('------------ Orbit 1 ------------')
-    print(orbit)
+impossible_pairs = [
+    ('p', 'h'),         # Direct dependency (h = sqrt(p * mu))
+    ('a', 'se'),        # Direct dependency (se = -mu/sqrt(a))
+    ('a', 'period'),    # Direct dependency (period = 2pi sqrt(a^3/mu))
+    ('period', 'se'),   # Indirect dependency (se <-> a <-> period)
+]
 
-    # print('------------ State 1 ------------')
-    print(state)
+orbit = Orbit(earth, a=51000 * units.km, e=0)
 
-    orbit2.e = orbit.e
-    orbit2.p = orbit.p
-    orbit2.inclination = orbit.inclination
-    orbit2.arg_periapsis = orbit.arg_periapsis
-    orbit2.raan = 120 * units.deg
-    # plt.figure(1)
-    frame = 'inertial'
-    #
-    # oplt = plotting.get_plot_utils('plotly')
-    # oplt.plot_orbit(orbit, frame=frame, planar=False)
-    # oplt.plot_orbit(orbit2, frame=frame, planar=False)    # plotting.plot_state(state, frame=frame)
-    # plt.show(block=False)
-    # #
-    # state.position.inertial()
-    # plt.figure(2)
-    # plotting.animate_orbit_fixed(orbit)
+for pair in two_value_pairs:
+    if pair[0] == pair[1]:
+        continue
 
-    pass
+    if pair in impossible_pairs:
+        continue
+
+    test_orbit = Orbit(earth)
+    setattr(test_orbit, pair[0], getattr(orbit, pair[0]))
+    setattr(test_orbit, pair[1], getattr(orbit, pair[1]))
+    same = orbit.compare(test_orbit)
+    if not same:
+        print(pair)
