@@ -85,9 +85,8 @@ def output_orbit(orbit):
     header.append("Meta Information".center(LINE_WIDTH, " "))
     header.append("{:>12}: {}".format("Orbit Name", DEFAULT_FILLER if not orbit.name else orbit.name))
     header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
-    header.append("{:>12}: {}".format("Circular", DEFAULT_FILLER if orbit.e is None else orbit.circular()))
+    header.append("{:>12}: {}".format("Type", DEFAULT_FILLER if orbit.e is None else orbit.type().name))
     header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
-
     header.append(SECTION_DIVIDER)
 
     output.append("\n".join(header))
@@ -115,7 +114,7 @@ def output_state(state):
     header.append("{:>12}: {}".format("Orbit Name", DEFAULT_FILLER if not orbit.name else orbit.name))
     header.append("{:>12}: {}".format("State Name", DEFAULT_FILLER if not state.name else state.name))
     header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
-    header.append("{:>12}: {}".format("Circular", DEFAULT_FILLER if orbit.e is None else orbit.circular()))
+    header.append("{:>12}: {}".format("Type", DEFAULT_FILLER if orbit.e is None else orbit.type().name))
     header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
     header.append("{:>12}: {}".format("Ascending", DEFAULT_FILLER if state._is_ascending is None else state._is_ascending))
 

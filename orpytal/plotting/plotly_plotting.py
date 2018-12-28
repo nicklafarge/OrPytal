@@ -7,17 +7,13 @@ from orpytal.plotting.plotting_base import PlotUtils3D, PlotUtils2D, PlotUtilsBa
 from orpytal import Orbit, planet_constants, Trajectory
 
 ########### External ###########
-from dash import Dash
-import dash_html_components as html
+# from dash import Dash
+# import dash_html_components as html
 import dash_core_components as dcc
 import numpy as np
 import plotly
 import plotly.graph_objs as go
 import seaborn as sns
-
-# TODO I shouldn't have my api key in a public repository you moron
-plotly.tools.set_credentials_file(username='nlafarge', api_key='FW8T5gLFcKYHcT1fICQa', stream_ids=['qpoh56k49e'])
-app = Dash(__name__)
 
 
 class PlotlyPlotUtils(object):
@@ -32,21 +28,21 @@ class PlotlyPlotUtils(object):
         self._color_cycle = itertools.cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
         self._layout = go.Layout(autosize=True, height=800)
 
-        self.app = app
-        self.app.css.config.serve_locally = True
-        self.app.scripts.config.serve_locally = True
-
-        self.graph = dcc.Graph(
-            id='plot',
-            figure=self.figure
-        )
-
-        self.app.layout = html.Div(children=[
-            dcc.Graph(
-                id='plot',
-                figure=self.figure
-            )
-        ])
+        # self.app = app
+        # self.app.css.config.serve_locally = True
+        # self.app.scripts.config.serve_locally = True
+        #
+        # self.graph = dcc.Graph(
+        #     id='plot',
+        #     figure=self.figure
+        # )
+        #
+        # self.app.layout = html.Div(children=[
+        #     dcc.Graph(
+        #         id='plot',
+        #         figure=self.figure
+        #     )
+        # ])
 
     @property
     def figure(self):

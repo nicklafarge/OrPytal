@@ -1,5 +1,6 @@
 ########### Standard ###########
 import logging
+from enum import Enum
 
 ########### Local ###########
 from orpytal.base import OrbitBase
@@ -11,6 +12,13 @@ from orpytal.trajectory import Trajectory
 
 ########### External ###########
 import numpy as np
+
+
+class OrbitType(Enum):
+    Circular = 0
+    Elliptic = 1
+    Parabolic = 2
+    Hyperbolic = 3
 
 
 class Orbit(object):
@@ -136,6 +144,18 @@ class Orbit(object):
         else:
             raise ParameterUnavailableError('Need eccentricity to see if circular')
 
+    def type(self, tol=1e-8):
+        if self.e is None:
+            raise ParameterUnavailableError('Need eccentricity evaluate type of orbit')
+        elif self.circular(tol=tol):
+            return OrbitType.Circular
+        elif 0.0 < self.e < 1.0:
+            return OrbitType.Elliptic
+        elif (self.e - 1.) < tol:
+            return OrbitType.Parabolic
+        else:
+            return OrbitType.Hyperbolic
+
     def compare(self, orbit):
         all_same = True
 
@@ -146,7 +166,7 @@ class Orbit(object):
             if var != other_evaluated_vars[i]:
                 logging.warning('Different Evaluated Variables!')
                 return False
-            # assert var == other_evaluated_vars[i]
+                # assert var == other_evaluated_vars[i]
 
         # Compare values of evaluated variables
         for var in self.vars:
@@ -368,7 +388,6 @@ class SemiLatusRectum(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = orbit.ra * (1 - orbit.e)
 
-
     @orbit_setter
     def set_from_state(self, state, orbit):
 
@@ -419,7 +438,7 @@ class Eccentricity(OrbitValue):
 
         # ra/a - 1
         elif self.satisfied(orbit, self.orbit_requirements[4]):
-            self.value = orbit.ra/orbit.a - 1.
+            self.value = orbit.ra / orbit.a - 1.
 
         # p / rp - 1
         elif self.satisfied(orbit, self.orbit_requirements[5]):
@@ -662,7 +681,7 @@ class SemimajorAxis(OrbitValue):
 
         # (mu / n^2) ^ (1/3)
         elif self.satisfied(orbit, self.orbit_requirements[4]):
-            self.value = (orbit.central_body.mu / orbit.n ** 2) ** (1./3.)
+            self.value = (orbit.central_body.mu / orbit.n ** 2) ** (1. / 3.)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -710,7 +729,6 @@ class OrbitalPeriod(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-
         # 2pi / n
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 2.0 * np.pi / orbit.n
@@ -736,14 +754,16 @@ class MeanMotion(OrbitValue):
     @orbit_setter
     def set(self, orbit):
 
+        if orbit.type() == OrbitType.Parabolic or orbit.type() == OrbitType.Hyperbolic:
+            self.value = np.nan
+
         # sqrt(mu / a^3)
-        if self.satisfied(orbit, self.orbit_requirements[0]):
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = np.sqrt(orbit.central_body.mu / (orbit.a ** 3))
 
         # 2pi / period
         if self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = 2 * np.pi / orbit.period
-
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -793,9 +813,11 @@ class Apoapsis(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
+        if orbit.type() != OrbitType.Elliptic:
+            self.value = np.nan
 
         # p / (1 - e)
-        if self.satisfied(orbit, self.orbit_requirements[0]):
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = orbit.p / (1 - orbit.e)
 
         # a * (1 + e)
