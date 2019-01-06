@@ -2,9 +2,9 @@
 import itertools
 
 ########### Local ##########
-from orpytal.common import units, copydoc
 from orpytal.plotting.plotting_base import PlotUtils3D, PlotUtils2D, PlotUtilsBase
 from orpytal import Orbit, planet_constants, Trajectory
+from orpytal.utils.utils import copydoc
 
 ########### External ###########
 from dash import Dash
@@ -194,7 +194,7 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
         super().plot_primary(primary, **kwargs)
 
     @copydoc(PlotUtils3D.plot_sphere)
-    def plot_sphere(self, x, y, z, radius, num=20, **kwargs):
+    def plot_sphere(self, x, y, z, radius, num=100, **kwargs):
         kwargs = self.format_args(**kwargs)
         u1 = np.linspace(0, 2 * np.pi, num)
         v1 = u1.copy()

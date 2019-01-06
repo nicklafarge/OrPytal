@@ -1,10 +1,9 @@
 import numpy as np
 from scipy import integrate
-from orpytal import KeplarianState
 
 
 def integrate_orbit(orbit, tol=1e-12, method="RK45"):
-    periapsis_state = KeplarianState(orbit, ta=0)
+    periapsis_state = orbit.get_state(ta=0)
 
     if orbit.angles_set():
         ic = np.concatenate((periapsis_state.position.inertial().value.m, periapsis_state.velocity.inertial().value.m))

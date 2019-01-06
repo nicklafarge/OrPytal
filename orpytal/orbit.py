@@ -4,9 +4,7 @@ from enum import Enum
 
 ########### Local ###########
 from orpytal.base import OrbitBase
-from orpytal.common import units
-from orpytal.errors import ParameterUnavailableError
-from orpytal import frames, output
+from orpytal import output, integration, frames
 from orpytal.state import KeplarianState
 from orpytal.trajectory import Trajectory
 from orpytal.utils.conics_utils import *
@@ -83,7 +81,7 @@ class Orbit(object):
     def get_state(self, **kwargs):
         return KeplarianState(self, **kwargs)
 
-    def propagate_full_orbit(self, n=150):
+    def analytic_propagate_full_orbit(self, n=150):
         t_range = np.linspace(start=0, stop=self.period.m, num=n)
 
         st_list = []
@@ -103,7 +101,7 @@ class Orbit(object):
 
         return Trajectory(st_list)
 
-    def propagate_full_orbit_ta(self, state, step=0.1):
+    def analytic_propagate_full_orbit_ta(self, state, step=0.1):
         ta_range = list(np.arange(state.ta, state.ta + 2 * np.pi, step))
         ta_range.append(state.ta.m + 2 * np.pi)
 
@@ -119,6 +117,27 @@ class Orbit(object):
             st_list.append(st)
 
         return Trajectory(st_list)
+
+    def propagate_orbit(self, n=80):
+        res = integration.integrate_orbit(self)
+        numeric_states = res.y
+
+        n_states = len(numeric_states[0])
+        d = int(n_states / n)
+
+        pos_list = [[numeric_states[0][i], numeric_states[1][i], numeric_states[2][i]] for i in range(n_states)]
+        vel_list = [[numeric_states[3][i], numeric_states[4][i], numeric_states[5][i]] for i in range(n_states)]
+
+        r_pos_list = pos_list[::d]
+        r_pos_list.append(pos_list[-1])
+
+        states = []
+        for p in r_pos_list:
+            st = self.get_state()
+            st.position = p, frames.InertialFrame
+            states.append(st)
+
+        return Trajectory(states)
 
     def set_vars(self):
         for var in self.vars:
@@ -176,7 +195,11 @@ class Orbit(object):
         for var in self.vars:
             if var.evaluated and hasattr(orbit, var.symbol):
                 if isinstance(var.value, units.Quantity):
-                    same = np.isclose(var.value, getattr(orbit, var.symbol))
+                    other_value = getattr(orbit, var.symbol)
+                    if np.isnan(var.value) and np.isnan(other_value):
+                        same = True
+                    else:
+                        same = np.isclose(var.value, other_value)
                 elif isinstance(var.value, frames.Vector):
 
                     vec1 = var.value

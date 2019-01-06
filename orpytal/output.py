@@ -1,4 +1,5 @@
 from orpytal import frames
+from orpytal.errors import ParameterUnavailableError
 
 DEFAULT_LENGTH = 17
 DEFAULT_PRECISION = 10
@@ -101,7 +102,7 @@ def output_orbit(orbit):
     return output_str
 
 
-def output_state(state, frame=frames.InertialFrame):
+def output_state(state):
     orbit = state.orbit
 
     output = []
@@ -126,6 +127,23 @@ def output_state(state, frame=frames.InertialFrame):
 
     # Keplarian State Data
     default_vector = [None, None, None]
+
+    # Inertial if possible, else orbit fixed, else rotating
+    frame = frames.InertialFrame
+    try:
+        state.position.to(frames.InertialFrame)
+    except AttributeError as ae:
+        pass
+    except ParameterUnavailableError as pue:
+        frame = frames.OrbitFixedFrame
+
+    try:
+        state.position.to(frames.OrbitFixedFrame)
+    except AttributeError as ae:
+        pass
+    except ParameterUnavailableError as pue:
+        frame = frames.RotatingFrame
+
     pos = default_vector if not state.position else state.position.to(frame)
     vel = default_vector if not state.velocity else state.velocity.to(frame)
 
@@ -145,7 +163,6 @@ def output_state(state, frame=frames.InertialFrame):
     # Orbit
     output.append("\n".join(orbit_parameters_output(orbit)))
     output.append(SECTION_DIVIDER)
-
 
     output_str = "\n".join(output)
 

@@ -43,6 +43,11 @@ class KeplarianState(object):
             self._E
         ]
 
+        if "ascending" in kwargs:
+            self.ascending = kwargs.pop("ascending")
+        else:
+            self._ascending = None
+
         for k, v in kwargs.items():
             try:
                 attribute = getattr(self, '_' + k)
@@ -189,6 +194,9 @@ class KeplarianState(object):
 
     @property
     def ascending_sign(self):
+        if self.ascending is None:
+            raise ParameterUnavailableError()
+
         return 1 if self.ascending else -1
 
     @property
@@ -416,11 +424,11 @@ class FlightPathAngle(StateValue):
             self.value = 0.0 * units.rad
 
         # acos(h/(rv))
-        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
+        if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
 
         # atan(vr/vt)
-        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
+        if self.satisfied(state, orbit, self.orbit_requirements[1]):
             v = state.velocity.orbit_fixed()
             fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)

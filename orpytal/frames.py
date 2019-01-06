@@ -15,6 +15,7 @@ class Vector(object):
 
         self.value = value
         self.frame = frame
+
     @classmethod
     def from_vector(cls, orbit, state, vector):
         return cls(orbit, state, vector.value, vector.frame)
@@ -47,7 +48,8 @@ class Vector(object):
                     break
                 except ParameterUnavailableError:
                     raise ParameterUnavailableError(
-                        'Tried to Compare [{}] to [{}] Values, but could not put them in the same frame'.format(self, other))
+                        'Tried to Compare [{}] to [{}] Values, but could not put them in the same frame'.format(self,
+                                                                                                                other))
 
             return np.allclose(vec1.value, vec2.value)
 
@@ -107,7 +109,6 @@ class Vector(object):
         return np.dot(self.value, val2) * units
 
 
-
 class CoordinateFrame(object):
     name = None
     fn_name = None
@@ -131,8 +132,6 @@ class CoordinateFrame(object):
     def __mul__(self, other):
         return (self, other)
 
-    # def __rmul__(self, other):
-    #     self.__mul__(other)
 
 class RotatingFrame(CoordinateFrame):
     name = 'Rotating Frame'
@@ -140,10 +139,10 @@ class RotatingFrame(CoordinateFrame):
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
-
         requirements = ['raan', 'inclination', 'arg_latitude']
         if not conics_utils.state_orbit_satisfied(state, orbit, requirements):
-            raise ParameterUnavailableError('Need ascending node, inclination and argument of latitude to convert to xyz')
+            raise ParameterUnavailableError(
+                'Need ascending node, inclination and argument of latitude to convert to xyz')
 
         Omega = orbit.raan
         theta = state.arg_latitude
