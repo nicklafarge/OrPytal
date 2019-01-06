@@ -68,3 +68,4 @@ def copydoc(fromfunc, sep="\n"):
             func.__doc__ = sep.join([sourcedoc, func.__doc__])
         return func
     return _decorator
+

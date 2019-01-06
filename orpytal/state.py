@@ -1,14 +1,15 @@
 ########### Standard ###########
 import logging
 
-########### Local ###########
-from orpytal.base import OrbitBase
-from orpytal.common import units, conics_utils, orbit_setter, attribute_setter
-from orpytal.errors import ParameterUnavailableError
-from orpytal import frames, output
-
 ########### External ###########
 import numpy as np
+
+from orpytal import frames, output
+########### Local ###########
+from orpytal.base import OrbitBase
+from orpytal.common import units
+from orpytal.errors import ParameterUnavailableError, InvalidInputError
+from orpytal.utils.conics_utils import *
 
 
 class KeplarianState(object):
@@ -27,7 +28,7 @@ class KeplarianState(object):
         self._M = MeanAnomaly()
         self._E = EccentricAnomaly()
 
-        self._is_ascending = None
+        self._ascending = None
 
         self.vars = [
             self._r,
@@ -56,6 +57,8 @@ class KeplarianState(object):
         return output.output_state(self)
 
     def set_vars(self):
+        self.update_ascending()
+
         for var in self.vars:
             new_value_set = var.set(self, self.orbit)
             if new_value_set:
@@ -181,21 +184,26 @@ class KeplarianState(object):
     @attribute_setter
     def t_since_rp(self, t_since_rp):
         self._t_since_rp.value = t_since_rp
+        if check_satisfied(self.orbit, "period"):
+            self._t_since_rp.value = self._t_since_rp.value % self.orbit.period
 
     @property
     def ascending_sign(self):
-        return 1 if self.is_ascending() else -1
+        return 1 if self.ascending else -1
 
     @property
     def ascending(self):
-        return self._is_ascending
+        return self._ascending
 
     @ascending.setter
     @attribute_setter
     def ascending(self, ascending):
-        self._is_ascending = ascending
+        if isinstance(ascending, bool):
+            self._ascending = ascending
+        else:
+            raise InvalidInputError("Ascending must be True/False")
 
-    def is_ascending(self):
+    def update_ascending(self):
 
         angle_to_check = None
 
@@ -206,17 +214,25 @@ class KeplarianState(object):
         elif self._E.evaluated:
             angle_to_check = self.E
         elif self._velocity.evaluated:
-            self._is_ascending = self.velocity.rotating().value[0].m > 0
+            try:
+                self._ascending = self.velocity.rotating().value[0].m > 0
+            except ParameterUnavailableError as e:
+                pass
+        elif self._position.evaluated:
+            try:
+                self._ascending = self.position.orbit_fixed().value[1].m > 0
+            except ParameterUnavailableError as e:
+                pass
         elif self.ascending is None:
-            raise ParameterUnavailableError("Need either ta, fpa or E to check ascending")
+            logging.debug("Need either ta, fpa or E to check ascending")
 
         if angle_to_check is not None:
-            self._is_ascending = 0 <= angle_to_check <= np.pi
+            self._ascending = 0 <= angle_to_check <= np.pi
 
         return self.ascending
 
     def angle_check_tan(self, tan_val):
-        if (self.is_ascending() and tan_val >= 0) or (not self.is_ascending() and tan_val < 0):
+        if (self.ascending and tan_val >= 0) or (not self.ascending and tan_val < 0):
             return tan_val
         else:
             return np.pi + tan_val
@@ -228,6 +244,9 @@ class StateValue(OrbitBase):
 
     def satisfied(self, state, orbit, requirements):
         return self.state_orbit_satisfied(state, orbit, requirements)
+
+    def validate_state_input(self, value, state):
+        pass  # No op
 
 
 class TrueAnomaly(StateValue):
@@ -300,6 +319,13 @@ class TrueAnomaly(StateValue):
 
             self.value = np.arctan2(y, x)
 
+    def validate_state_input(self, value, state):
+        if state.ascending is not None:
+            if state.ascending and 2 * np.pi > value > np.pi:
+                raise InvalidInputError("pi < value < 2pi (should be ascending orbit)")
+            elif not state.ascending and np.pi > value > 0:
+                raise InvalidInputError("0 < value < pi (should be descending orbit)")
+
 
 class PositionMagnitude(StateValue):
     symbol = 'r'
@@ -333,6 +359,13 @@ class PositionMagnitude(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[3]):
             self.value = np.linalg.norm(state.position.value)
 
+    def validate_state_input(self, value, state):
+        if self.satisfied(state, state.orbit, ["rp"]) and value < state.orbit.rp:
+            raise InvalidInputError("r < rp")
+
+        if self.satisfied(state, state.orbit, ["ra"]) and value > state.orbit.ra:
+            raise InvalidInputError("r > ra")
+
 
 class ArgumentOfLatitude(StateValue):
     symbol = 'arg_latitude'
@@ -363,7 +396,7 @@ class ArgumentOfLatitude(StateValue):
             else:
                 sin_val = np.arcsin(rhat[2] / np.sin(orbit.inclination.to(units.rad)))
                 cos_val = np.arccos(theta_hat[2] / np.sin(orbit.inclination.to(units.rad)))
-                self.value = conics_utils.common_val(sin_val, cos_val)
+                self.value = common_val(sin_val, cos_val)
 
 
 class FlightPathAngle(StateValue):
@@ -421,6 +454,17 @@ class VelocityMagnitude(StateValue):
         # |v|
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             self.value = state.velocity.norm()
+
+    def validate_state_input(self, value, state):
+        if self.satisfied(state, state.orbit, ["rp"]):
+            v_max = state.orbit.get_state(r=state.orbit.rp).v
+            if value > v_max:
+                raise InvalidInputError("v > v_max (%0.6e)".format(v_max))
+
+        if self.satisfied(state, state.orbit, ["ra"]):
+            v_min = state.orbit.get_state(r=state.orbit.ra).v
+            if value < v_min:
+                raise InvalidInputError("v < v_min (%0.6e)".format(v_min))
 
 
 class PositionVector(StateValue):
@@ -485,7 +529,7 @@ class TimeSincePeriapsis(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
-        # Rotating Frame
+        # ( E - e sin(E) ) / n
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = (state.E - orbit.e * np.sin(state.E)) / orbit.n
 

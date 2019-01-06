@@ -2,13 +2,14 @@
 import os
 import sys
 
-########### Local ###########
-from orpytal.common import units, utils
-from orpytal import Orbit
-
+import numpy as np
 ########### External ###########
 import untangle
-import numpy as np
+
+from orpytal import Orbit
+########### Local ###########
+from orpytal.common import units
+from orpytal.utils import utils
 
 ##########################################################
 # Values

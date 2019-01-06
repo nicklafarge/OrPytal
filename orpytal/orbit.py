@@ -4,11 +4,12 @@ from enum import Enum
 
 ########### Local ###########
 from orpytal.base import OrbitBase
-from orpytal.common import units, orbit_setter, attribute_setter
+from orpytal.common import units
 from orpytal.errors import ParameterUnavailableError
 from orpytal import frames, output
 from orpytal.state import KeplarianState
 from orpytal.trajectory import Trajectory
+from orpytal.utils.conics_utils import *
 
 ########### External ###########
 import numpy as np
@@ -78,6 +79,9 @@ class Orbit(object):
 
     def __str__(self):
         return output.output_orbit(self)
+
+    def get_state(self, **kwargs):
+        return KeplarianState(self, **kwargs)
 
     def propagate_full_orbit(self, n=150):
         t_range = np.linspace(start=0, stop=self.period.m, num=n)
@@ -190,6 +194,9 @@ class Orbit(object):
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
 
         return all_same
+
+    def angles_set(self):
+        return self._raan.evaluated and self._arg_periapsis.evaluated
 
     @property
     def a(self):

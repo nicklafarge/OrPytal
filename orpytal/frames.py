@@ -1,11 +1,11 @@
 ########### Standard ###########
 
-########### Local ###########
-from orpytal.common import conics_utils
-from orpytal.errors import ParameterUnavailableError
-
 ########### External ###########
 import numpy as np
+
+from orpytal.errors import ParameterUnavailableError
+########### Local ###########
+from orpytal.utils import conics_utils
 
 
 class Vector(object):

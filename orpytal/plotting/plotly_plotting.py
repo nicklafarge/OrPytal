@@ -7,13 +7,15 @@ from orpytal.plotting.plotting_base import PlotUtils3D, PlotUtils2D, PlotUtilsBa
 from orpytal import Orbit, planet_constants, Trajectory
 
 ########### External ###########
-# from dash import Dash
-# import dash_html_components as html
+from dash import Dash
+import dash_html_components as html
 import dash_core_components as dcc
 import numpy as np
 import plotly
 import plotly.graph_objs as go
 import seaborn as sns
+
+app = Dash(__name__)
 
 
 class PlotlyPlotUtils(object):
@@ -28,21 +30,21 @@ class PlotlyPlotUtils(object):
         self._color_cycle = itertools.cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
         self._layout = go.Layout(autosize=True, height=800)
 
-        # self.app = app
-        # self.app.css.config.serve_locally = True
-        # self.app.scripts.config.serve_locally = True
-        #
-        # self.graph = dcc.Graph(
-        #     id='plot',
-        #     figure=self.figure
-        # )
-        #
-        # self.app.layout = html.Div(children=[
-        #     dcc.Graph(
-        #         id='plot',
-        #         figure=self.figure
-        #     )
-        # ])
+        self.app = app
+        self.app.css.config.serve_locally = True
+        self.app.scripts.config.serve_locally = True
+
+        self.graph = dcc.Graph(
+            id='plot',
+            figure=self.figure
+        )
+
+        self.app.layout = html.Div(children=[
+            dcc.Graph(
+                id='plot',
+                figure=self.figure
+            )
+        ])
 
     @property
     def figure(self):
@@ -149,6 +151,7 @@ class PlotlyPlotUtils(object):
                 kwargs['name'] = name
         return kwargs
 
+
 class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
     def __init__(self, **kwargs):
         self.init_plotly(**kwargs)
@@ -183,7 +186,6 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
     def init_plot(self, fig_number=None, **kwargs):
         super().init_plot(**kwargs)
         self.__init__()
-
 
     @copydoc(PlotUtilsBase.plot_primary)
     def plot_primary(self, primary, **kwargs):
@@ -304,7 +306,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
 
         self.default_axes()
 
-
     @copydoc(PlotUtils2D.plot_circle)
     def plot_circle(self, x, y, radius, num=500, **kwargs):
         kwargs = self.format_args(**kwargs)
@@ -345,7 +346,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
         kwargs = self._add_primary_name(primary, **kwargs)
         super().plot_primary(primary, **kwargs)
 
-
     @copydoc(PlotUtils2D.plot)
     def plot(self, x_vals, y_vals, **kwargs):
         kwargs = self.format_args(**kwargs)
@@ -365,7 +365,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
             **kwargs
         )
         self._data.append(trace)
-
 
     @copydoc(PlotUtils2D.title)
     def title(self, title, **kwargs):

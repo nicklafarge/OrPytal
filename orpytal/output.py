@@ -1,3 +1,5 @@
+from orpytal import frames
+
 DEFAULT_LENGTH = 17
 DEFAULT_PRECISION = 10
 DEFAULT_PRECISION_TOTAL_LENGTH = DEFAULT_PRECISION + 7
@@ -99,7 +101,7 @@ def output_orbit(orbit):
     return output_str
 
 
-def output_state(state):
+def output_state(state, frame=frames.InertialFrame):
     orbit = state.orbit
 
     output = []
@@ -116,13 +118,16 @@ def output_state(state):
     header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
     header.append("{:>12}: {}".format("Type", DEFAULT_FILLER if orbit.e is None else orbit.type().name))
     header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
-    header.append("{:>12}: {}".format("Ascending", DEFAULT_FILLER if state._is_ascending is None else state._is_ascending))
+    header.append("{:>12}: {}".format("Ascending", DEFAULT_FILLER if state.ascending is None else state.ascending))
 
     header.append(SECTION_DIVIDER)
 
     output.append("\n".join(header))
 
     # Keplarian State Data
+    default_vector = [None, None, None]
+    pos = default_vector if not state.position else state.position.to(frame)
+    vel = default_vector if not state.velocity else state.velocity.to(frame)
 
     output.append("State Parameters".center(LINE_WIDTH, " ") + "\n")
     output.append(create_key_value_line_params(state._r, state._ta))
@@ -130,10 +135,14 @@ def output_state(state):
     output.append(create_key_value_line_params(state._fpa, state._M))
     output.append(create_key_value_line_params(state._t_since_rp, state._arg_latitude))
     output.append(SECTION_DIVIDER)
+    output.append(str(frame.name).center(LINE_WIDTH, " ") + "\n")
+    output.append(create_key_value_line(["X", "DX"], [pos[0], vel[0]]))
+    output.append(create_key_value_line(["Y", "DY"], [pos[1], vel[1]]))
+    output.append(create_key_value_line(["Z", "DZ"], [pos[2], vel[2]]))
+    output.append(SECTION_DIVIDER)
     output.append(SECTION_DIVIDER)
 
     # Orbit
-
     output.append("\n".join(orbit_parameters_output(orbit)))
     output.append(SECTION_DIVIDER)
 
