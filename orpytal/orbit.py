@@ -209,7 +209,7 @@ class Orbit(object):
                     same = False
 
             if same:
-                logging.debug('Checked {} [✓]'.format(var.symbol))
+                logging.debug('Checked {} [OK]'.format(var.symbol))
             else:
                 all_same = False
                 logging.warning('Error Found for {} [x]'.format(var.symbol))

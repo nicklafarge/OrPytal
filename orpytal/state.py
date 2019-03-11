@@ -1,15 +1,16 @@
 ########### Standard ###########
 import logging
-
-########### External ###########
-import numpy as np
-
-from orpytal import frames, output
+from datetime import datetime
 ########### Local ###########
+from orpytal import frames, output
 from orpytal.base import OrbitBase
 from orpytal.common import units
 from orpytal.errors import ParameterUnavailableError, InvalidInputError
 from orpytal.utils.conics_utils import *
+
+########### External ###########
+import numpy as np
+from scipy.optimize import newton
 
 
 class KeplarianState(object):
@@ -345,7 +346,8 @@ class PositionMagnitude(StateValue):
             ('p', 'e', 'ta'),
             ('a', 'e', 'E'),
             ('a', 'E', 'H'),
-            ('position')
+            ('position'),
+            ('v', 'fpa', 'ta')
         ]
 
     @orbit_setter
@@ -503,7 +505,7 @@ class VelocityVector(StateValue):
         super().__init__(units.km / units.second)
         self.orbit_requirements = [
             ('ta', 'e', 'h'),
-            ('fpa' 'v')
+            ('fpa', 'v')
         ]
 
     @orbit_setter
@@ -521,7 +523,7 @@ class VelocityVector(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
             self.value = frames.Vector(orbit,
                                        state,
-                                       np.array([state.v * np.sin(state.fpa), state.v * np.cos(state.fpa), 0]),
+                                       np.array([state.v.m * np.sin(state.fpa), state.v.m * np.cos(state.fpa), 0]),
                                        frames.RotatingFrame)
 
 
@@ -572,7 +574,8 @@ class EccentricAnomaly(StateValue):
         super().__init__(units.radians)
         self.orbit_requirements = [
             ('a', 'r', 'e'),
-            ('e', 'M')
+            ('e', 'M'),
+            ('ta', 'e')
         ]
 
     @orbit_setter
@@ -589,17 +592,15 @@ class EccentricAnomaly(StateValue):
                 self.value = state.ascending_sign * np.arccos(
                     (orbit.a - state.r) / (orbit.a * orbit.e))
 
+        # Newton raphson to find eccentric anomaly from from mean anomaly
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
-            self.value = self._iterative_eccentric_anomaly(state, orbit)
+            self.value = newton(lambda E, state: E - state.orbit.e.m * np.sin(E) - state.M.m,
+                                state.M.m,
+                                args=(state,),
+                                fprime=lambda E, state: 1 - state.orbit.e.m * np.cos(E),
+                                tol=1e-12)
 
-    def _iterative_eccentric_anomaly(self, state, orbit, **kwargs):
-        return self._find_eccentric_anomaly_recursively(orbit, state.M, state.M, **kwargs)
-
-    def _find_eccentric_anomaly_recursively(self, orbit, E, M, tol=1e-12):
-        E1 = E - (E - orbit.e * np.sin(E) - M) / (1 - orbit.e * np.cos(E))
-        dE = np.fabs(E - E1)
-
-        if dE < tol:
-            return E
-
-        return self._find_eccentric_anomaly_recursively(orbit, E1, M, tol=tol)
+        # acos(2 atan(sqrt( (1+e)/(1-e) tan(E/2) )))
+        elif self.satisfied(state, orbit, self.orbit_requirements[2]):
+            E = 2 * np.arctan(np.tan(state.ta / 2) / np.sqrt((1 + orbit.e) / (1 - orbit.e)))
+            self.value = state.angle_check_tan(E)

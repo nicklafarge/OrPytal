@@ -145,7 +145,7 @@ def output_state(state):
         frame = frames.RotatingFrame
 
     pos = default_vector if not state.position else state.position.to(frame)
-    vel = default_vector if not state.velocity else state.velocity.to(frame)
+    vel = default_vector if not state.position and state.velocity else state.velocity.to(frame)
 
     output.append("State Parameters".center(LINE_WIDTH, " ") + "\n")
     output.append(create_key_value_line_params(state._r, state._ta))
