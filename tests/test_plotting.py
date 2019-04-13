@@ -3,7 +3,7 @@ import unittest
 import logging
 
 ########### Local ###########
-from orpytal import Orbit, KeplarianState, get_plot_utils, frames
+from orpytal import Orbit, KeplarianState, plotting, frames
 from orpytal.common import units
 from orpytal.planet_constants import earth
 
@@ -29,11 +29,8 @@ state.ascending = True
 traj = orbit.propagate_full_orbit()
 
 def test_plotly_3d():
-    oplt = get_plot_utils('plotly')
-    oplt.init_plot()
-    oplt.plot_primary(traj)
-    oplt.plot_traj(traj)
-    oplt.show()
+    # plotting.plot_orbit(orbit)
+    plotting.plot_orbit(orbit, frame=frames.PerifocalFrame)
 
 
 if __name__ == '__main__':

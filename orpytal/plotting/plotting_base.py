@@ -137,22 +137,33 @@ class PlotUtils2D(PlotUtilsBase, metaclass=ABCMeta):
 
         primary_location = [0, 0]
 
+        if isinstance(radius, units.Quantity):
+            radius = radius.m
+
         return self.plot_circle(*primary_location, radius)
 
 
     @copydoc(PlotUtilsBase.default_axes)
-    def default_axes(self,
-                     var1='x',
-                     var2='y',
-                     st=None,
-                     latex=True,
-                     frame=frames.InertialFrame):
-        pass # TODO does OrPytal need this?
+    def default_axes(self,frame=frames.InertialFrame):
+
+        unit = 'km'
+        fmt_str = '%s[%s]'
+        labels = ['e', 'p']
+
+        self.xlabel(fmt_str % (labels[0], unit), latex=True)
+        self.ylabel(fmt_str % (labels[1], unit), latex=True)
 
     @copydoc(PlotUtilsBase.plot_traj)
     def plot_traj(self, traj, **kwargs):
         super().plot_traj(traj, **kwargs)
-        return self.plot_traj_projection(traj, **kwargs)
+
+        if 'ls' not in kwargs:
+            kwargs['ls'] = 'solid'
+
+        if 'label' not in kwargs and traj.name:
+            kwargs['label'] = traj.name
+
+        return self.plot(traj.x_vals, traj.y_vals)
 
     @copydoc(PlotUtilsBase.plot_state)
     def plot_state(self, state, **kwargs):
@@ -165,60 +176,6 @@ class PlotUtils2D(PlotUtilsBase, metaclass=ABCMeta):
         Shadows 'plot_traj_list'
         """
         return self.plot_traj_list(traj_list, **kwargs)
-
-    def plot_traj_projection(self, traj, **kwargs):
-        """
-        Plot a given trajectory. Each trajectory will be projected on given axes
-
-        :param traj: Instance of cr3bp.Trajectory
-        :param kwargs: arguments to pass the the plotting function
-        """
-        if 'ls' not in kwargs:
-            kwargs['ls'] = 'solid'
-
-        if 'label' not in kwargs and traj.name:
-            kwargs['label'] = traj.name
-
-        return self.plot_projection(traj.states, **kwargs)
-
-    def plot_projection(self, state_list, var1='x', var2='y', poincare_map=False, **kwargs):
-        """
-        Plot a projection of a list of states.
-
-        Each state will be projected on given axes (default is x-y)
-
-        :param state_list: List of cr3bp.State objects
-        :param var1: x-axis projection variable (default = 'x')
-        :param var2: y-axis projection variable (default = 'y')
-        :param poincare_map: true if this projection is a poincare map
-        :param kwargs: arguments to pass the the plotting function
-        """
-        map(lambda s: s.to(self.frame), state_list)
-
-        l_vars = ['x', 'y', 'z']
-        ls_vars = ['dx', 'dy', 'dz']
-
-        valid_vars = l_vars + ls_vars
-
-        if var1 not in valid_vars:
-            raise ValueError('%s not in (%s)' % (var1, ','.join(valid_vars)))
-
-        if var2 not in valid_vars:
-            raise ValueError('%s not in (%s)' % (var2, ','.join(valid_vars)))
-
-        if not poincare_map and 'ls' not in kwargs:
-            kwargs['ls'] = 'solid'
-
-        if 'label' not in kwargs:
-            kwargs['label'] = '_nolegend_'
-
-        if not hasattr(state_list, '__len__'):
-            state_list = [state_list]
-
-        var1_axis = [getattr(st, var1) for st in state_list]
-        var2_axis = [getattr(st, var2) for st in state_list]
-
-        return self.plot(var1_axis, var2_axis, **kwargs)
 
 
     @abstractmethod
@@ -279,18 +236,22 @@ class PlotUtils3D(PlotUtilsBase, metaclass=ABCMeta):
         return self.plot_sphere(*primary_location, radius, **kwargs)
 
     @copydoc(PlotUtilsBase.default_axes)
-    def default_axes(self, *_, state=None, frame=frames.RotatingFrame, **kwargs):
+    def default_axes(self, frame=frames.InertialFrame):
         unit = 'km'
-        fmt_str = '$%s[%s]'
+        fmt_str = '{}[{}]'
 
         if frame == frames.InertialFrame:
             labels = ['x', 'y', 'z']
-        elif frame == frames.OrbitFixedFrame:
+        elif frame == frames.PerifocalFrame:
             labels = ['e', 'p', 'h']
+        else:
+            raise ValueError(f"Can't set axes for {frame.name}")
 
-        self.xlabel(fmt_str % (labels[0], unit), latex=True)
-        self.ylabel(fmt_str % (labels[1], unit), latex=True)
-        self.zlabel(fmt_str % (labels[2], unit), latex=True)
+
+
+        self.xlabel(fmt_str.format(labels[0], unit))
+        self.ylabel(fmt_str.format(labels[1], unit))
+        self.zlabel(fmt_str.format(labels[2], unit))
 
     @copydoc(PlotUtilsBase.plot_state)
     def plot_state(self, state, **kwargs):

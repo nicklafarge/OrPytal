@@ -29,8 +29,8 @@ class TestOrbit(unittest.TestCase):
 
         from orpytal import plotting
         from matplotlib import pyplot as plt
-        plotting.plot_orbit(orbit, frames.OrbitFixedFrame)
-        plotting.plot_state(state, frames.OrbitFixedFrame)
+        plotting.plot_orbit(orbit, frames.PerifocalFrame)
+        plotting.plot_state(state, frames.PerifocalFrame)
         plt.show(block=False)
 
         # Assert Orbit Quantities

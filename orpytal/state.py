@@ -388,7 +388,7 @@ class FlightPathAngle(StateValue):
 
         # atan(vr/vt)
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
-            v = state.velocity.orbit_fixed()
+            v = state.velocity.perifocal()
             fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)
 

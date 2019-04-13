@@ -63,8 +63,8 @@ class Vector(object):
             dcm = self.frame.inertial_dcm
         elif frame == RotatingFrame:
             dcm = self.frame.rotating_dcm
-        elif frame == OrbitFixedFrame:
-            dcm = self.frame.orbit_fixed_dcm
+        elif frame == PerifocalFrame:
+            dcm = self.frame.perifocal_dcm
         else:
             raise ValueError('Frame ({}) is not recognized'.format(frame))
 
@@ -81,8 +81,8 @@ class Vector(object):
     def rotating(self):
         return self.to(RotatingFrame)
 
-    def orbit_fixed(self):
-        return self.to(OrbitFixedFrame)
+    def perifocal(self):
+        return self.to(PerifocalFrame)
 
     def norm(self):
         return np.linalg.norm(self.value) * self.value.units
@@ -121,7 +121,7 @@ class CoordinateFrame(object):
         raise NotImplementedError()
 
     @classmethod
-    def orbit_fixed_dcm(cls, orbit, state):
+    def perifocal_dcm(cls, orbit, state):
         raise NotImplementedError()
 
     @classmethod
@@ -166,8 +166,8 @@ class RotatingFrame(CoordinateFrame):
         return np.eye(3)
 
     @classmethod
-    def orbit_fixed_dcm(cls, orbit, state):
-        return OrbitFixedFrame.rotating_dcm(orbit, state).transpose()
+    def perifocal_dcm(cls, orbit, state):
+        return PerifocalFrame.rotating_dcm(orbit, state).transpose()
 
     @classmethod
     def vnc_dcm(cls, orbit, state):
@@ -192,9 +192,9 @@ class VncFrame(CoordinateFrame):
         return RotatingFrame.vnc_dcm(orbit, state).transpose()
 
     @classmethod
-    def orbit_fixed_dcm(cls, orbit, state):
+    def perifocal_dcm(cls, orbit, state):
         dcm_vr = cls.rotating_dcm(orbit, state)
-        dcm_re = RotatingFrame.orbit_fixed_dcm(orbit, state)
+        dcm_re = RotatingFrame.perifocal_dcm(orbit, state)
         return dcm_vr.dot(dcm_re)
 
     @classmethod
@@ -202,9 +202,9 @@ class VncFrame(CoordinateFrame):
         return np.eye(3)
 
 
-class OrbitFixedFrame(CoordinateFrame):
-    name = 'Orbit Fixed Frame'
-    fn_name = 'orbit_fixed'
+class PerifocalFrame(CoordinateFrame):
+    name = 'Perifocal Frame'
+    fn_name = 'perifocal'
 
     @classmethod
     def inertial_dcm(cls, orbit, state):
@@ -223,7 +223,7 @@ class OrbitFixedFrame(CoordinateFrame):
         )
 
     @classmethod
-    def orbit_fixed_dcm(cls, orbit, state):
+    def perifocal_dcm(cls, orbit, state):
         return np.eye(3)
 
     @classmethod
@@ -246,8 +246,8 @@ class InertialFrame(CoordinateFrame):
         return RotatingFrame.inertial_dcm(orbit, state).transpose()
 
     @classmethod
-    def orbit_fixed_dcm(cls, orbit, state):
-        return OrbitFixedFrame.inertial_dcm(orbit, state).transpose()
+    def perifocal_dcm(cls, orbit, state):
+        return PerifocalFrame.inertial_dcm(orbit, state).transpose()
 
     @classmethod
     def vnc_dcm(cls, orbit, state):

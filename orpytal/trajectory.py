@@ -11,7 +11,7 @@ class Trajectory(object):
         self.frame = states[0].position.frame
         self.central_body =states[0].orbit.central_body
 
-    def x_vals(self, frame='orbit_fixed'):
+    def x_vals(self, frame='perifocal'):
         x_vals = []
         for st in self.states:
             frame_fn = getattr(st.position, frame)
@@ -41,8 +41,8 @@ class Trajectory(object):
     def inertial(self):
         return self.in_frame(frames.InertialFrame)
 
-    def orbit_fixed(self):
-        return self.in_frame(frames.OrbitFixedFrame)
+    def perifocal(self):
+        return self.in_frame(frames.PerifocalFrame)
 
     def in_frame(self, frame_name):
         self.frame = frame_name
@@ -51,7 +51,7 @@ class Trajectory(object):
         return self.x_vals, self.y_vals, self.z_vals
 
     def to(self, frame_name):
-        return self.vals(frame_name)
+        return self.in_frame(frame_name)
 
     def start(self):
         return self.states[0]
