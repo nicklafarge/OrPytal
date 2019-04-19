@@ -11,4 +11,9 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
 
-
+from enum import Enum
+class OrbitType(Enum):
+    Circular = 0
+    Elliptic = 1
+    Parabolic = 2
+    Hyperbolic = 3

@@ -1,8 +1,9 @@
 ########### Standard ###########
 import logging
 from datetime import datetime
+
 ########### Local ###########
-from orpytal import frames, output
+from orpytal import frames, output, OrbitType
 from orpytal.base import OrbitBase
 from orpytal.common import units
 from orpytal.errors import ParameterUnavailableError, InvalidInputError
@@ -28,6 +29,7 @@ class KeplarianState(object):
         self._t_since_rp = TimeSincePeriapsis()
         self._M = MeanAnomaly()
         self._E = EccentricAnomaly()
+        self._H = HyperbolicAnomaly()
 
         self._ascending = None
 
@@ -41,7 +43,8 @@ class KeplarianState(object):
             self._fpa,
             self._t_since_rp,
             self._M,
-            self._E
+            self._E,
+            self._H
         ]
 
         if "ascending" in kwargs:
@@ -183,6 +186,15 @@ class KeplarianState(object):
         self._E.value = E
 
     @property
+    def H(self):
+        return self._H.value
+
+    @H.setter
+    @attribute_setter
+    def H(self, H):
+        self._H.value = H
+
+    @property
     def t_since_rp(self):
         return self._t_since_rp.value
 
@@ -222,6 +234,8 @@ class KeplarianState(object):
             angle_to_check = self.fpa
         elif self._E.evaluated:
             angle_to_check = self.E
+        elif self._H.evaluated:
+            angle_to_check = self.H
         elif self._velocity.evaluated:
             try:
                 self._ascending = self.velocity.rotating().value[0].m > 0
@@ -583,6 +597,10 @@ class EccentricAnomaly(StateValue):
         if orbit.circular():
             self.value = np.nan
 
+        # Only proceed if elliptic orbit
+        if orbit.type() != OrbitType.Elliptic:
+            pass
+
         # acos((a-r)/(ae))
         elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             cos_val = (orbit.a - state.r) / (orbit.a * orbit.e)
@@ -604,3 +622,35 @@ class EccentricAnomaly(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             E = 2 * np.arctan(np.tan(state.ta / 2) / np.sqrt((1 + orbit.e) / (1 - orbit.e)))
             self.value = state.angle_check_tan(E)
+
+
+class HyperbolicAnomaly(StateValue):
+    symbol = 'H'
+    name = 'Hyperbolic Anomaly'
+
+    def __init__(self):
+        super().__init__(units.radians)
+        self.orbit_requirements = [
+            ('e', 'a', 'n')
+        ]
+
+    @orbit_setter
+    def set(self, state, orbit):
+        if orbit.type() != OrbitType.Hyperbolic:
+            pass
+
+        # TODO: fix this!
+        # Newton raphson to find hyperbolic anomaly
+        # elif self.satisfied(state, orbit, self.orbit_requirements[0]):
+        #     def findH(H, state):
+        #         e = state.orbit.e
+        #         mu = state.orbit.central_body.mu
+        #         a = state.orbit.a
+        #         n = state.orbit.n
+        #         ttp = 1 / n * (e * np.sinh(H) - H)
+        #         return e * np.sinh(H) - H - np.sqrt(mu / (np.abs(a) ** 3)) * ttp
+        #
+        #     self.value = newton(findH,
+        #                         0.1,  # TODO is there a better initial guess?
+        #                         args=(state,),
+        #                         tol=1e-12)

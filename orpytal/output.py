@@ -151,6 +151,7 @@ def output_state(state):
     output.append(create_key_value_line_params(state._r, state._ta))
     output.append(create_key_value_line_params(state._v, state._E))
     output.append(create_key_value_line_params(state._fpa, state._M))
+    output.append(create_key_value_line_params(state._fpa, state._H))
     output.append(create_key_value_line_params(state._t_since_rp, state._arg_latitude))
     output.append(SECTION_DIVIDER)
     output.append(str(frame.name).center(LINE_WIDTH, " ") + "\n")
