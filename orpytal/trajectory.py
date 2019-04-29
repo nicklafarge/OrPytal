@@ -1,7 +1,7 @@
 from orpytal import frames
 
-class Trajectory(object):
 
+class Trajectory(object):
     def __init__(self, states, name=None):
         self.states = states
         self.t_range = [self.states[0].t_since_rp, self.states[-1].t_since_rp]
@@ -9,7 +9,7 @@ class Trajectory(object):
         self.metadata = {}
         self.name = name
         self.frame = states[0].position.frame
-        self.central_body =states[0].orbit.central_body
+        self.central_body = states[0].orbit.central_body
 
     def x_vals(self, frame='perifocal'):
         x_vals = []

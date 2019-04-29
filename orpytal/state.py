@@ -1,14 +1,17 @@
 ########### Standard ###########
 import logging
+from datetime import datetime
 
 ########### Local ###########
+from orpytal import frames, output, OrbitType
 from orpytal.base import OrbitBase
-from orpytal.common import units, conics_utils, orbit_setter, attribute_setter
-from orpytal.errors import ParameterUnavailableError
-from orpytal import frames, output
+from orpytal.common import units
+from orpytal.errors import ParameterUnavailableError, InvalidInputError
+from orpytal.utils.conics_utils import *
 
 ########### External ###########
 import numpy as np
+from scipy.optimize import newton
 
 
 class KeplarianState(object):
@@ -26,8 +29,9 @@ class KeplarianState(object):
         self._t_since_rp = TimeSincePeriapsis()
         self._M = MeanAnomaly()
         self._E = EccentricAnomaly()
+        self._H = HyperbolicAnomaly()
 
-        self._is_ascending = None
+        self._ascending = None
 
         self.vars = [
             self._r,
@@ -39,8 +43,14 @@ class KeplarianState(object):
             self._fpa,
             self._t_since_rp,
             self._M,
-            self._E
+            self._E,
+            self._H
         ]
+
+        if "ascending" in kwargs:
+            self.ascending = kwargs.pop("ascending")
+        else:
+            self._ascending = None
 
         for k, v in kwargs.items():
             try:
@@ -56,6 +66,8 @@ class KeplarianState(object):
         return output.output_state(self)
 
     def set_vars(self):
+        self.update_ascending()
+
         for var in self.vars:
             new_value_set = var.set(self, self.orbit)
             if new_value_set:
@@ -174,6 +186,15 @@ class KeplarianState(object):
         self._E.value = E
 
     @property
+    def H(self):
+        return self._H.value
+
+    @H.setter
+    @attribute_setter
+    def H(self, H):
+        self._H.value = H
+
+    @property
     def t_since_rp(self):
         return self._t_since_rp.value
 
@@ -181,21 +202,29 @@ class KeplarianState(object):
     @attribute_setter
     def t_since_rp(self, t_since_rp):
         self._t_since_rp.value = t_since_rp
+        if check_satisfied(self.orbit, "period"):
+            self._t_since_rp.value = self._t_since_rp.value % self.orbit.period
 
     @property
     def ascending_sign(self):
-        return 1 if self.is_ascending() else -1
+        if self.ascending is None:
+            raise ParameterUnavailableError()
+
+        return 1 if self.ascending else -1
 
     @property
     def ascending(self):
-        return self._is_ascending
+        return self._ascending
 
     @ascending.setter
     @attribute_setter
     def ascending(self, ascending):
-        self._is_ascending = ascending
+        if isinstance(ascending, bool):
+            self._ascending = ascending
+        else:
+            raise InvalidInputError("Ascending must be True/False")
 
-    def is_ascending(self):
+    def update_ascending(self):
 
         angle_to_check = None
 
@@ -205,18 +234,28 @@ class KeplarianState(object):
             angle_to_check = self.fpa
         elif self._E.evaluated:
             angle_to_check = self.E
+        elif self._H.evaluated:
+            angle_to_check = self.H
         elif self._velocity.evaluated:
-            self._is_ascending = self.velocity.rotating().value[0].m > 0
+            try:
+                self._ascending = self.velocity.rotating().value[0].m > 0
+            except ParameterUnavailableError as e:
+                pass
+        elif self._position.evaluated:
+            try:
+                self._ascending = self.position.perifocal().value[1].m > 0
+            except ParameterUnavailableError as e:
+                pass
         elif self.ascending is None:
-            raise ParameterUnavailableError("Need either ta, fpa or E to check ascending")
+            logging.debug("Need either ta, fpa or E to check ascending")
 
         if angle_to_check is not None:
-            self._is_ascending = 0 <= angle_to_check <= np.pi
+            self._ascending = 0 <= angle_to_check <= np.pi
 
         return self.ascending
 
     def angle_check_tan(self, tan_val):
-        if (self.is_ascending() and tan_val >= 0) or (not self.is_ascending() and tan_val < 0):
+        if (self.ascending and tan_val >= 0) or (not self.ascending and tan_val < 0):
             return tan_val
         else:
             return np.pi + tan_val
@@ -228,6 +267,9 @@ class StateValue(OrbitBase):
 
     def satisfied(self, state, orbit, requirements):
         return self.state_orbit_satisfied(state, orbit, requirements)
+
+    def validate_state_input(self, value, state):
+        pass  # No op
 
 
 class TrueAnomaly(StateValue):
@@ -300,6 +342,13 @@ class TrueAnomaly(StateValue):
 
             self.value = np.arctan2(y, x)
 
+    def validate_state_input(self, value, state):
+        if state.ascending is not None:
+            if state.ascending and 2 * np.pi > value > np.pi:
+                raise InvalidInputError("pi < value < 2pi (should be ascending orbit)")
+            elif not state.ascending and np.pi > value > 0:
+                raise InvalidInputError("0 < value < pi (should be descending orbit)")
+
 
 class PositionMagnitude(StateValue):
     symbol = 'r'
@@ -333,6 +382,13 @@ class PositionMagnitude(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[3]):
             self.value = np.linalg.norm(state.position.value)
 
+    def validate_state_input(self, value, state):
+        if self.satisfied(state, state.orbit, ["rp"]) and value < state.orbit.rp:
+            raise InvalidInputError("r < rp")
+
+        if self.satisfied(state, state.orbit, ["ra"]) and value > state.orbit.ra:
+            raise InvalidInputError("r > ra")
+
 
 class ArgumentOfLatitude(StateValue):
     symbol = 'arg_latitude'
@@ -363,7 +419,7 @@ class ArgumentOfLatitude(StateValue):
             else:
                 sin_val = np.arcsin(rhat[2] / np.sin(orbit.inclination.to(units.rad)))
                 cos_val = np.arccos(theta_hat[2] / np.sin(orbit.inclination.to(units.rad)))
-                self.value = conics_utils.common_val(sin_val, cos_val)
+                self.value = common_val(sin_val, cos_val)
 
 
 class FlightPathAngle(StateValue):
@@ -383,7 +439,7 @@ class FlightPathAngle(StateValue):
             self.value = 0.0 * units.rad
 
         # acos(h/(rv))
-        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
+        if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
 
         # atan(vr/vt)
@@ -422,6 +478,17 @@ class VelocityMagnitude(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[2]):
             self.value = state.velocity.norm()
 
+    def validate_state_input(self, value, state):
+        if self.satisfied(state, state.orbit, ["rp"]):
+            v_max = state.orbit.get_state(r=state.orbit.rp).v
+            if value > v_max:
+                raise InvalidInputError("v > v_max (%0.6e)".format(v_max))
+
+        if self.satisfied(state, state.orbit, ["ra"]):
+            v_min = state.orbit.get_state(r=state.orbit.ra).v
+            if value < v_min:
+                raise InvalidInputError("v < v_min (%0.6e)".format(v_min))
+
 
 class PositionVector(StateValue):
     symbol = 'position'
@@ -451,7 +518,7 @@ class VelocityVector(StateValue):
         super().__init__(units.km / units.second)
         self.orbit_requirements = [
             ('ta', 'e', 'h'),
-            ('fpa' 'v')
+            ('fpa', 'v')
         ]
 
     @orbit_setter
@@ -469,7 +536,7 @@ class VelocityVector(StateValue):
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
             self.value = frames.Vector(orbit,
                                        state,
-                                       np.array([state.v * np.sin(state.fpa), state.v * np.cos(state.fpa), 0]),
+                                       np.array([state.v.m * np.sin(state.fpa), state.v.m * np.cos(state.fpa), 0]),
                                        frames.RotatingFrame)
 
 
@@ -485,7 +552,7 @@ class TimeSincePeriapsis(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
-        # Rotating Frame
+        # ( E - e sin(E) ) / n
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = (state.E - orbit.e * np.sin(state.E)) / orbit.n
 
@@ -520,13 +587,18 @@ class EccentricAnomaly(StateValue):
         super().__init__(units.radians)
         self.orbit_requirements = [
             ('a', 'r', 'e'),
-            ('e', 'M')
+            ('e', 'M'),
+            ('ta', 'e')
         ]
 
     @orbit_setter
     def set(self, state, orbit):
         if orbit.circular():
             self.value = np.nan
+
+        # Only proceed if elliptic orbit
+        if orbit.type() != OrbitType.Elliptic:
+            pass
 
         # acos((a-r)/(ae))
         elif self.satisfied(state, orbit, self.orbit_requirements[0]):
@@ -537,17 +609,47 @@ class EccentricAnomaly(StateValue):
                 self.value = state.ascending_sign * np.arccos(
                     (orbit.a - state.r) / (orbit.a * orbit.e))
 
+        # Newton raphson to find eccentric anomaly from from mean anomaly
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
-            self.value = self._iterative_eccentric_anomaly(state, orbit)
+            self.value = newton(lambda E, state: E - state.orbit.e.m * np.sin(E) - state.M.m,
+                                state.M.m,
+                                args=(state,),
+                                fprime=lambda E, state: 1 - state.orbit.e.m * np.cos(E),
+                                tol=1e-12)
 
-    def _iterative_eccentric_anomaly(self, state, orbit, **kwargs):
-        return self._find_eccentric_anomaly_recursively(orbit, state.M, state.M, **kwargs)
+        # acos(2 atan(sqrt( (1+e)/(1-e) tan(E/2) )))
+        elif self.satisfied(state, orbit, self.orbit_requirements[2]):
+            E = 2 * np.arctan(np.tan(state.ta / 2) / np.sqrt((1 + orbit.e) / (1 - orbit.e)))
+            self.value = state.angle_check_tan(E)
 
-    def _find_eccentric_anomaly_recursively(self, orbit, E, M, tol=1e-12):
-        E1 = E - (E - orbit.e * np.sin(E) - M) / (1 - orbit.e * np.cos(E))
-        dE = np.fabs(E - E1)
 
-        if dE < tol:
-            return E
+class HyperbolicAnomaly(StateValue):
+    symbol = 'H'
+    name = 'Hyperbolic Anomaly'
 
-        return self._find_eccentric_anomaly_recursively(orbit, E1, M, tol=tol)
+    def __init__(self):
+        super().__init__(units.radians)
+        self.orbit_requirements = [
+            ('e', 'a', 'n')
+        ]
+
+    @orbit_setter
+    def set(self, state, orbit):
+        if orbit.type() != OrbitType.Hyperbolic:
+            pass
+
+        # TODO: fix this!
+        # Newton raphson to find hyperbolic anomaly
+        # elif self.satisfied(state, orbit, self.orbit_requirements[0]):
+        #     def findH(H, state):
+        #         e = state.orbit.e
+        #         mu = state.orbit.central_body.mu
+        #         a = state.orbit.a
+        #         n = state.orbit.n
+        #         ttp = 1 / n * (e * np.sinh(H) - H)
+        #         return e * np.sinh(H) - H - np.sqrt(mu / (np.abs(a) ** 3)) * ttp
+        #
+        #     self.value = newton(findH,
+        #                         0.1,  # TODO is there a better initial guess?
+        #                         args=(state,),
+        #                         tol=1e-12)

@@ -3,10 +3,10 @@ import logging
 from abc import ABCMeta, abstractmethod
 
 ########### Local ###########
-from orpytal.common import copydoc
 from orpytal.errors import ParameterUnavailableError
 from orpytal import frames, Orbit, Trajectory
 from orpytal import planet_constants, units
+from orpytal.utils.utils import copydoc
 
 ########### External ###########
 import numpy as np

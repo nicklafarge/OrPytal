@@ -26,11 +26,9 @@ state.r = 18500 * units.km
 state.arg_latitude = 55 * units.deg
 state.ascending = True
 
-traj = orbit.propagate_full_orbit()
-
 def test_plotly_3d():
-    # plotting.plot_orbit(orbit)
     plotting.plot_orbit(orbit, frame=frames.PerifocalFrame)
+    plotting.plot_orbit(orbit, frame=frames.InertialFrame)
 
 
 if __name__ == '__main__':

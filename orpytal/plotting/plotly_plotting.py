@@ -2,9 +2,9 @@
 import itertools
 
 ########### Local ##########
-from orpytal.common import units, copydoc
 from orpytal.plotting.plotting_base import PlotUtils3D, PlotUtils2D, PlotUtilsBase
 from orpytal import Orbit, planet_constants, Trajectory, frames
+from orpytal.utils.utils import copydoc
 
 ########### External ###########
 from dash import Dash
@@ -15,8 +15,6 @@ import plotly
 import plotly.graph_objs as go
 import seaborn as sns
 
-# TODO I shouldn't have my api key in a public repository you moron
-plotly.tools.set_credentials_file(username='nlafarge', api_key='FW8T5gLFcKYHcT1fICQa', stream_ids=['qpoh56k49e'])
 app = Dash(__name__)
 
 BODY_COLORS = dict(
@@ -28,9 +26,9 @@ BODY_COLORS = dict(
 
 
 class PlotlyPlotUtils(object):
-    MOON_COLOR = 'rgb(162,168,174)'
-    EARTH_COLOR = "#204a87"
-    SUN_COLOR = 'rgb(253,184,19)'
+    moon_color = 'rgb(162,168,174)'
+    earth_color = "#204a87"
+    sun_color = 'rgb(253,184,19)'
 
     def init_plotly(self, filename=None):
         self.filename = filename
@@ -360,7 +358,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
         kwargs = self._add_primary_name(primary, **kwargs)
         super().plot_primary(primary, **kwargs)
 
-
     @copydoc(PlotUtils2D.plot)
     def plot(self, x_vals, y_vals, **kwargs):
         kwargs = self.format_args(**kwargs)
@@ -380,7 +377,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
             **kwargs
         )
         self._data.append(trace)
-
 
     @copydoc(PlotUtils2D.title)
     def title(self, title, **kwargs):

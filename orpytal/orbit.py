@@ -3,11 +3,10 @@ import logging
 
 ########### Local ###########
 from orpytal.base import OrbitBase
-from orpytal.common import units, orbit_setter, attribute_setter
-from orpytal.errors import ParameterUnavailableError
-from orpytal import frames, output
+from orpytal import output, integration, frames, OrbitType
 from orpytal.state import KeplarianState
 from orpytal.trajectory import Trajectory
+from orpytal.utils.conics_utils import *
 
 ########### External ###########
 import numpy as np
@@ -38,6 +37,7 @@ class Orbit(object):
         self._se = SpecificEnergy()
         self._rp = Periapsis()
         self._ra = Apoapsis()
+        self._flyby_angle = FlybyAngle()
 
         self.vars = [
             self._p,
@@ -55,7 +55,8 @@ class Orbit(object):
             self._arg_periapsis,
             self._raan,
             self._raan_vec,
-            self._inclination
+            self._inclination,
+            self._flyby_angle
         ]
 
         for k, v in kwargs.items():
@@ -71,7 +72,10 @@ class Orbit(object):
     def __str__(self):
         return output.output_orbit(self)
 
-    def propagate_full_orbit(self, n=150):
+    def get_state(self, **kwargs):
+        return KeplarianState(self, **kwargs)
+
+    def analytic_propagate_full_orbit(self, n=150):
         t_range = np.linspace(start=0, stop=self.period.m, num=n)
 
         st_list = []
@@ -91,7 +95,7 @@ class Orbit(object):
 
         return Trajectory(st_list)
 
-    def propagate_full_orbit_ta(self, state, step=0.1):
+    def analytic_propagate_full_orbit_ta(self, state, step=0.1):
         ta_range = list(np.arange(state.ta, state.ta + 2 * np.pi, step))
         ta_range.append(state.ta.m + 2 * np.pi)
 
@@ -107,6 +111,31 @@ class Orbit(object):
             st_list.append(st)
 
         return Trajectory(st_list)
+
+    def propagate_orbit(self, n=80):
+        res = integration.integrate_orbit(self)
+        numeric_states = res.y
+
+        n_states = len(numeric_states[0])
+        d = int(n_states / n)
+
+        pos_list = [[numeric_states[0][i], numeric_states[1][i], numeric_states[2][i]] for i in range(n_states)]
+        vel_list = [[numeric_states[3][i], numeric_states[4][i], numeric_states[5][i]] for i in range(n_states)]
+
+        r_pos_list = pos_list[::d]
+        r_pos_list.append(pos_list[-1])
+
+        r_vel_list = vel_list[::d]
+        r_vel_list.append(vel_list[-1])
+
+        states = []
+        for p, v in zip(r_pos_list, r_vel_list):
+            st = self.get_state()
+            st.position = p, frames.InertialFrame
+            st.velocity = v, frames.InertialFrame
+            states.append(st)
+
+        return Trajectory(states)
 
     def set_vars(self):
         for var in self.vars:
@@ -136,6 +165,27 @@ class Orbit(object):
         else:
             raise ParameterUnavailableError('Need eccentricity to see if circular')
 
+    def type(self, tol=1e-10):
+        if not self._e.evaluated and not self._a.evaluated:
+            raise ParameterUnavailableError('Need eccentricity or a evaluate type of orbit')
+
+        if self.circular(tol=tol):
+            return OrbitType.Circular
+
+        if self._e.evaluated:
+            if 0.0 <= self.e < 1.0:
+                return OrbitType.Elliptic
+            elif (self.e - 1.) < tol:
+                return OrbitType.Parabolic
+            else:
+                return OrbitType.Hyperbolic
+
+        elif self.a.evaluated:
+            if self.a < 0:
+                return OrbitType.Hyperbolic
+            else:
+                return OrbitType.Parabolic
+
     def compare(self, orbit):
         all_same = True
 
@@ -146,13 +196,17 @@ class Orbit(object):
             if var != other_evaluated_vars[i]:
                 logging.warning('Different Evaluated Variables!')
                 return False
-            # assert var == other_evaluated_vars[i]
+                # assert var == other_evaluated_vars[i]
 
         # Compare values of evaluated variables
         for var in self.vars:
             if var.evaluated and hasattr(orbit, var.symbol):
                 if isinstance(var.value, units.Quantity):
-                    same = np.isclose(var.value, getattr(orbit, var.symbol))
+                    other_value = getattr(orbit, var.symbol)
+                    if np.isnan(var.value) and np.isnan(other_value):
+                        same = True
+                    else:
+                        same = np.isclose(var.value, other_value)
                 elif isinstance(var.value, frames.Vector):
 
                     vec1 = var.value
@@ -162,7 +216,7 @@ class Orbit(object):
                     same = False
 
             if same:
-                logging.debug('Checked {} [✓]'.format(var.symbol))
+                logging.debug('Checked {} [OK]'.format(var.symbol))
             else:
                 all_same = False
                 logging.warning('Error Found for {} [x]'.format(var.symbol))
@@ -170,6 +224,9 @@ class Orbit(object):
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
 
         return all_same
+
+    def angles_set(self):
+        return self._raan.evaluated and self._arg_periapsis.evaluated
 
     @property
     def a(self):
@@ -323,6 +380,15 @@ class Orbit(object):
     def inclination(self, inclination):
         self._inclination.value = inclination
 
+    @property
+    def flyby_angle(self):
+        return self._flyby_angle.value
+
+    @flyby_angle.setter
+    @attribute_setter
+    def flyby_angle(self, flyby_angle):
+        self._flyby_angle.value = flyby_angle
+
 
 class OrbitValue(OrbitBase):
     def set(self, orbit):
@@ -368,7 +434,6 @@ class SemiLatusRectum(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[2]):
             self.value = orbit.ra * (1 - orbit.e)
 
-
     @orbit_setter
     def set_from_state(self, state, orbit):
 
@@ -407,7 +472,10 @@ class Eccentricity(OrbitValue):
 
         # 1 - rp/a
         elif self.satisfied(orbit, self.orbit_requirements[1]):
-            self.value = 1. - orbit.rp / orbit.a
+            if orbit.type() == OrbitType.Elliptic:
+                self.value = 1 - orbit.rp / orbit.a
+            elif orbit.type() == OrbitType.Hyperbolic:
+                self.value = orbit.rp / np.abs(orbit.a) + 1
 
         # |e|
         elif self.satisfied(orbit, self.orbit_requirements[2]):
@@ -419,7 +487,7 @@ class Eccentricity(OrbitValue):
 
         # ra/a - 1
         elif self.satisfied(orbit, self.orbit_requirements[4]):
-            self.value = orbit.ra/orbit.a - 1.
+            self.value = orbit.ra / orbit.a - 1.
 
         # p / rp - 1
         elif self.satisfied(orbit, self.orbit_requirements[5]):
@@ -662,7 +730,7 @@ class SemimajorAxis(OrbitValue):
 
         # (mu / n^2) ^ (1/3)
         elif self.satisfied(orbit, self.orbit_requirements[4]):
-            self.value = (orbit.central_body.mu / orbit.n ** 2) ** (1./3.)
+            self.value = (orbit.central_body.mu / orbit.n ** 2) ** (1. / 3.)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -689,7 +757,10 @@ class SemiminorAxis(OrbitValue):
             self.value = orbit.p / (1. + orbit.e ** 2.)
 
         elif self.satisfied(orbit, self.orbit_requirements[1]):
-            self.value = orbit.a * np.sqrt(1 - orbit.e ** 2)
+            if orbit.type() == OrbitType.Elliptic:
+                self.value = orbit.a * np.sqrt(1 - orbit.e ** 2)
+            elif orbit.type() == OrbitType.Hyperbolic:
+                self.value = np.abs(orbit.a) * np.sqrt(orbit.e ** 2 - 1)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -710,7 +781,6 @@ class OrbitalPeriod(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-
         # 2pi / n
         if self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 2.0 * np.pi / orbit.n
@@ -738,12 +808,15 @@ class MeanMotion(OrbitValue):
 
         # sqrt(mu / a^3)
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = np.sqrt(orbit.central_body.mu / (orbit.a ** 3))
+            a = orbit.a
+            if orbit.type() == OrbitType.Hyperbolic:
+                a = np.abs(a)
+
+            self.value = np.sqrt(orbit.central_body.mu / (a ** 3))
 
         # 2pi / period
-        if self.satisfied(orbit, self.orbit_requirements[1]):
+        elif self.satisfied(orbit, self.orbit_requirements[1]) and orbit.type() == OrbitType.Elliptic:
             self.value = 2 * np.pi / orbit.period
-
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -768,7 +841,10 @@ class SpecificEnergy(OrbitValue):
 
         # -mu/(2a)
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = -orbit.central_body.mu / (2 * orbit.a)
+            if orbit.type() == OrbitType.Elliptic:
+                self.value = -orbit.central_body.mu / (2 * orbit.a)
+            elif orbit.type() == OrbitType.Hyperbolic:
+                self.value = orbit.central_body.mu / (2 * np.abs(orbit.a))
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -793,9 +869,11 @@ class Apoapsis(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
+        if orbit.type() != OrbitType.Elliptic and orbit.type() != OrbitType.Circular:
+            pass
 
         # p / (1 - e)
-        if self.satisfied(orbit, self.orbit_requirements[0]):
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = orbit.p / (1 - orbit.e)
 
         # a * (1 + e)
@@ -829,7 +907,37 @@ class Periapsis(OrbitValue):
 
         # a * (1 - e)
         elif self.satisfied(orbit, self.orbit_requirements[1]):
-            self.value = orbit.a * (1 - orbit.e)
+            if orbit.type() == OrbitType.Elliptic:
+                self.value = orbit.a * (1 - orbit.e)
+            elif orbit.type() == OrbitType.Hyperbolic:
+                self.value = np.abs(orbit.a) * (orbit.e - 1)
+        
+    @orbit_setter
+    def set_from_state(self, state, orbit):
+        return False
+
+
+class FlybyAngle(OrbitValue):
+    symbol = 'flyby_angle'
+    name = "Flyby Angle"
+
+    def __init__(self):
+        super().__init__(units.km)
+        self.orbit_requirements = [
+            ('e')
+        ]
+        self.orbit_state_requirements = [
+        ]
+
+    @orbit_setter
+    def set(self, orbit):
+
+        if orbit.type() != OrbitType.Hyperbolic:
+            pass
+
+        # 2 arcsin (1 / e)
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
+            self.value = 2 * np.arcsin(1 / orbit.e)
 
     @orbit_setter
     def set_from_state(self, state, orbit):

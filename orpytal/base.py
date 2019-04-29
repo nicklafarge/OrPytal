@@ -1,11 +1,12 @@
 ########### Standard ###########
 
 ########### Local ###########
-from orpytal.common import units, conics_utils
-from orpytal import frames
+from orpytal.common import units
+from orpytal.errors import InvalidInputError
+from orpytal.utils import conics_utils
+
 
 ########### External ###########
-import numpy as np
 
 
 class OrbitBase(object):
@@ -27,23 +28,19 @@ class OrbitBase(object):
 
     @value.setter
     def value(self, value=None):
-        if isinstance(value, units.Quantity):
-            self._value = value.to(self.units)
-        elif isinstance(value, frames.Vector):
-            if isinstance(value.value, units.Quantity):
-                value.value = value.value.to(self.units)
-                self._value = value
-            else:
-                value.value = value.value * self.units
-                self._value = value
-        else:
-            self._value = value * self.units
+        temp_value = conics_utils.add_units(value, self.units)
+
 
         # Resolve signs for units
         if self.units == units.rad:
-            self._value = self._value % (2* np.pi)
+            temp_value = conics_utils.angle_positive(temp_value)
 
-        self.evaluated = True
+        # Validate input
+        if self.validate_input(temp_value):
+            self._value = temp_value
+            self.evaluated = True
+        else:
+            raise InvalidInputError()
 
     def __eq__(self, other):
         if isinstance(other, OrbitBase):
@@ -80,3 +77,6 @@ class OrbitBase(object):
 
     def state_orbit_satisfied(self, state, orbit, requirements):
         return conics_utils.state_orbit_satisfied(state, orbit, requirements)
+
+    def validate_input(self, value):
+        return True
