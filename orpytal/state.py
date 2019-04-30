@@ -285,7 +285,7 @@ class TrueAnomaly(StateValue):
             ('angular_momentum', 'position', 'e_vec', 'e', 'inclination'),
             ('angular_momentum', 'position', 'raan_vec', 'e', 'inclination'),
             ('position', 'e', 'inclination'),
-            ('angular_momentum', 'position', 'e_vec', 'e', 'inclination', 'raan_vec'),
+            ('angular_momentum', 'position', 'e_vec', 'e', 'inclination', 'raan_vec')
         ]
 
     @orbit_setter

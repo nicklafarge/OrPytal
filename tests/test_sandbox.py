@@ -4,17 +4,14 @@ import itertools
 
 ########### Local ###########
 from orpytal import units, Orbit, KeplarianState, bodies, plotting, get_plot_utils
-
+from orpytal.planet_constants import BODIES_532 as bodies
+from orpytal.plotting import plot_orbit
 import matplotlib.pyplot as plt
 import numpy as np
 
-# logging.basicConfig()
-# logging.getLogger().setLevel(logging.DEBUG)
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
-orbit = Orbit(bodies.earth, a=51000, e=0.0)
-pair = ('a', 'e')
-
-test_orbit = Orbit(orbit.central_body)
-setattr(test_orbit, pair[0], getattr(orbit, pair[0]))
-setattr(test_orbit, pair[1], getattr(orbit, pair[1]))
-same = orbit.compare(test_orbit)
+orbit = Orbit(bodies['EARTH'], se=0, rp=6603)
+st = orbit.get_state(r=2*orbit.central_body.radius)
+print(st)
