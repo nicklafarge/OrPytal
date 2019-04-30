@@ -77,18 +77,30 @@ class Orbit(object):
         return output.output_orbit(self)
 
     def get_state(self, **kwargs):
-        return KeplarianState(self, **kwargs)
+        return KeplarianState(  self, **kwargs)
 
     def analytic_propagate_full_orbit(self, n=150):
-        t_range = np.linspace(start=0, stop=self.period.m, num=n)
+
+        if self.type() == OrbitType.Elliptic:
+            tstart = 0
+            tend = self.period.m
+        elif self.type() == OrbitType.Hyperbolic:
+            start_state = self.get_state(ta=-self.ta_inf + 0.03)
+            tstart = -start_state.t_since_rp.m
+            tend = start_state.t_since_rp.m
+        else:
+            raise ValueError("Only handles elliptic and hyperbolic")
+
+        t_range = np.linspace(start=tstart, stop=tend, num=n)
 
         st_list = []
         for t in t_range:
             st = KeplarianState(self)
-            st.t_since_rp = t
+            # st.t_since_rp = t
             st._t_since_rp.value = t
             st._M.set(st, self)
             st._E.set(st, self)
+            st._H.set(st, self)
             st._r.set(st, self)
             st._ta.set(st, self)
             st._arg_latitude.set(st, self)
@@ -116,7 +128,7 @@ class Orbit(object):
 
         return Trajectory(st_list)
 
-    def propagate_orbit(self, n=80):
+    def propagate_orbit(self, n=10):
         res = integration.integrate_orbit(self)
         numeric_states = res.y
 
@@ -419,7 +431,6 @@ class Orbit(object):
     @attribute_setter
     def v_inf(self, v_inf):
         self._v_inf.value = v_inf
-
 
     @property
     def ta_inf(self):

@@ -631,7 +631,7 @@ class EccentricAnomaly(StateValue):
 
 class HyperbolicAnomaly(StateValue):
     symbol = 'H'
-    name = 'Hyperbolic Anomaly'
+    name = 'Hyperb. Anomaly'
 
     def __init__(self):
         super().__init__(units.radians)

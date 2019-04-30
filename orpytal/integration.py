@@ -1,18 +1,27 @@
 import numpy as np
 from scipy import integrate
+from orpytal import OrbitType, units
 
-
-def integrate_orbit(orbit, tol=1e-12, method="RK45"):
-    periapsis_state = orbit.get_state(ta=0)
+def integrate_orbit(orbit, tol=1e-13, method="RK45"):
+    if orbit.type() == OrbitType.Elliptic:
+        start_state = orbit.get_state(ta=0)
+        tend = orbit.period.m
+    elif orbit.type() == OrbitType.Hyperbolic:
+        start_state = orbit.get_state(ta=-orbit.ta_inf+0.3)
+        # start_state = orbit.get_state(ta=0)
+        tend = -start_state.t_since_rp.m * 2
+        # tend=((5*units.hr).to('s')).m
+    else:
+        raise ValueError("Only handles elliptic and hyperbolic")
 
     if orbit.angles_set():
-        ic = np.concatenate((periapsis_state.position.inertial().value.m, periapsis_state.velocity.inertial().value.m))
+        ic = np.concatenate((start_state.position.inertial().value.m, start_state.velocity.inertial().value.m))
     else:
         ic = np.concatenate(
-            (periapsis_state.position.perifocal().value.m, periapsis_state.velocity.perifocal().value.m))
+            (start_state.position.perifocal().value.m, start_state.velocity.perifocal().value.m))
 
     return integrate.solve_ivp(lambda t, y: two_body_eom(t, y, orbit.central_body),
-                               (0, orbit.period.m),
+                               (0, tend),
                                ic,
                                method=method,
                                dense_output=True,
