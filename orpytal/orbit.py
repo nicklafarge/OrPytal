@@ -39,6 +39,7 @@ class Orbit(object):
         self._ra = Apoapsis()
         self._flyby_angle = FlybyAngle()
         self._v_inf = VInfinity()
+        self._ta_inf = TrueAnomalyInfinity()
 
         self.vars = [
             self._p,
@@ -58,7 +59,8 @@ class Orbit(object):
             self._raan_vec,
             self._inclination,
             self._flyby_angle,
-            self._v_inf
+            self._v_inf,
+            self._ta_inf
         ]
 
         for k, v in kwargs.items():
@@ -171,11 +173,11 @@ class Orbit(object):
         if not self._e.evaluated and not self._a.evaluated and not self._ra.evaluated and not self._se.evaluated:
             raise ParameterUnavailableError('Need eccentricity, a, se, or ra to evaluate type of orbit')
 
-        try:
-            if self.circular(tol=tol):
-                return OrbitType.Circular
-        except ParameterUnavailableError as pae:
-            pass
+        # try:
+        #     if self.circular(tol=tol):
+        #         return OrbitType.Elliptic
+        # except ParameterUnavailableError as pae:
+        #     pass
 
         if self._e.evaluated:
             if 0.0 <= self.e < 1.0:
@@ -418,6 +420,15 @@ class Orbit(object):
     def v_inf(self, v_inf):
         self._v_inf.value = v_inf
 
+
+    @property
+    def ta_inf(self):
+        return self._ta_inf.value
+
+    @ta_inf.setter
+    @attribute_setter
+    def ta_inf(self, ta_inf):
+        self._ta_inf.value = ta_inf
 
 
 class OrbitValue(OrbitBase):
@@ -814,8 +825,11 @@ class OrbitalPeriod(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
+        if orbit.type() != OrbitType.Elliptic:
+            pass
+
         # 2pi / n
-        if self.satisfied(orbit, self.orbit_requirements[0]):
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
             self.value = 2.0 * np.pi / orbit.n
 
     @orbit_setter
@@ -902,7 +916,7 @@ class Apoapsis(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-        if orbit.type() != OrbitType.Elliptic and orbit.type() != OrbitType.Circular:
+        if orbit.type() != OrbitType.Elliptic:
             pass
 
         # p / (1 - e)
@@ -955,7 +969,7 @@ class FlybyAngle(OrbitValue):
     name = "Flyby Angle"
 
     def __init__(self):
-        super().__init__(units.dimensionless)
+        super().__init__(units.rad)
         self.orbit_requirements = [
             ('e')
         ]
@@ -979,7 +993,7 @@ class FlybyAngle(OrbitValue):
 
 class VInfinity(OrbitValue):
     symbol = 'v_inf'
-    name = "V Inifinity"
+    name = "V Infinity"
 
     def __init__(self):
         super().__init__(units.km / units.s)
@@ -994,13 +1008,40 @@ class VInfinity(OrbitValue):
 
         if orbit.type() == OrbitType.Parabolic:
             self.value = 0
-            
+
         elif orbit.type() == OrbitType.Elliptic:
             pass
 
         # 2 arcsin (1 / e)
         elif self.satisfied(orbit, self.orbit_requirements[0]) and orbit.type() == OrbitType.Hyperbolic:
             self.value = np.sqrt(2 * orbit.se)
+
+    @orbit_setter
+    def set_from_state(self, state, orbit):
+        return False
+
+
+class TrueAnomalyInfinity(OrbitValue):
+    symbol = 'ta_inf'
+    name = "TA Infinity"
+
+    def __init__(self):
+        super().__init__(units.rad)
+        self.orbit_requirements = [
+            ('e')
+        ]
+        self.orbit_state_requirements = [
+        ]
+
+    @orbit_setter
+    def set(self, orbit):
+
+        if orbit.type() != OrbitType.Hyperbolic:
+            pass
+
+        # 2 arcsin(-1/e)
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
+            self.value = np.arccos(-1 / orbit.e)
 
     @orbit_setter
     def set_from_state(self, state, orbit):

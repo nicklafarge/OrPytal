@@ -118,4 +118,12 @@ def add_units(value, value_units):
 
 
 def angle_positive(value):
-    return value.to(units.rad) % (2 * np.pi)
+    return (value.to(units.rad) + (2 * np.pi)) % (2 * np.pi)
+
+
+def angle_pos_neg(value):
+    angle = angle_positive(value)
+    if angle > np.pi:
+        return angle - 2*np.pi
+    else:
+        return angle

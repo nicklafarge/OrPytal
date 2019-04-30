@@ -12,6 +12,9 @@ import numpy as np
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-orbit = Orbit(bodies['EARTH'], se=0, rp=6603)
-st = orbit.get_state(r=2*orbit.central_body.radius)
+# earth = bodies['EARTH']
+orbit = Orbit(bodies['MOON'], rp=1937.4, a=-6460)
+st = orbit.get_state(ta=-90*units.deg)
 print(st)
+
+print(orbit.get_state(ta=0).v)

@@ -73,7 +73,7 @@ def orbit_parameters_output(orbit):
     output.append(create_key_value_line_params(orbit._p, orbit._h))
     output.append(create_key_value_line_params(orbit._n, orbit._period))
     output.append(create_key_value_line_params(orbit._se, orbit._flyby_angle))
-    output.append(create_key_value_line_params(orbit._v_inf))
+    output.append(create_key_value_line_params(orbit._v_inf, orbit._ta_inf))
     return output
 
 

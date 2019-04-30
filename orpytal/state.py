@@ -202,7 +202,7 @@ class KeplarianState(object):
     @attribute_setter
     def t_since_rp(self, t_since_rp):
         self._t_since_rp.value = t_since_rp
-        if check_satisfied(self.orbit, "period"):
+        if self.orbit.type() == OrbitType.Elliptic and check_satisfied(self.orbit, "period"):
             self._t_since_rp.value = self._t_since_rp.value % self.orbit.period
 
     @property
@@ -548,13 +548,19 @@ class TimeSincePeriapsis(StateValue):
         super().__init__(units.seconds)
         self.orbit_requirements = [
             ('E', 'e', 'n'),
+            ('H', 'e', 'n'),
         ]
 
     @orbit_setter
     def set(self, state, orbit):
         # ( E - e sin(E) ) / n
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+        if orbit.type() == OrbitType.Elliptic and self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = (state.E - orbit.e * np.sin(state.E)) / orbit.n
+
+        # ( e sinh(H) - H) / N
+        if orbit.type() == OrbitType.Hyperbolic and self.satisfied(state, orbit, self.orbit_requirements[1]):
+            H = angle_pos_neg(state.H)
+            self.value = (orbit.e * np.sinh(H) - H) / orbit.n
 
 
 class MeanAnomaly(StateValue):
@@ -630,6 +636,7 @@ class HyperbolicAnomaly(StateValue):
     def __init__(self):
         super().__init__(units.radians)
         self.orbit_requirements = [
+            ('e', 'r', 'a'),
             ('e', 'a', 'n')
         ]
 
@@ -638,6 +645,9 @@ class HyperbolicAnomaly(StateValue):
         if orbit.type() != OrbitType.Hyperbolic:
             pass
 
+        # H = arccosh(1/e(r/|a| + 1))
+        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
+            self.value = state.ascending_sign * np.arccosh(1 / orbit.e * (state.r / np.abs(orbit.a) + 1))
         # TODO: fix this!
         # Newton raphson to find hyperbolic anomaly
         # elif self.satisfied(state, orbit, self.orbit_requirements[0]):
