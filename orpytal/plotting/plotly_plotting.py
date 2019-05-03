@@ -2,18 +2,27 @@
 import itertools
 
 ########### Local ##########
-from orpytal.common import units, copydoc
 from orpytal.plotting.plotting_base import PlotUtils3D, PlotUtils2D, PlotUtilsBase
-from orpytal import Orbit, planet_constants, Trajectory
+from orpytal import Orbit, planet_constants, Trajectory, frames
+from orpytal.utils.utils import copydoc
 
 ########### External ###########
-# from dash import Dash
-# import dash_html_components as html
+from dash import Dash
+import dash_html_components as html
 import dash_core_components as dcc
 import numpy as np
 import plotly
 import plotly.graph_objs as go
 import seaborn as sns
+
+app = Dash(__name__)
+
+BODY_COLORS = dict(
+    moon='rgb(162,168,174)',
+    earth="#204a87",
+    sun='rgb(253,184,19)'
+)
+
 
 
 class PlotlyPlotUtils(object):
@@ -28,21 +37,21 @@ class PlotlyPlotUtils(object):
         self._color_cycle = itertools.cycle(plotly.colors.DEFAULT_PLOTLY_COLORS)
         self._layout = go.Layout(autosize=True, height=800)
 
-        # self.app = app
-        # self.app.css.config.serve_locally = True
-        # self.app.scripts.config.serve_locally = True
-        #
-        # self.graph = dcc.Graph(
-        #     id='plot',
-        #     figure=self.figure
-        # )
-        #
-        # self.app.layout = html.Div(children=[
-        #     dcc.Graph(
-        #         id='plot',
-        #         figure=self.figure
-        #     )
-        # ])
+        self.app = app
+        self.app.css.config.serve_locally = True
+        self.app.scripts.config.serve_locally = True
+
+        self.graph = dcc.Graph(
+            id='plot',
+            figure=self.figure
+        )
+
+        self.app.layout = html.Div(children=[
+            dcc.Graph(
+                id='plot',
+                figure=self.figure
+            )
+        ])
 
     @property
     def figure(self):
@@ -85,14 +94,7 @@ class PlotlyPlotUtils(object):
         return kwargs
 
     def get_body_color(self, body_name):
-        if body_name.lower() == 'moon':
-            return self.moon_color
-        elif body_name.lower() == 'earth':
-            return self.earth_color
-        elif body_name.lower() == 'sun':
-            return self.sun_color
-        else:
-            return 'black'
+        return BODY_COLORS.get(body_name.lower(), 'black')
 
     def plotly_title(self, title, **kwargs):
         self._layout.title = title
@@ -122,7 +124,6 @@ class PlotlyPlotUtils(object):
         elif 'filename' in kwargs:
             plot_kwargs['filename'] = kwargs.pop('filename')
         plotly.offline.plot(self.figure, **plot_kwargs)
-        # self.app.run_server(debug=True)
 
     def xlim(self, lims):
         self._layout.xaxis.range = lims
@@ -150,15 +151,25 @@ class PlotlyPlotUtils(object):
         return kwargs
 
 class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
-    def __init__(self, **kwargs):
-        self.init_plotly(**kwargs)
+    def __init__(self, frame=frames.InertialFrame):
+        self.init_plotly()
 
         # TODO update default camera to something not cr3bp based
-        camera = dict(
-            up=dict(x=1, y=0, z=0),
-            center=dict(x=0, y=0, z=0),
-            eye=dict(x=0, y=0, z=1)
-        )
+
+        if frame == frames.InertialFrame:
+            camera = dict(
+                up=dict(x=0, y=0, z=1),
+                center=dict(x=0, y=0, z=0),
+                eye=dict(x=1.25, y=1.25, z=1.25)
+            )
+        elif frame == frames.PerifocalFrame:
+            camera = dict(
+                up=dict(x=0, y=0, z=1),
+                center=dict(x=0, y=0, z=0),
+                eye=dict(x=-1.25, y=0, z=1.25)
+            )
+        else:
+            raise ValueError(f"Can't plot in {self.frame.name}")
 
         self._layout.scene = dict(
             xaxis=dict(
@@ -175,6 +186,8 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
             camera=camera
         )
 
+        self.default_axes(frame=frame)
+
     @copydoc(PlotUtilsBase.show)
     def show(self, **kwargs):
         super().show_plotly(**kwargs)
@@ -182,7 +195,7 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
     @copydoc(PlotUtilsBase.init_plot)
     def init_plot(self, fig_number=None, **kwargs):
         super().init_plot(**kwargs)
-        self.__init__()
+        self.__init__(frame=self.frame)
 
 
     @copydoc(PlotUtilsBase.plot_primary)
@@ -192,7 +205,7 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
         super().plot_primary(primary, **kwargs)
 
     @copydoc(PlotUtils3D.plot_sphere)
-    def plot_sphere(self, x, y, z, radius, num=20, **kwargs):
+    def plot_sphere(self, x, y, z, radius, num=50, **kwargs):
         kwargs = self.format_args(**kwargs)
         u1 = np.linspace(0, 2 * np.pi, num)
         v1 = u1.copy()
@@ -263,15 +276,15 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
 
     @copydoc(PlotUtils2D.xlabel)
     def xlabel(self, xlabel, **kwargs):
-        self.plotly_xlabel(xlabel)
+        self._layout.scene.xaxis.title = xlabel
 
-    @copydoc(PlotUtils2D.ylabel)
+    @copydoc(PlotUtils2D.xlabel)
     def ylabel(self, ylabel, **kwargs):
-        self.plotly_ylabel(ylabel)
+        self._layout.scene.yaxis.title = ylabel
 
     @copydoc(PlotUtils2D.ylabel)
     def zlabel(self, zlabel, **kwargs):
-        self.plotly_zlabel(zlabel)
+        self._layout.scene.zaxis.title = zlabel
 
     @copydoc(PlotUtilsBase.update_plot)
     def update_plot(self):
@@ -345,7 +358,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
         kwargs = self._add_primary_name(primary, **kwargs)
         super().plot_primary(primary, **kwargs)
 
-
     @copydoc(PlotUtils2D.plot)
     def plot(self, x_vals, y_vals, **kwargs):
         kwargs = self.format_args(**kwargs)
@@ -365,7 +377,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
             **kwargs
         )
         self._data.append(trace)
-
 
     @copydoc(PlotUtils2D.title)
     def title(self, title, **kwargs):

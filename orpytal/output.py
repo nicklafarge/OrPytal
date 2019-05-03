@@ -1,3 +1,6 @@
+from orpytal import frames
+from orpytal.errors import ParameterUnavailableError
+
 DEFAULT_LENGTH = 17
 DEFAULT_PRECISION = 10
 DEFAULT_PRECISION_TOTAL_LENGTH = DEFAULT_PRECISION + 7
@@ -69,7 +72,8 @@ def orbit_parameters_output(orbit):
     output.append(create_key_value_line_params(orbit._rp, orbit._ra))
     output.append(create_key_value_line_params(orbit._p, orbit._h))
     output.append(create_key_value_line_params(orbit._n, orbit._period))
-    output.append(create_key_value_line_params(orbit._se))
+    output.append(create_key_value_line_params(orbit._se, orbit._flyby_angle))
+    output.append(create_key_value_line_params(orbit._v_inf, orbit._ta_inf))
     return output
 
 
@@ -85,7 +89,7 @@ def output_orbit(orbit):
     header.append("Meta Information".center(LINE_WIDTH, " "))
     header.append("{:>12}: {}".format("Orbit Name", DEFAULT_FILLER if not orbit.name else orbit.name))
     header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
-    header.append("{:>12}: {}".format("Type", DEFAULT_FILLER if orbit.e is None else orbit.type().name))
+    header.append("{:>12}: {}".format("Type", DEFAULT_FILLER if orbit.type() is None else orbit.type().name))
     header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
     header.append(SECTION_DIVIDER)
 
@@ -116,27 +120,55 @@ def output_state(state):
     header.append("{:>12}: {}".format("Central Body", orbit.central_body.name))
     header.append("{:>12}: {}".format("Type", DEFAULT_FILLER if orbit.e is None else orbit.type().name))
     header.append("{:>12}: {}".format("Equitorial", DEFAULT_FILLER if orbit.i is None else orbit.equitorial()))
-    header.append("{:>12}: {}".format("Ascending", DEFAULT_FILLER if state._is_ascending is None else state._is_ascending))
+    header.append("{:>12}: {}".format("Ascending", DEFAULT_FILLER if state.ascending is None else state.ascending))
 
     header.append(SECTION_DIVIDER)
 
     output.append("\n".join(header))
 
     # Keplarian State Data
+    default_vector = [None, None, None]
+
+    # Inertial if possible, else orbit fixed, else rotating
+    frame = frames.InertialFrame
+    try:
+        state.position.to(frames.InertialFrame)
+        unit_vectors = ["x", "y", "z"]
+    except AttributeError as ae:
+        pass
+    except ParameterUnavailableError as pue:
+        frame = frames.PerifocalFrame
+
+    try:
+        state.position.to(frames.PerifocalFrame)
+        unit_vectors = ["e", "p", "h"]
+    except AttributeError as ae:
+        pass
+    except ParameterUnavailableError as pue:
+        frame = frames.RotatingFrame
+        unit_vectors = ["r", "theta", "h"]
+
+    pos = default_vector if not state.position else state.position.to(frame)
+    vel = default_vector if not state.position or not state.velocity else state.velocity.to(frame)
 
     output.append("State Parameters".center(LINE_WIDTH, " ") + "\n")
     output.append(create_key_value_line_params(state._r, state._ta))
     output.append(create_key_value_line_params(state._v, state._E))
     output.append(create_key_value_line_params(state._fpa, state._M))
+    output.append(create_key_value_line_params(state._fpa, state._H))
     output.append(create_key_value_line_params(state._t_since_rp, state._arg_latitude))
+    output.append(SECTION_DIVIDER)
+    output.append(str(frame.name).center(LINE_WIDTH, " ") + "\n")
+    output.append(create_key_value_line(["Position","Velocity"], [None, None]))
+    output.append(create_key_value_line([unit_vectors[0],unit_vectors[0]], [pos[0], vel[0]]))
+    output.append(create_key_value_line([unit_vectors[1],unit_vectors[1]], [pos[1], vel[1]]))
+    output.append(create_key_value_line([unit_vectors[2],unit_vectors[2]], [pos[2], vel[2]]))
     output.append(SECTION_DIVIDER)
     output.append(SECTION_DIVIDER)
 
     # Orbit
-
     output.append("\n".join(orbit_parameters_output(orbit)))
     output.append(SECTION_DIVIDER)
-
 
     output_str = "\n".join(output)
 

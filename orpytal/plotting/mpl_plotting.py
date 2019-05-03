@@ -2,11 +2,7 @@
 import logging
 
 ########### Local ###########
-import cr3bp
-from ML.db import arc_db
-from ML import graph_utils
-from plotting_base import PlotUtils2D, PlotUtils3D
-from utils import utils
+from orpytal.plotting.plotting_base import PlotUtils2D, PlotUtils3D
 
 ########### External ###########
 import matplotlib.animation as animation
@@ -15,247 +11,6 @@ import matplotlib.colors as colors
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-# ========================================================================= #
-#                                Animations                                 #
-# ========================================================================= #
-
-
-class TrajectoryAnimator(object):
-    def __init__(self,
-                 traj,
-                 fig=1,
-                 t_fmt_str="t = %0.4f [nd]",
-                 title="Trajectory Animation",
-                 projection_vars=('x', 'y')):
-
-        self.system = traj.system
-        self.traj = traj
-        self.t_fmt_str = t_fmt_str
-        self.projection_vars = projection_vars
-
-        if fig:
-            self.fig = plt.figure(fig, dpi=80)
-        else:
-            self.fig = plt.figure(dpi=80)
-
-        plt.axis("equal")
-        plt.title(title)
-
-        xlabel, ylabel = get_default_axes(self.projection_vars[0], self.projection_vars[1], self.traj[0])
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-
-        ax = self.fig.gca()
-
-        self.time = ax.text(.05, 0.05, '',
-                            fontsize=15,
-                            horizontalalignment='left',
-                            verticalalignment='bottom',
-                            transform=plt.gca().transAxes)
-
-        self.t_loc = ax.plot([], [], 'bo')[0]
-
-        # For the axes....
-        var1_pts, var2_pts = traj.get_projection(self.projection_vars[0], self.projection_vars[1])
-        plt.plot(var1_pts, var2_pts, c='0.85')
-
-    def _init(self):
-        return self._animate(0)
-
-    def _animate(self, i):
-        st = self.traj[i]
-
-        self.t_loc.set_data([getattr(st, self.projection_vars[0])], [getattr(st, self.projection_vars[1])])
-
-        if self.t_fmt_str:
-            self.time.set_text(self.t_fmt_str % st.t)
-
-        return self.t_loc, self.time
-
-    def animate(self, save_as_gif_name=None, interval=50, block=False, fps=1):
-        frames = np.arange(0, len(self.traj))
-        ani = animation.FuncAnimation(self.fig, self._animate, frames,
-                                      interval=interval, blit=True)
-        plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-
-        if save_as_gif_name:
-            print('Saving gif....')
-            ani.save(save_as_gif_name, writer='imagemagick', fps=fps)
-            print('Saving complete!')
-        else:
-            plt.show(block=block)
-
-
-class MultipleTrajectoryAnimator(object):
-    def __init__(self,
-                 system,
-                 traj_list,
-                 step_fmt_str="Step %i",
-                 fig=1,
-                 show_old_lines=False,
-                 border_factor=0.1,
-                 title="Trajectory Animation",
-                 projection_vars=('x', 'y')):
-
-        self.system = system
-        self.traj_list = traj_list
-        self.step_fmt_str = step_fmt_str
-        self.show_old_lines = show_old_lines
-        self.projection_vars = projection_vars
-
-        self.fig = plt.figure(fig, dpi=80)
-
-        plt.axis("equal")
-        plt.title(title)
-
-        xlabel, ylabel = get_default_axes(self.projection_vars[0], self.projection_vars[1], self.traj_list[0][0])
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-
-        self.time = self.fig.gca().text(.05, 0.05, '',
-                                        fontsize=15,
-                                        horizontalalignment='left',
-                                        verticalalignment='bottom',
-                                        transform=plt.gca().transAxes)
-        self.traj_line = self.fig.gca().plot([], [], c='b')[0]
-
-        if self.show_old_lines:
-            self.traj_line_list = [self.fig.gca().plot([], [])[0] for i in traj_list]
-
-        x_max = max([t.x_max() for t in traj_list])
-        x_min = min([t.x_min() for t in traj_list])
-
-        y_max = max([t.y_max() for t in traj_list])
-        y_min = min([t.y_min() for t in traj_list])
-
-        x_border = (x_max - x_min) * border_factor
-        y_border = (y_max - y_min) * border_factor
-
-        self.axes = [x_min - x_border, x_max + x_border, y_min - y_border, y_max + y_border]
-
-        # For the axes....
-        for traj in traj_list:
-            var1_pts, var2_pts = traj.get_projection(self.projection_vars[0], self.projection_vars[1])
-            plt.plot(var1_pts, var2_pts, alpha=0.0)
-
-    def _init(self):
-        return self._animate(0)
-
-    def _animate(self, i):
-        var1_pts, var2_pts = self.traj_list[i].get_projection(*self.projection_vars)
-
-        if self.step_fmt_str:
-            self.time.set_text(self.step_fmt_str % i)
-
-        if self.show_old_lines:
-            # reset lines
-            if i == 0:
-                for t in self.traj_line_list[1:]:
-                    t.set_data([], [])
-
-            self.traj_line_list[i].set_data(var1_pts, var2_pts)
-
-            plt.setp(self.traj_line_list[i], 'color', 'b')
-
-            if i > 0:
-                plt.setp(self.traj_line_list[i - 1], 'color', '0.85')
-
-            return tuple(self.traj_line_list) + (self.time,)
-        else:
-            self.traj_line.set_data(var1_pts, var2_pts)
-            return self.traj_line, self.time
-
-    def animate(self, save_as_gif_name=None, interval=700, block=False, fps=1):
-        frames = np.arange(0, len(self.traj_list))
-        ani = animation.FuncAnimation(self.fig, self._animate, frames,
-                                      interval=interval, blit=True)
-        plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-
-        if save_as_gif_name:
-            print('Saving gif....')
-            ani.save(save_as_gif_name, writer='imagemagick', fps=fps)
-            print('Saving complete!')
-        else:
-            plt.show(block=block)
-            # plt.show()
-
-
-class MultipleShooterTrajectoryAnimator(object):
-    def __init__(self,
-                 system,
-                 global_traj_list,
-                 step_fmt_str="Step %i",
-                 fig=100,
-                 show_old_lines=False,
-                 border_factor=0.1,
-                 title="Trajectory Animation",
-                 projection_vars=('x', 'y')):
-
-        self.system = system
-        self.global_traj_list = global_traj_list
-        self.step_fmt_str = step_fmt_str
-        self.show_old_lines = show_old_lines
-        self.projection_vars = projection_vars
-
-        self.fig = plt.figure(fig, dpi=80)
-
-        plt.axis("equal")
-        plt.title(title)
-
-        xlabel, ylabel = ('x [nd]', 'y [nd]')
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-
-        self.time = self.fig.gca().text(.05, 0.05, '',
-                                        fontsize=15,
-                                        horizontalalignment='left',
-                                        verticalalignment='bottom',
-                                        transform=plt.gca().transAxes)
-        self.traj_lines = [
-            self.fig.gca().plot([], [])[0] for _ in range(max([len(li) for li in self.global_traj_list]))
-        ]
-
-        # For the axes....
-        for tl in self.global_traj_list:
-            for traj in tl:
-                var1_pts, var2_pts = traj.get_projection(self.projection_vars[0], self.projection_vars[1])
-                plt.plot(var1_pts, var2_pts, alpha=0.0)
-
-    def _init(self):
-        return self._animate(0)
-
-    def _animate(self, i):
-        if self.step_fmt_str:
-            self.time.set_text(self.step_fmt_str % i)
-
-        for j, traj in enumerate(self.global_traj_list[i]):
-            var1_pts, var2_pts = traj.get_projection(*self.projection_vars)
-
-            self.traj_lines[j].set_data(var1_pts, var2_pts)
-
-        if len(self.global_traj_list[i]) < len(self.traj_lines):
-            for j in range(len(self.global_traj_list[i]), len(self.traj_lines)):
-                self.traj_lines[j].set_data([], [])
-        return tuple(self.traj_lines) + (self.time,)
-
-    def animate(self, save_as_gif_name=None, interval=700, fps=1):
-        frames = np.arange(0, len(self.global_traj_list))
-        ani = animation.FuncAnimation(self.fig, self._animate, frames,
-                                      init_func=self._init,
-                                      interval=interval,
-                                      blit=True)
-
-        if save_as_gif_name:
-            print('Saving gif....')
-            plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-            ani.save(save_as_gif_name, writer='imagemagick', fps=fps)
-            print('Saving complete!')
-        else:
-            plt.show(block=True)
-            return ani
-            # plt.show()
 
 
 class MplPlotUtilsBase(object):
@@ -340,8 +95,8 @@ class MplPlotUtilsBase(object):
         plt.gcf().canvas.draw()
         plt.show(block=False)
 
-class MplPlotUtils2D(PlotUtils2D, MplPlotUtilsBase):
 
+class MplPlotUtils2D(PlotUtils2D, MplPlotUtilsBase):
     def __init__(self):
         pass
 
@@ -349,7 +104,6 @@ class MplPlotUtils2D(PlotUtils2D, MplPlotUtilsBase):
         plt.figure()
         plt.axis('equal')
         self.default_axes(**kwargs)
-
 
     def show(self, **kwargs):
         plt.show(block=False)
@@ -491,7 +245,6 @@ class MplPlotUtils2D(PlotUtils2D, MplPlotUtilsBase):
     def update_plot(self):
         self.update_mpl_plot()
 
-
     def plot_accessible_arc_list_w_colormap(self, arc_mngr, q_manager, system, arc, base, time, rank, digraph_args={},
                                             **kwargs):
         accessible_arcs = graph_utils.get_accessible_region_mc(arc_mngr,
@@ -539,7 +292,6 @@ class MplPlotUtils2D(PlotUtils2D, MplPlotUtilsBase):
 
 
 class MplPlotUtils3D(PlotUtils3D, MplPlotUtilsBase):
-
     def set_3d_scaling(self):
         ax = plt.gca()
 
@@ -795,8 +547,6 @@ def tile_graph_for_pt_from_db(start_point,
     tile_graph_grid(base, x_grid_base, y_grid_base)
     return traj_list, edges
 
-
 # ========================================================================= #
 #                                 RL Arcs                                   #
 # ========================================================================= #
-
