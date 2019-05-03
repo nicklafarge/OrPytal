@@ -408,7 +408,9 @@ class Eccentricity(OrbitValue):
             ('e_vec'),
             ('p', 'ra'),
             ('a', 'ra'),
-            ('p', 'rp')
+            ('p', 'rp'),
+            ('a', 'b'),
+            ('b', 'rp')
         ]
         self.orbit_state_requirements = [
             ('r', 'v', 'fpa')
@@ -443,6 +445,13 @@ class Eccentricity(OrbitValue):
         # p / rp - 1
         elif self.satisfied(orbit, self.orbit_requirements[5]):
             self.value = orbit.p / orbit.rp - 1.
+
+        # sqrt(1 - (b / a)^2)
+        elif self.satisfied(orbit, self.orbit_requirements[6]):
+            self.value = np.sqrt(1 - (orbit.b ** 2 / orbit.a ** 2) )
+
+        elif self.satisfied(orbit, self.orbit_requirements[7]):
+            self.value = orbit.b * np.sqrt(1 - orbit.e ** 2) / orbit.rp
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -704,9 +713,11 @@ class SemiminorAxis(OrbitValue):
     @orbit_setter
     def set(self, orbit):
 
+        # p / sqrt(1 - e^2)
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = orbit.p / (1. + orbit.e ** 2.)
+            self.value = orbit.p / np.sqrt(1. - orbit.e ** 2.)
 
+        # a * sqrt(1 - e^2)
         elif self.satisfied(orbit, self.orbit_requirements[1]):
             self.value = orbit.a * np.sqrt(1 - orbit.e ** 2)
 
