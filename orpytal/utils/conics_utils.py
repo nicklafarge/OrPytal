@@ -59,35 +59,38 @@ def orbit_setter(setter_function):
     return wrapper
 
 
+def set_attribute(orbit_or_state, val, setter_function):
+    var_name = setter_function.__name__
+    cls_name = orbit_or_state.__class__.__name__
+
+    is_keplarian_state = cls_name == 'KeplarianState'
+
+    if is_keplarian_state:
+        # Allow for tuple vector inputs
+        if isinstance(val, tuple) and \
+                hasattr(val[0], '__len__') and \
+                (isinstance(val[1], frames.CoordinateFrame) or val[1].__bases__[0] == frames.CoordinateFrame):
+            val = frames.Vector(orbit_or_state.orbit, orbit_or_state, val[0], val[1])
+
+        # Validate input
+        try:
+            var = getattr(orbit_or_state, "_" + var_name)
+            if hasattr(var, "validate_state_input"):
+                var.validate_state_input(add_units(val, var.units), orbit_or_state)
+        except InvalidInputError as iie:
+            logging.error("Invalid input for {}. Validation failed due to:\n {}".format(var_name, str(iie)))
+            return False
+
+    setter_function(orbit_or_state, val)
+    logging.debug('Set {} to {}'.format(var_name, val))
+
+    orbit_or_state.set_vars()
+    return True
+
+
 def attribute_setter(setter_function):
     def wrapper(*args):
-        orbit_or_state = args[0]
-        val = args[1]
-        var_name = setter_function.__name__
-        cls_name = orbit_or_state.__class__.__name__
-
-        is_keplarian_state = cls_name == 'KeplarianState'
-
-        if is_keplarian_state:
-            # Allow for tuple vector inputs
-            if isinstance(val, tuple) and \
-                    hasattr(val[0], '__len__') and \
-                    (isinstance(val[1], frames.CoordinateFrame) or val[1].__bases__[0] == frames.CoordinateFrame):
-                val = frames.Vector(orbit_or_state.orbit, orbit_or_state, val[0], val[1])
-
-            # Validate input
-            try:
-                var = getattr(orbit_or_state, "_" + var_name)
-                if hasattr(var, "validate_state_input"):
-                    var.validate_state_input(add_units(val, var.units), orbit_or_state)
-            except InvalidInputError as iie:
-                logging.error("Invalid input for {}. Validation failed due to:\n {}".format(var_name, str(iie)))
-                return wrapper
-
-        setter_function(orbit_or_state, val)
-        logging.debug('Set {} to {}'.format(var_name, val))
-
-        orbit_or_state.set_vars()
+        set_attribute(*args, setter_function)
 
     return wrapper
 
@@ -118,7 +121,7 @@ def add_units(value, value_units):
 
 
 def angle_positive(value):
-    return (value.to(units.rad) + (2 * np.pi)) % (2 * np.pi)
+    return ((value.to(units.rad) + (2 * np.pi)) % (2 * np.pi)).to('rad')
 
 
 def angle_pos_neg(value):

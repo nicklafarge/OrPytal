@@ -30,7 +30,6 @@ class OrbitBase(object):
     def value(self, value=None):
         temp_value = conics_utils.add_units(value, self.units)
 
-
         # Resolve signs for units
         if self.units == units.rad:
             temp_value = conics_utils.angle_positive(temp_value)

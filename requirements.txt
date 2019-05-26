@@ -14,6 +14,7 @@ dash
 dash-renderer
 dash-html-components
 dash-core-components
+ipywidgets
 
 # -------- Pycharm --------
 ipython
@@ -24,3 +25,6 @@ untangle
 
 # -------- units --------
 pint
+
+# -------- orbital mechanics --------
+poliastro

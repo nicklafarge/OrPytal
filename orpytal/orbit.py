@@ -66,7 +66,11 @@ class Orbit(object):
         for k, v in kwargs.items():
             try:
                 attribute = getattr(self, '_' + k)
-                attribute.value = v
+
+                def setter_fn(oos, val):
+                     attribute.value = v
+
+                set_attribute(self, attribute, setter_fn)
             except AttributeError as e:
                 logging.error('Orbit has no parameter named {}.'.format(k))
                 raise e
@@ -228,9 +232,8 @@ class Orbit(object):
         other_evaluated_vars = sorted([v.symbol for v in orbit.vars if v.evaluated])
         for i, var in enumerate(evaluated_vars):
             if var != other_evaluated_vars[i]:
-                logging.warning('Different Evaluated Variables!')
+                logging.warning('Different Evaluated Variables! ({})'.format(var))
                 return False
-                # assert var == other_evaluated_vars[i]
 
         # Compare values of evaluated variables
         for var in self.vars:
@@ -258,6 +261,44 @@ class Orbit(object):
                 logging.warning('Their value: {}'.format(getattr(orbit, var.symbol)))
 
         return all_same
+
+    def compare_poliastro(self, poliastro_orbit):
+        from poliastro.twobody import Orbit
+        if not isinstance(poliastro_orbit, Orbit):
+            logging.warning('Inputted orbit is not an instance of poliastro.twobody.Orbit')
+            return False
+
+        def compare_value(symbol, psymbol=None):
+            my_value = getattr(self, symbol)
+
+            if isinstance(my_value, frames.Vector):
+                my_value = my_value.value
+
+            other_value = getattr(poliastro_orbit, symbol if not psymbol else psymbol)
+            unit_str = my_value.units.format_babel()
+
+            if unit_str != 'dimensionless':
+                other_value = other_value.to(unit_str)
+
+            return np.isclose(my_value.to(unit_str).m, other_value.value)
+
+
+        assert compare_value('a')
+        assert compare_value('e', 'ecc')
+        assert compare_value('rp', 'r_p')
+        assert compare_value('ra', 'r_a')
+        assert compare_value('a')
+        assert compare_value('se', 'energy')
+        assert compare_value('n')
+        assert compare_value('arg_periapsis', 'argp')
+        assert compare_value('raan')
+        assert compare_value('i', 'inc')
+        assert compare_value('p')
+        assert compare_value('period')
+        assert all(compare_value('e_vec'))
+        assert all(compare_value('angular_momentum', 'h_vec'))
+
+
 
     def angles_set(self):
         return self._raan.evaluated and self._arg_periapsis.evaluated
@@ -627,9 +668,9 @@ class AngularMomentumVector(OrbitValue):
     def __init__(self):
         super().__init__(units.km ** 2 / units.s)
         self.orbit_requirements = [
+            ('raan', 'inclination', 'h')
         ]
         self.orbit_state_requirements = [
-            ('raan', 'inclination', 'h'),
             ('position', 'velocity')
         ]
 

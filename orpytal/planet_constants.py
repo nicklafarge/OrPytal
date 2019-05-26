@@ -3,13 +3,16 @@ import os
 import sys
 
 import numpy as np
+
 ########### External ###########
 import untangle
+from poliastro.bodies import Earth
 
-from orpytal import Orbit
 ########### Local ###########
+from orpytal import Orbit
 from orpytal.common import units
 from orpytal.utils import utils
+
 
 ##########################################################
 # Values
@@ -262,6 +265,7 @@ BODIES['CALLISTO'] = CentralBody(
     i=0.192 * units.degrees,
     parent=BODIES['JUPITER']
 )
+
 
 BODIES_532 = {}
 
