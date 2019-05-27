@@ -4,7 +4,7 @@ import logging
 import unittest
 
 ########### Local ###########
-from orpytal import Orbit, KeplarianState, frames, bodies
+from orpytal import Orbit, KeplarianState, frames, bodies, OrbitType
 from orpytal.common import units
 from orpytal.planet_constants import CentralBody
 
@@ -16,7 +16,7 @@ from poliastro.twobody import Orbit as PoliastroOrbit
 from astropy import units as u
 
 logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 
 earth_poliastro = CentralBody(
     name='Earth (Poliastro)',
@@ -26,7 +26,7 @@ earth_poliastro = CentralBody(
 
 earth = earth_poliastro
 
-possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se']
+possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se', 'b']
 two_value_pairs = [i for i in itertools.combinations(possible_values, 2)]
 print(len(two_value_pairs))
 
@@ -35,6 +35,19 @@ impossible_pairs = [
     ('a', 'se'),  # Direct dependency (se = -mu/sqrt(a))
     ('a', 'period'),  # Direct dependency (period = 2pi sqrt(a^3/mu))
     ('period', 'se'),  # Indirect dependency (se <-> a <-> period)
+]
+
+# I don't know if these are impossible
+unsupported_pairs = [
+    ('rp', 'period'),  # I suspect ths isn't possible
+    ('p', 'period'),  # I suspect ths isn't possible
+    ('h', 'period'),  # I suspect ths isn't possible
+    ('e', 'b'),  # Should be possible
+    ('rp', 'b'),  # Should be possible
+    ('ra', 'b'),  # Should be possible
+    ('p', 'b'),  # Should be possible
+    ('h', 'b'),  # Should be possible
+    ('period', 'b'),  # Should be possible
 ]
 
 a = 51000 * units.km
@@ -88,18 +101,18 @@ class TestOrbitCreation(unittest.TestCase):
 
         elliptic_poliastro = PoliastroOrbit.from_classical(Earth, a.m * u.km, 0.7 * u.one, i.m * u.deg,
                                                            raan.m * u.deg, argp.m * u.deg, ta.m * u.deg)
-        elliptic_orbit.compare_poliastro(elliptic_orbit)
+        elliptic_orbit.compare_poliastro(elliptic_poliastro)
 
     def test_two_value_pairs_elliptic(self):
         """
-        Check that all supported two value pairs yield the same orbit as all other two value pairs
+        Check that all supported two value pairs yield the same orbit as all other two value pairs (elliptic orbit)
         """
         for pair in two_value_pairs:
             if pair[0] == pair[1]:
                 continue
 
-            # Not all pairs are possible!
-            if pair in impossible_pairs:
+            # Skip over unsupported pairs
+            if pair in impossible_pairs or pair in unsupported_pairs:
                 continue
 
             test_orbit = Orbit(earth, i=i, raan=raan, arg_periapsis=argp)
@@ -107,24 +120,33 @@ class TestOrbitCreation(unittest.TestCase):
             setattr(test_orbit, pair[1], getattr(elliptic_orbit, pair[1]))
             same = elliptic_orbit.compare(test_orbit)
             if not same:
-                print(pair)
-                # assert same
+                logging.error(pair)
+            assert same
+            assert test_orbit.type() == OrbitType.Elliptic
+            assert not test_orbit.circular()
 
     def test_two_value_pairs_circular(self):
-        two_value_pairs = [('a', 'ra')]
+        """
+        Check that all supported two value pairs yield the same orbit as all other two value pairs (circular orbit)
+        """
 
         for pair in two_value_pairs:
-            print(pair)
             if pair[0] == pair[1]:
                 continue
 
-            if pair in impossible_pairs:
+            # Skip over unsupported pairs
+            if pair in impossible_pairs or pair in unsupported_pairs:
                 continue
 
-            test_orbit = Orbit(earth)
+            test_orbit = Orbit(earth, i=i, raan=raan, arg_periapsis=argp)
             setattr(test_orbit, pair[0], getattr(circular_orbit, pair[0]))
             setattr(test_orbit, pair[1], getattr(circular_orbit, pair[1]))
             same = circular_orbit.compare(test_orbit)
+            if not same:
+                logging.error(pair)
+            assert same
+            assert test_orbit.type() == OrbitType.Elliptic
+            assert test_orbit.circular()
 
     def test_not_ascending(self):
         orbit = Orbit(earth, a=a, e=0.4)

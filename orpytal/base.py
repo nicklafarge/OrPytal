@@ -74,8 +74,8 @@ class OrbitBase(object):
     def check_satisfied(self, obj, req):
         return conics_utils.check_satisfied(obj, req)
 
-    def state_orbit_satisfied(self, state, orbit, requirements):
-        return conics_utils.state_orbit_satisfied(state, orbit, requirements)
+    def state_orbit_satisfied(self, state, requirements):
+        return conics_utils.state_orbit_satisfied(state, requirements)
 
     def validate_input(self, value):
         return True

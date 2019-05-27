@@ -189,16 +189,10 @@ class Orbit(object):
         if not self._e.evaluated and not self._a.evaluated and not self._ra.evaluated and not self._se.evaluated:
             raise ParameterUnavailableError('Need eccentricity, a, se, or ra to evaluate type of orbit')
 
-        # try:
-        #     if self.circular(tol=tol):
-        #         return OrbitType.Elliptic
-        # except ParameterUnavailableError as pae:
-        #     pass
-
         if self._e.evaluated:
-            if 0.0 <= self.e < 1.0:
+            if 0.0 <= self.e < 1.0 or np.isclose(0, self.e):
                 return OrbitType.Elliptic
-            elif (self.e - 1.) < tol:
+            elif np.abs(self.e - 1.) < tol:
                 return OrbitType.Parabolic
             else:
                 return OrbitType.Hyperbolic
@@ -263,8 +257,8 @@ class Orbit(object):
         return all_same
 
     def compare_poliastro(self, poliastro_orbit):
-        from poliastro.twobody import Orbit
-        if not isinstance(poliastro_orbit, Orbit):
+        from poliastro.twobody import Orbit as PoliastroOrbit
+        if not isinstance(poliastro_orbit, PoliastroOrbit):
             logging.warning('Inputted orbit is not an instance of poliastro.twobody.Orbit')
             return False
 
@@ -281,7 +275,6 @@ class Orbit(object):
                 other_value = other_value.to(unit_str)
 
             return np.isclose(my_value.to(unit_str).m, other_value.value)
-
 
         assert compare_value('a')
         assert compare_value('e', 'ecc')
@@ -531,7 +524,7 @@ class SemiLatusRectum(OrbitValue):
     def set_from_state(self, state, orbit):
 
         # r(1+ecos(ta))
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
             self.value = state.r * (1 + orbit.e * np.cos(state.ta))
 
 
@@ -548,8 +541,7 @@ class Eccentricity(OrbitValue):
             ('p', 'ra'),
             ('a', 'ra'),
             ('p', 'rp'),
-            ('a', 'b'),
-            ('b', 'rp')
+            ('a', 'b')
         ]
         self.orbit_state_requirements = [
             ('r', 'v', 'fpa')
@@ -592,13 +584,11 @@ class Eccentricity(OrbitValue):
         elif self.satisfied(orbit, self.orbit_requirements[6]):
             self.value = np.sqrt(1 - (orbit.b ** 2 / orbit.a ** 2) )
 
-        elif self.satisfied(orbit, self.orbit_requirements[7]):
-            self.value = orbit.b * np.sqrt(1 - orbit.e ** 2) / orbit.rp
 
     @orbit_setter
     def set_from_state(self, state, orbit):
 
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
             self.value = np.sqrt(((state.r * state.v ** 2) / orbit.central_body.mu - 1) ** 2 * np.cos(state.fpa) ** 2 + \
                                  np.sin(state.fpa) ** 2)
 
@@ -610,6 +600,7 @@ class EccentricityVector(OrbitValue):
     def __init__(self):
         super().__init__(units.dimensionless)
         self.orbit_requirements = [
+            ('a', 'rp', 'raan', 'arg_periapsis', 'inclination')
         ]
         self.orbit_state_requirements = [
             ('position', 'velocity')
@@ -617,16 +608,17 @@ class EccentricityVector(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-        return
+        if self.satisfied(orbit, self.orbit_requirements[0]):
+            self.set_from_state(orbit.get_state(ta=0), orbit)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
-            v = state.velocity.inertial()  # inertial velocity (xyz)
-            r = state.position.inertial()  # inertial position (xyz)
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
+            v = state.velocity.inertial(state)  # inertial velocity (xyz)
+            r = state.position.inertial(state)  # inertial position (xyz)
             mu = orbit.central_body.mu  # gravitational parameter
             val = ((v.dot(v) - mu / r.norm()) * r.value - r.dot(v) * v.value) / mu
-            self.value = frames.Vector(orbit, state, val, frames.InertialFrame)
+            self.value = frames.Vector(val, frames.InertialFrame)
 
 
 class AngularMomentumMagnitude(OrbitValue):
@@ -657,7 +649,7 @@ class AngularMomentumMagnitude(OrbitValue):
     def set_from_state(self, state, orbit):
 
         # | r cross v |
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
             self.value = np.linalg.norm(np.cross(state.position.value, state.velocity.value))
 
 
@@ -668,7 +660,8 @@ class AngularMomentumVector(OrbitValue):
     def __init__(self):
         super().__init__(units.km ** 2 / units.s)
         self.orbit_requirements = [
-            ('raan', 'inclination', 'h')
+            ('raan', 'inclination', 'h'),
+            ('rp', 'a', 'raan', 'arg_periapsis', 'inclination')
         ]
         self.orbit_state_requirements = [
             ('position', 'velocity')
@@ -676,19 +669,20 @@ class AngularMomentumVector(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-        return False
-
-    @orbit_setter
-    def set_from_state(self, state, orbit):
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+        if self.satisfied(orbit, self.orbit_requirements[0]):
             h_vector = orbit.h * np.array([np.sin(orbit.raan) * np.sin(orbit.inclination),
                                            -np.cos(orbit.raan) * np.sin(orbit.inclination),
                                            np.cos(orbit.inclination)
                                            ])
-            self.value = frames.Vector(orbit, state, h_vector, frames.InertialFrame)
-        elif self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[1]):
-            h = state.position.inertial().cross(state.velocity.inertial())
-            self.value = frames.Vector(orbit, state, h, frames.InertialFrame)
+            self.value = frames.Vector(h_vector, frames.InertialFrame)
+        elif self.satisfied(orbit, self.orbit_requirements[1]):
+            self.set_from_state(orbit.get_state(ta=0), orbit)
+
+    @orbit_setter
+    def set_from_state(self, state, orbit):
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
+            h = state.position.inertial(state).cross(state.velocity.inertial(state))
+            self.value = frames.Vector(h, frames.InertialFrame)
 
 
 class ArgumentOfPeriapsis(OrbitValue):
@@ -724,7 +718,7 @@ class ArgumentOfPeriapsis(OrbitValue):
     @orbit_setter
     def set_from_state(self, state, orbit):
         # r(1+ecos(ta))
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
             self.value = state.arg_latitude - state.ta
 
 
@@ -770,10 +764,10 @@ class AscendingNodeVector(OrbitValue):
 
     @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
-            h_xyz = orbit.angular_momentum.inertial().unit()
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
+            h_xyz = orbit.angular_momentum.inertial(state).unit()
             value = np.cross([0, 0, 1], h_xyz)
-            self.value = frames.Vector(orbit, state, value, frames.InertialFrame)
+            self.value = frames.Vector(value, frames.InertialFrame)
 
 
 class Inclination(OrbitValue):
@@ -960,7 +954,7 @@ class SpecificEnergy(OrbitValue):
     def set_from_state(self, state, orbit):
 
         # v^2/2 - mu/r
-        if self.state_orbit_satisfied(state, orbit, self.orbit_state_requirements[0]):
+        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
             self.value = state.v ** 2. / 2. - orbit.central_body.mu / state.r
 
 

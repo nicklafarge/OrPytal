@@ -238,12 +238,12 @@ class KeplarianState(object):
             angle_to_check = self.H
         elif self._velocity.evaluated:
             try:
-                self._ascending = self.velocity.rotating().value[0].m > 0
+                self._ascending = self.velocity.rotating(self).value[0].m > 0
             except ParameterUnavailableError as e:
                 pass
         elif self._position.evaluated:
             try:
-                self._ascending = self.position.perifocal().value[1].m > 0
+                self._ascending = self.position.perifocal(self).value[1].m > 0
             except ParameterUnavailableError as e:
                 pass
         elif self.ascending is None:
@@ -266,7 +266,7 @@ class StateValue(OrbitBase):
         raise NotImplementedError()
 
     def satisfied(self, state, orbit, requirements):
-        return self.state_orbit_satisfied(state, orbit, requirements)
+        return self.state_orbit_satisfied(state, requirements)
 
     def validate_state_input(self, value, state):
         pass  # No op
@@ -440,7 +440,10 @@ class FlightPathAngle(StateValue):
 
         # acos(h/(rv))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = state.ascending_sign * np.arccos(orbit.h / (state.r * state.v))
+            cos_val = orbit.h / (state.r * state.v)
+            if np.isclose(cos_val, 1):
+                cos_val = 1
+            self.value = state.ascending_sign * np.arccos(cos_val)
 
         # atan(vr/vt)
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
@@ -504,9 +507,7 @@ class PositionVector(StateValue):
     def set(self, state, orbit):
         # r (rhat)
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            self.value = frames.Vector(orbit,
-                                       state,
-                                       np.array([state.r.m, 0, 0]),
+            self.value = frames.Vector(np.array([state.r.m, 0, 0]),
                                        frames.RotatingFrame)
 
 
@@ -528,15 +529,11 @@ class VelocityVector(StateValue):
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
             vr = (orbit.central_body.mu * orbit.e) / orbit.h * np.sin(state.ta)
             vt = orbit.central_body.mu / orbit.h * (1 + orbit.e * np.cos(state.ta))
-            self.value = frames.Vector(orbit,
-                                       state,
-                                       np.array([vr.m, vt.m, 0]) * vr.u,
+            self.value = frames.Vector(np.array([vr.m, vt.m, 0]) * vr.u,
                                        frames.RotatingFrame)
 
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
-            self.value = frames.Vector(orbit,
-                                       state,
-                                       np.array([state.v.m * np.sin(state.fpa), state.v.m * np.cos(state.fpa), 0]),
+            self.value = frames.Vector(np.array([state.v.m * np.sin(state.fpa), state.v.m * np.cos(state.fpa), 0]),
                                        frames.RotatingFrame)
 
 
@@ -603,17 +600,16 @@ class EccentricAnomaly(StateValue):
             self.value = np.nan
 
         # Only proceed if elliptic orbit
-        if orbit.type() != OrbitType.Elliptic:
+        elif orbit.type() != OrbitType.Elliptic:
             pass
 
         # acos((a-r)/(ae))
         elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             cos_val = (orbit.a - state.r) / (orbit.a * orbit.e)
-            if cos_val > 1 and np.isclose(cos_val, 1):
-                self.value = 0
-            else:
-                self.value = state.ascending_sign * np.arccos(
-                    (orbit.a - state.r) / (orbit.a * orbit.e))
+            if np.isclose(cos_val, 1):
+                cos_val = 1
+
+            self.value = state.ascending_sign * np.arccos(cos_val)
 
         # Newton raphson to find eccentric anomaly from from mean anomaly
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):

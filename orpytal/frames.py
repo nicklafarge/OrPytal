@@ -10,10 +10,7 @@ from orpytal.utils import conics_utils
 
 
 class Vector(object):
-    def __init__(self, orbit, state, value, frame):
-        self.orbit = orbit
-        self.state = state
-
+    def __init__(self,value, frame):
         self.value = value
         self.frame = frame
 
@@ -35,33 +32,24 @@ class Vector(object):
 
     def __eq__(self, other):
         if isinstance(other, Vector):
+
             vec1 = self
             vec2 = other
-            while vec1.frame != vec2.frame:
-                try:
-                    vec1 = vec1.to(vec2.frame)
-                    break
-                except ParameterUnavailableError:
-                    pass
 
-                try:
-                    vec2 = vec2.to(vec1.frame)
-                    break
-                except ParameterUnavailableError:
-                    raise ParameterUnavailableError(
-                        'Tried to Compare [{}] to [{}] Values, but could not put them in the same frame'.format(self,
-                                                                                                                other))
+            if vec1.frame != vec2.frame:
+                return False
+            else:
+                return np.allclose(vec1.value, vec2.value)
 
-            return np.allclose(vec1.value, vec2.value)
-
-        return NotImplemented
+        else:
+            return False
 
     def __neq__(self, other):
         if isinstance(other, Vector):
             return not self == other
         return NotImplemented
 
-    def to(self, frame):
+    def to(self, frame, state):
         if frame == InertialFrame:
             dcm = self.frame.inertial_dcm
         elif frame == RotatingFrame:
@@ -74,18 +62,18 @@ class Vector(object):
         if self.frame == frame:
             value = self.value
         else:
-            value = dcm(self.orbit, self.state).dot(self.value) * self.value.units
+            value = dcm(state).dot(self.value) * self.value.units
 
-        return Vector(self.orbit, self.state, value, frame)
+        return Vector(value, frame)
 
-    def inertial(self):
-        return self.to(InertialFrame)
+    def inertial(self, *args):
+        return self.to(InertialFrame, *args)
 
-    def rotating(self):
-        return self.to(RotatingFrame)
+    def rotating(self, *args):
+        return self.to(RotatingFrame, *args)
 
-    def perifocal(self):
-        return self.to(PerifocalFrame)
+    def perifocal(self, *args):
+        return self.to(PerifocalFrame, *args)
 
     def norm(self):
         return np.linalg.norm(self.value) * self.value.units
@@ -115,23 +103,20 @@ class CoordinateFrame(object):
     fn_name = None
 
     @classmethod
-    def inertial_dcm(cls, orbit, state):
+    def inertial_dcm(cls, state):
         raise NotImplementedError()
 
     @classmethod
-    def rotating_dcm(cls, orbit, state):
+    def rotating_dcm(cls, state):
         raise NotImplementedError()
 
     @classmethod
-    def perifocal_dcm(cls, orbit, state):
+    def perifocal_dcm(cls, state):
         raise NotImplementedError()
 
     @classmethod
-    def vnc_dcm(cls, orbit, state):
+    def vnc_dcm(cls, state):
         raise NotImplementedError()
-
-    def __mul__(self, other):
-        return (self, other)
 
 
 class RotatingFrame(CoordinateFrame):
@@ -139,15 +124,15 @@ class RotatingFrame(CoordinateFrame):
     fn_name = 'rotating'
 
     @classmethod
-    def inertial_dcm(cls, orbit, state):
+    def inertial_dcm(cls, state):
         requirements = ['raan', 'inclination', 'arg_latitude']
-        if not conics_utils.state_orbit_satisfied(state, orbit, requirements):
+        if not conics_utils.state_orbit_satisfied(state, requirements):
             raise ParameterUnavailableError(
                 'Need ascending node, inclination and argument of latitude to convert to xyz')
 
-        Omega = orbit.raan
+        Omega = state.orbit.raan
         theta = state.arg_latitude
-        i = orbit.inclination
+        i = state.orbit.inclination
         dcm_ri = np.zeros((3, 3))
         dcm_ri[0, 0] = np.cos(Omega) * np.cos(theta) - np.sin(Omega) * np.cos(i) * np.sin(theta)
         dcm_ri[0, 1] = -np.cos(Omega) * np.sin(theta) - np.sin(Omega) * np.cos(i) * np.cos(theta)
@@ -162,15 +147,15 @@ class RotatingFrame(CoordinateFrame):
         return dcm_ri
 
     @classmethod
-    def rotating_dcm(cls, orbit, state):
+    def rotating_dcm(cls, state):
         return np.eye(3)
 
     @classmethod
-    def perifocal_dcm(cls, orbit, state):
-        return PerifocalFrame.rotating_dcm(orbit, state).transpose()
+    def perifocal_dcm(cls, state):
+        return PerifocalFrame.rotating_dcm(state).transpose()
 
     @classmethod
-    def vnc_dcm(cls, orbit, state):
+    def vnc_dcm(cls, state):
         return np.array(
             [[np.sin(state.fpa), 0, np.cos(state.fpa)],
              [np.cos(state.fpa), 0, -np.sin(state.fpa)],
@@ -182,23 +167,23 @@ class VncFrame(CoordinateFrame):
     fn_name = 'vnc'
 
     @classmethod
-    def inertial_dcm(cls, orbit, state):
-        dcm_vr = cls.rotating_dcm(orbit, state)
-        dcm_ri = RotatingFrame.inertial_dcm(orbit, state)
+    def inertial_dcm(cls, state):
+        dcm_vr = cls.rotating_dcm(state)
+        dcm_ri = RotatingFrame.inertial_dcm(state)
         return dcm_vr.dot(dcm_ri)
 
     @classmethod
-    def rotating_dcm(cls, orbit, state):
-        return RotatingFrame.vnc_dcm(orbit, state).transpose()
+    def rotating_dcm(cls, state):
+        return RotatingFrame.vnc_dcm(state).transpose()
 
     @classmethod
-    def perifocal_dcm(cls, orbit, state):
-        dcm_vr = cls.rotating_dcm(orbit, state)
-        dcm_re = RotatingFrame.perifocal_dcm(orbit, state)
+    def perifocal_dcm(cls, state):
+        dcm_vr = cls.rotating_dcm(state)
+        dcm_re = RotatingFrame.perifocal_dcm(state)
         return dcm_vr.dot(dcm_re)
 
     @classmethod
-    def vnc_dcm(cls, orbit, state):
+    def vnc_dcm(cls, state):
         return np.eye(3)
 
 
@@ -207,13 +192,13 @@ class PerifocalFrame(CoordinateFrame):
     fn_name = 'perifocal'
 
     @classmethod
-    def inertial_dcm(cls, orbit, state):
-        dcm_pr = cls.rotating_dcm(orbit, state)
-        dcm_ri = RotatingFrame.inertial_dcm(orbit, state)
+    def inertial_dcm(cls, state):
+        dcm_pr = cls.rotating_dcm(state)
+        dcm_ri = RotatingFrame.inertial_dcm(state)
         return dcm_ri.dot(dcm_pr) # order different from 440 because column vector
 
     @classmethod
-    def rotating_dcm(cls, orbit, state):
+    def rotating_dcm(cls, state):
         if state.ta is None:
             raise ParameterUnavailableError('Need true anomaly to convert to the rotating frame')
         return np.array(
@@ -223,13 +208,13 @@ class PerifocalFrame(CoordinateFrame):
         )
 
     @classmethod
-    def perifocal_dcm(cls, orbit, state):
+    def perifocal_dcm(cls, state):
         return np.eye(3)
 
     @classmethod
-    def vnc_dcm(cls, orbit, state):
-        dcm_vr = cls.rotating_dcm(orbit, state)
-        dcm_rv = RotatingFrame.vnc_dcm(orbit, state)
+    def vnc_dcm(cls, state):
+        dcm_vr = cls.rotating_dcm(state)
+        dcm_rv = RotatingFrame.vnc_dcm(state)
         return dcm_rv.dot(dcm_vr)
 
 
@@ -238,17 +223,17 @@ class InertialFrame(CoordinateFrame):
     fn_name = 'inertial'
 
     @classmethod
-    def inertial_dcm(cls, orbit, state):
+    def inertial_dcm(cls, state):
         return np.eye(3)
 
     @classmethod
-    def rotating_dcm(cls, orbit, state):
-        return RotatingFrame.inertial_dcm(orbit, state).transpose()
+    def rotating_dcm(cls, state):
+        return RotatingFrame.inertial_dcm(state).transpose()
 
     @classmethod
-    def perifocal_dcm(cls, orbit, state):
-        return PerifocalFrame.inertial_dcm(orbit, state).transpose()
+    def perifocal_dcm(cls, state):
+        return PerifocalFrame.inertial_dcm(state).transpose()
 
     @classmethod
-    def vnc_dcm(cls, orbit, state):
-        return VncFrame.inertial_dcm(orbit, state).transpose()
+    def vnc_dcm(cls, state):
+        return VncFrame.inertial_dcm(state).transpose()

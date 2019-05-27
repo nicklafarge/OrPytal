@@ -83,7 +83,7 @@ class PlotUtilsBase(metaclass=ABCMeta):
         :param state: instance of state.State
         :param kwargs: arguments to pass the the plotting function
         """
-        state.to(self.frame)
+        state.to(self.frame, state)
 
     @abstractmethod
     def default_axes(self, *args, **kwargs):
@@ -167,7 +167,7 @@ class PlotUtils2D(PlotUtilsBase, metaclass=ABCMeta):
 
     @copydoc(PlotUtilsBase.plot_state)
     def plot_state(self, state, **kwargs):
-        state.to(self.frame)
+        state.to(self.frame, state)
         self.plot_projection(state, **kwargs)
 
     @copydoc(PlotUtilsBase.plot_traj_list)

@@ -99,11 +99,11 @@ def check_satisfied(obj, req):
     return hasattr(obj, '_' + req) and getattr(obj, '_' + req).evaluated
 
 
-def state_orbit_satisfied(state, orbit, requirements):
+def state_orbit_satisfied(state, requirements):
     if isinstance(requirements, str):
-        return check_satisfied(state, requirements) or check_satisfied(orbit, requirements)
+        return check_satisfied(state, requirements) or check_satisfied(state.orbit, requirements)
     else:
-        return all([check_satisfied(state, req) or check_satisfied(orbit, req) for req in requirements])
+        return all([check_satisfied(state, req) or check_satisfied(state.orbit, req) for req in requirements])
 
 
 def add_units(value, value_units):

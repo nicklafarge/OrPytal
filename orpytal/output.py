@@ -132,7 +132,7 @@ def output_state(state):
     # Inertial if possible, else orbit fixed, else rotating
     frame = frames.InertialFrame
     try:
-        state.position.to(frames.InertialFrame)
+        state.position.to(frames.InertialFrame, state)
         unit_vectors = ["x", "y", "z"]
     except AttributeError as ae:
         pass
@@ -140,7 +140,7 @@ def output_state(state):
         frame = frames.PerifocalFrame
 
     try:
-        state.position.to(frames.PerifocalFrame)
+        state.position.to(frames.PerifocalFrame, state)
         unit_vectors = ["e", "p", "h"]
     except AttributeError as ae:
         pass
@@ -148,8 +148,8 @@ def output_state(state):
         frame = frames.RotatingFrame
         unit_vectors = ["r", "theta", "h"]
 
-    pos = default_vector if not state.position else state.position.to(frame)
-    vel = default_vector if not state.position or not state.velocity else state.velocity.to(frame)
+    pos = default_vector if not state.position else state.position.to(frame, state)
+    vel = default_vector if not state.position or not state.velocity else state.velocity.to(frame, state)
 
     output.append("State Parameters".center(LINE_WIDTH, " ") + "\n")
     output.append(create_key_value_line_params(state._r, state._ta))
