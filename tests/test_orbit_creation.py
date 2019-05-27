@@ -148,12 +148,34 @@ class TestOrbitCreation(unittest.TestCase):
             assert test_orbit.type() == OrbitType.Elliptic
             assert test_orbit.circular()
 
-    def test_not_ascending(self):
-        orbit = Orbit(earth, a=a, e=0.4)
-        st = orbit.get_state(r=49000)
-        assert st._ascending == None
-        assert st.ta == None
+    def test_creation_from_position_and_velocity_elliptic(self):
+        """
+        Test creation from inertial position and velocity for an elliptic orbit
+        """
+        test_st = elliptic_orbit.get_state(ta=0.2)
 
+        test_orbit = Orbit(earth, i=i, raan=raan, arg_periapsis=argp)
+        new_st = KeplarianState(test_orbit)
+        new_st.position = test_st.position
+        new_st.velocity = test_st.velocity
+
+        assert elliptic_orbit.compare(test_orbit)
+        assert test_orbit.type() == OrbitType.Elliptic
+
+    def test_creation_from_position_and_velocity_circular(self):
+        """
+        Test creation from inertial position and velocity for a circular orbit
+        """
+        test_st = circular_orbit.get_state(ta=0.2)
+
+        test_orbit = Orbit(earth, i=i, raan=raan, arg_periapsis=argp)
+        new_st = KeplarianState(test_orbit)
+        new_st.position = test_st.position
+        new_st.velocity = test_st.velocity
+
+        assert circular_orbit.compare(test_orbit, exceptions=('ta'))
+        assert test_orbit.type() == OrbitType.Elliptic
+        assert test_orbit.circular()
 
 if __name__ == '__main__':
     unittest.main()

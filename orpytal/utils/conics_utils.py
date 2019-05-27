@@ -50,11 +50,17 @@ def orbit_setter(setter_function):
             pass
 
         value_after = orbit_value.value
-        if value_before != value_after:
+
+        try:
+            value_changed = bool(value_before != value_after)
+        except ValueError as ve:
+            value_changed = any(value_before != value_after)
+
+        if value_changed:
             logging.debug('Set {} to {}'.format(orbit_value.symbol, orbit_value.value))
 
         # Return true if the value of the parameter has changed as as result of the function call
-        return value_before != value_after
+        return value_changed
 
     return wrapper
 
@@ -127,6 +133,6 @@ def angle_positive(value):
 def angle_pos_neg(value):
     angle = angle_positive(value)
     if angle > np.pi:
-        return angle - 2*np.pi
+        return angle - 2 * np.pi
     else:
         return angle

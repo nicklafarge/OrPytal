@@ -313,30 +313,30 @@ class TrueAnomaly(StateValue):
 
         elif self.satisfied(state, orbit, self.orbit_requirements[3]) and orbit.equitorial() and not orbit.circular():
 
-            h = orbit.angular_momentum.inertial().unit()
+            h = orbit.angular_momentum.inertial(state).unit()
             e = orbit.e_vec
-            r = state.position.inertial()
+            r = state.position.inertial(state)
             self.value = np.arctan2(h.dot(e.cross(r)), r.dot(e))
 
         elif self.satisfied(state, orbit, self.orbit_requirements[4]) and not orbit.equitorial() and orbit.circular():
-            h = orbit.angular_momentum.inertial().unit()
-            r = state.position.inertial()
-            n = orbit.raan_vec.inertial()
+            h = orbit.angular_momentum.inertial(state).unit()
+            r = state.position.inertial(state)
+            n = orbit.raan_vec.inertial(state)
             self.value = np.arctan2(r.dot(np.cross(h, n)), r.dot(n))
 
         elif self.satisfied(state, orbit, self.orbit_requirements[5]) and orbit.equitorial() and orbit.circular():
-            r = state.position.inertial()
+            r = state.position.inertial(state)
             self.value = np.arctan2(r[1], r[0])
 
         elif self.satisfied(state, orbit,
                             self.orbit_requirements[6]) and not orbit.equitorial() and not orbit.circular():
 
             # unit vectors
-            ehat = orbit.e_vec.inertial().unit()
-            hhat = orbit.angular_momentum.inertial().unit()
+            ehat = orbit.e_vec.inertial(state).unit()
+            hhat = orbit.angular_momentum.inertial(state).unit()
             phat = np.cross(hhat, ehat)
 
-            r = state.position.inertial().unit()
+            r = state.position.inertial(state).unit()
             y = r.dot(phat)
             x = r.dot(ehat)
 
@@ -403,14 +403,18 @@ class ArgumentOfLatitude(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
+
+        if orbit.circular():
+            self.value = np.nan
+
         # omega + ta
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.arg_periapsis + state.ta
 
         # from DCM
-        if self.satisfied(state, orbit, self.orbit_requirements[1]):
-            rhat = state.position.inertial().unit()
-            hhat = orbit.angular_momentum.inertial().unit()
+        elif self.satisfied(state, orbit, self.orbit_requirements[1]):
+            rhat = state.position.inertial(state).unit()
+            hhat = orbit.angular_momentum.inertial(state).unit()
             theta_hat = np.cross(hhat, rhat)
 
             # special case i=0
@@ -447,7 +451,7 @@ class FlightPathAngle(StateValue):
 
         # atan(vr/vt)
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):
-            v = state.velocity.perifocal()
+            v = state.velocity.perifocal(state)
             fpa = np.arctan(v[0] / v[1])
             self.value = state.angle_check_tan(fpa)
 
@@ -550,8 +554,12 @@ class TimeSincePeriapsis(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
+
+        if orbit.circular():
+            self.value = np.nan
+
         # ( E - e sin(E) ) / n
-        if orbit.type() == OrbitType.Elliptic and self.satisfied(state, orbit, self.orbit_requirements[0]):
+        elif orbit.type() == OrbitType.Elliptic and self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = (state.E - orbit.e * np.sin(state.E)) / orbit.n
 
         # ( e sinh(H) - H) / N
@@ -573,8 +581,12 @@ class MeanAnomaly(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
+
+        if orbit.circular():
+            self.value = np.nan
+
         # n * ttp
-        if self.satisfied(state, orbit, self.orbit_requirements[0]):
+        elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.n * state.t_since_rp
 
         # E - e sin(E)
@@ -596,6 +608,7 @@ class EccentricAnomaly(StateValue):
 
     @orbit_setter
     def set(self, state, orbit):
+
         if orbit.circular():
             self.value = np.nan
 

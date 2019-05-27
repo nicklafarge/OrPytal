@@ -68,7 +68,7 @@ class Orbit(object):
                 attribute = getattr(self, '_' + k)
 
                 def setter_fn(oos, val):
-                     attribute.value = v
+                    attribute.value = v
 
                 set_attribute(self, attribute, setter_fn)
             except AttributeError as e:
@@ -81,7 +81,7 @@ class Orbit(object):
         return output.output_orbit(self)
 
     def get_state(self, **kwargs):
-        return KeplarianState(  self, **kwargs)
+        return KeplarianState(self, **kwargs)
 
     def analytic_propagate_full_orbit(self, n=150):
 
@@ -218,7 +218,7 @@ class Orbit(object):
 
         return None
 
-    def compare(self, orbit):
+    def compare(self, orbit, exceptions=()):
         all_same = True
 
         # Compare which vars are evaluated
@@ -232,21 +232,31 @@ class Orbit(object):
         # Compare values of evaluated variables
         for var in self.vars:
             if var.evaluated and hasattr(orbit, var.symbol):
+                other_value = getattr(orbit, var.symbol)
+
                 if isinstance(var.value, units.Quantity):
-                    other_value = getattr(orbit, var.symbol)
-                    if np.isnan(var.value) and np.isnan(other_value):
+                    try:
+                        nan_check = bool(np.isnan(var.value)) and bool(np.isnan(other_value))
+                    except ValueError as ve:
+                        nan_check = all(np.isnan(var.value)) and all(np.isnan(other_value))
+                        
+                    if nan_check:
                         same = True
                     else:
                         same = np.isclose(var.value, other_value)
                 elif isinstance(var.value, frames.Vector):
 
-                    vec1 = var.value
-                    vec2 = getattr(orbit, var.symbol)
-                    same = vec1 == vec2
+                    x = 1
+                    if hasattr(var.value, '__len__') and hasattr(other_value, '__len__') and \
+                                    var.value.value.size > 1 and other_value.value.size > 1 and \
+                                    all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
+                        same = True
+                    else:
+                        same = var.value == other_value
                 else:
                     same = False
 
-            if same:
+            if same or var.symbol in exceptions:
                 logging.debug('Checked {} [OK]'.format(var.symbol))
             else:
                 all_same = False
@@ -288,10 +298,13 @@ class Orbit(object):
         assert compare_value('i', 'inc')
         assert compare_value('p')
         assert compare_value('period')
-        assert all(compare_value('e_vec'))
         assert all(compare_value('angular_momentum', 'h_vec'))
 
-
+        # Handlded differently for eccentricity vector in a circular orbit
+        if self.circular():
+            assert all(np.isnan(self.e_vec)) and all(np.isclose(poliastro_orbit.e_vec, 0))
+        else:
+            assert all(compare_value('e_vec'))
 
     def angles_set(self):
         return self._raan.evaluated and self._arg_periapsis.evaluated
@@ -582,8 +595,7 @@ class Eccentricity(OrbitValue):
 
         # sqrt(1 - (b / a)^2)
         elif self.satisfied(orbit, self.orbit_requirements[6]):
-            self.value = np.sqrt(1 - (orbit.b ** 2 / orbit.a ** 2) )
-
+            self.value = np.sqrt(1 - (orbit.b ** 2 / orbit.a ** 2))
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -608,7 +620,10 @@ class EccentricityVector(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-        if self.satisfied(orbit, self.orbit_requirements[0]):
+        if orbit.circular():
+            self.value = np.nan * np.ones(3)
+
+        elif self.satisfied(orbit, self.orbit_requirements[0]):
             self.set_from_state(orbit.get_state(ta=0), orbit)
 
     @orbit_setter
@@ -710,10 +725,11 @@ class ArgumentOfPeriapsis(OrbitValue):
             self.value = np.arctan2(orbit.e_vec[1], orbit.e_vec[0])
 
         elif self.satisfied(orbit, self.orbit_requirements[2]) and not orbit.equitorial() and not orbit.circular():
-            e = orbit.e_vec.inertial().value.m
-            h_xyz = orbit.angular_momentum.inertial().unit()
-            line_of_nodes = orbit.raan_vec
-            self.value = np.arctan2(e.dot(np.cross(h_xyz, line_of_nodes)), e.dot(line_of_nodes))
+            if orbit.e_vec.frame == frames.InertialFrame and orbit.angular_momentum.frame == frames.InertialFrame:
+                e = orbit.e_vec.value.m
+                h_xyz = orbit.angular_momentum.unit()
+                line_of_nodes = orbit.raan_vec
+                self.value = np.arctan2(e.dot(np.cross(h_xyz, line_of_nodes)), e.dot(line_of_nodes))
 
     @orbit_setter
     def set_from_state(self, state, orbit):
@@ -753,21 +769,21 @@ class AscendingNodeVector(OrbitValue):
     def __init__(self):
         super().__init__(units.dimensionless)
         self.orbit_requirements = [
+            ('angular_momentum')
         ]
         self.orbit_state_requirements = [
-            ('angular_momentum')
         ]
 
     @orbit_setter
     def set(self, orbit):
-        return False
+        if self.satisfied(orbit, self.orbit_requirements[0]) and orbit.angular_momentum.frame == frames.InertialFrame:
+            h_xyz = orbit.angular_momentum.unit()
+            value = np.cross([0, 0, 1], h_xyz)
+            self.value = frames.Vector(value, frames.InertialFrame)
 
     @orbit_setter
     def set_from_state(self, state, orbit):
-        if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
-            h_xyz = orbit.angular_momentum.inertial(state).unit()
-            value = np.cross([0, 0, 1], h_xyz)
-            self.value = frames.Vector(value, frames.InertialFrame)
+        return False
 
 
 class Inclination(OrbitValue):

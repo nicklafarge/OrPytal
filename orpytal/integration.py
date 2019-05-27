@@ -15,10 +15,11 @@ def integrate_orbit(orbit, tol=1e-13, method="RK45"):
         raise ValueError("Only handles elliptic and hyperbolic")
 
     if orbit.angles_set():
-        ic = np.concatenate((start_state.position.inertial().value.m, start_state.velocity.inertial().value.m))
+        ic = np.concatenate((start_state.position.inertial(start_state).value.m,
+                             start_state.velocity.inertial(start_state).value.m))
     else:
-        ic = np.concatenate(
-            (start_state.position.perifocal().value.m, start_state.velocity.perifocal().value.m))
+        ic = np.concatenate((start_state.position.perifocal(start_state).value.m,
+                             start_state.velocity.perifocal(start_state).value.m))
 
     return integrate.solve_ivp(lambda t, y: two_body_eom(t, y, orbit.central_body),
                                (0, tend),
