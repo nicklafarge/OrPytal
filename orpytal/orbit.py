@@ -237,9 +237,9 @@ class Orbit(object):
                 if isinstance(var.value, units.Quantity):
                     try:
                         nan_check = bool(np.isnan(var.value)) and bool(np.isnan(other_value))
-                    except ValueError as ve:
+                    except ValueError:
                         nan_check = all(np.isnan(var.value)) and all(np.isnan(other_value))
-                        
+
                     if nan_check:
                         same = True
                     else:

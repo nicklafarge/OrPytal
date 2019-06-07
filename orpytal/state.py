@@ -104,6 +104,37 @@ class KeplarianState(object):
             else:
                 logging.warning('Error Found for {} [x]'.format(var.symbol))
 
+    def compare_poliastro(self, poliastro_orbit):
+        from poliastro.twobody import Orbit as PoliastroOrbit
+        if not isinstance(poliastro_orbit, PoliastroOrbit):
+            logging.warning('Inputted orbit is not an instance of poliastro.twobody.Orbit')
+            return False
+
+        def compare_value(symbol, psymbol=None):
+            my_value = getattr(self, symbol)
+
+            if isinstance(my_value, frames.Vector):
+                my_value = my_value.inertial(self).value
+
+            other_value = getattr(poliastro_orbit, symbol if not psymbol else psymbol)
+            unit_str = my_value.units.format_babel()
+
+            if unit_str != 'dimensionless':
+                other_value = other_value.to(unit_str)
+
+            close_check = np.isclose(my_value.to(unit_str).m, other_value.value)
+            try:
+                same = bool(close_check)
+            except ValueError:
+                same = all(close_check)
+
+            return same
+
+        assert compare_value('arg_latitude', 'arglat')
+        assert compare_value('position', 'r')
+        assert compare_value('velocity', 'v')
+        assert compare_value('ta', 'nu')
+
     @property
     def r(self):
         return self._r.value
@@ -410,6 +441,7 @@ class ArgumentOfLatitude(StateValue):
         # omega + ta
         elif self.satisfied(state, orbit, self.orbit_requirements[0]):
             self.value = orbit.arg_periapsis + state.ta
+
 
         # from DCM
         elif self.satisfied(state, orbit, self.orbit_requirements[1]):

@@ -150,6 +150,7 @@ def output_state(state):
 
     pos = default_vector if not state.position else state.position.to(frame, state)
     vel = default_vector if not state.position or not state.velocity else state.velocity.to(frame, state)
+    unit_vectors = unit_vectors if state.position else default_vector
 
     output.append("State Parameters".center(LINE_WIDTH, " ") + "\n")
     output.append(create_key_value_line_params(state._r, state._ta))

@@ -1,61 +1,69 @@
 ########### Standard ###########
-import logging
 import itertools
+import logging
 import unittest
 
 ########### Local ###########
-from orpytal import units, Orbit, KeplarianState, bodies, plotting, get_plot_utils, integration, frames, Trajectory
-from orpytal.errors import InvalidInputError
+from orpytal import Orbit, KeplarianState, frames, bodies, OrbitType
+from orpytal.common import units
+from orpytal.planet_constants import CentralBody
 
 ########### External ###########
 import numpy as np
+import poliastro
+from poliastro.bodies import Earth
+from poliastro.twobody import Orbit as PoliastroOrbit
+from astropy import units as u
 
 logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 
-earth = bodies.earth
-orbit = Orbit(earth,
-              a=51000 * units.km,
-              e=0.7,
-              raan=10 * units.deg,
-              arg_periapsis=10 * units.deg,
-              inclination=45 * units.deg)
+earth_poliastro = CentralBody(
+    name='Earth (Poliastro)',
+    radius=bodies.earth.radius,
+    mu=Earth.k.value / 1e9
+)
 
-st = orbit.get_state(ta=0.2)
+earth = earth_poliastro
 
-print(st.position.inertial(st))
-print(st.position.perifocal(st).inertial(st))
+possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se', 'b']
+two_value_pairs = [i for i in itertools.combinations(possible_values, 2)]
 
-print(st.position.perifocal(st))
-print(st.position.inertial(st).perifocal(st))
+possible_eccentric_values = [
+    ('ta'),
+    ('ttp'),
+    ('E'),
+    ('arg_latitude'),
+    ('r', 'ascending'),
+    ('position', 'velocity'),
+    ('r', 'fpa')
+]
+
+impossible_vals = [
+]
+
+unsupported_vals = [
+
+]
+
+a = 51000 * units.km
+i = 1.85 * units.deg
+raan = 49.562 * units.deg
+argp = 286.537 * units.deg
+ta = 45 * units.deg
+
+circular_orbit = Orbit(earth, a=a, e=0, raan=raan, arg_periapsis=argp, i=i)
+elliptic_orbit = Orbit(earth, a=a, e=0.7, raan=raan, arg_periapsis=argp, i=i)
+
+ascending_elliptic_state = elliptic_orbit.get_state(ta=45 * units.deg)
 
 
-r = st.position.value
-C_ri = frames.RotatingFrame.inertial_dcm(orbit, st)
-C_ir = C_ri.transpose()
-
-C_rp = frames.RotatingFrame.perifocal_dcm(orbit, st)
-C_pr = C_rp.transpose()
-
-
-C_pi = np.dot(C_pr, C_ri)
-C_pi = np.dot(C_ri, C_pr)
-
-ri = np.dot(C_ri, r)
-rp = np.dot(C_rp, r)
-
-ri_test = np.dot(C_pi, rp)
-
-print("--actual values--")
-print(ri)
-print(ri_test)
-
-print(rp)
+class TestOrbitCreation(unittest.TestCase):
+    def test_ascending_state_matches_poliastro(self):
+        elliptic_poliastro = PoliastroOrbit.from_classical(Earth, a.m * u.km, 0.7 * u.one, i.m * u.deg,
+                                                           raan.m * u.deg, argp.m * u.deg, ta.m * u.deg)
+        ascending_elliptic_state.compare_poliastro(elliptic_poliastro)
 
 
-def test_not_ascending(self):
-    """"""
-    orbit = Orbit(earth, a=a, e=0.4)
-    st = orbit.get_state(r=49000)
-    assert st._ascending == None
-    assert st.ta == None
+if __name__ == '__main__':
+    unittest.main()

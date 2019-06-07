@@ -28,7 +28,6 @@ earth = earth_poliastro
 
 possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se', 'b']
 two_value_pairs = [i for i in itertools.combinations(possible_values, 2)]
-print(len(two_value_pairs))
 
 impossible_pairs = [
     ('p', 'h'),  # Direct dependency (h = sqrt(p * mu))
@@ -61,12 +60,6 @@ elliptic_orbit = Orbit(earth, a=a, e=0.7, raan=raan, arg_periapsis=argp, i=i)
 
 circular_state = circular_orbit.get_state(ta=0)
 elliptic_state = elliptic_orbit.get_state(ta=0)
-
-to = Orbit(earth, raan=raan, arg_periapsis=argp, i=i)
-to.a = a
-to.e = 0.2
-x = 1
-
 
 class TestOrbitCreation(unittest.TestCase):
     def test_angle_units_after_orbit_creation_regular(self):
