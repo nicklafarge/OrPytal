@@ -79,30 +79,52 @@ class KeplarianState(object):
         if orbit_changed:
             self.set_vars()
 
-    def compare(self, other_state):
+    def compare(self, other_state, exceptions=()):
+        all_same = True
+
         # Compare which vars are evaluated
         evaluated_vars = sorted([v.symbol for v in self.vars if v.evaluated])
         other_evaluated_vars = sorted([v.symbol for v in other_state.vars if v.evaluated])
         for i, var in enumerate(evaluated_vars):
-            assert var == other_evaluated_vars[i]
+            if var != other_evaluated_vars[i]:
+                logging.warning('Different Evaluated Variables! ({})'.format(var))
+                return False
 
         # Compare values of evaluated variables
         for var in self.vars:
             if var.evaluated and hasattr(other_state, var.symbol):
+                other_value = getattr(other_state, var.symbol)
+
                 if isinstance(var.value, units.Quantity):
-                    same = np.isclose(var.value, getattr(other_state, var.symbol))
+                    try:
+                        nan_check = bool(np.isnan(var.value)) and bool(np.isnan(other_value))
+                    except ValueError:
+                        nan_check = all(np.isnan(var.value)) and all(np.isnan(other_value))
+
+                    if nan_check:
+                        same = True
+                    else:
+                        same = np.isclose(var.value, other_value)
+
                 elif isinstance(var.value, frames.Vector):
-
-                    vec1 = var.value
-                    vec2 = getattr(other_state, var.symbol)
-                    same = vec1 == vec2
+                    if hasattr(var.value, '__len__') and hasattr(other_value, '__len__') and \
+                                    var.value.value.size > 1 and other_value.value.size > 1 and \
+                                    all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
+                        same = True
+                    else:
+                        same = var.value == other_value
                 else:
-                    assert False
+                    same = False
 
-            if same:
-                logging.debug('Checked {} [✓]'.format(var.symbol))
+            if same or var.symbol in exceptions:
+                logging.debug('Checked {} [OK]'.format(var.symbol))
             else:
+                all_same = False
                 logging.warning('Error Found for {} [x]'.format(var.symbol))
+                logging.warning('My value: {}'.format(var.value))
+                logging.warning('Their value: {}'.format(getattr(other_state, var.symbol)))
+
+        return all_same
 
     def compare_poliastro(self, poliastro_orbit):
         from poliastro.twobody import Orbit as PoliastroOrbit

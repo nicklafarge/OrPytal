@@ -76,7 +76,7 @@ def set_attribute(orbit_or_state, val, setter_function):
         if isinstance(val, tuple) and \
                 hasattr(val[0], '__len__') and \
                 (isinstance(val[1], frames.CoordinateFrame) or val[1].__bases__[0] == frames.CoordinateFrame):
-            val = frames.Vector(orbit_or_state.orbit, orbit_or_state, val[0], val[1])
+            val = frames.Vector(val[0], val[1])
 
         # Validate input
         try:

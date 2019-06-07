@@ -26,6 +26,7 @@ state.r = 18500 * units.km
 state.arg_latitude = 55 * units.deg
 state.ascending = True
 
+
 def test_plotly_3d():
     plotting.plot_orbit(orbit, frame=frames.PerifocalFrame)
     plotting.plot_orbit(orbit, frame=frames.InertialFrame)

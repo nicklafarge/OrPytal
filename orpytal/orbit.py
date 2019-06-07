@@ -244,9 +244,9 @@ class Orbit(object):
                         same = True
                     else:
                         same = np.isclose(var.value, other_value)
+
                 elif isinstance(var.value, frames.Vector):
 
-                    x = 1
                     if hasattr(var.value, '__len__') and hasattr(other_value, '__len__') and \
                                     var.value.value.size > 1 and other_value.value.size > 1 and \
                                     all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
@@ -289,15 +289,12 @@ class Orbit(object):
         assert compare_value('a')
         assert compare_value('e', 'ecc')
         assert compare_value('rp', 'r_p')
-        assert compare_value('ra', 'r_a')
-        assert compare_value('a')
         assert compare_value('se', 'energy')
         assert compare_value('n')
         assert compare_value('arg_periapsis', 'argp')
         assert compare_value('raan')
         assert compare_value('i', 'inc')
         assert compare_value('p')
-        assert compare_value('period')
         assert all(compare_value('angular_momentum', 'h_vec'))
 
         # Handlded differently for eccentricity vector in a circular orbit
@@ -305,6 +302,10 @@ class Orbit(object):
             assert all(np.isnan(self.e_vec)) and all(np.isclose(poliastro_orbit.e_vec, 0))
         else:
             assert all(compare_value('e_vec'))
+
+        if self.type() == OrbitType.Elliptic:
+            assert compare_value('ra', 'r_a')
+            assert compare_value('period')
 
     def angles_set(self):
         return self._raan.evaluated and self._arg_periapsis.evaluated
@@ -869,8 +870,8 @@ class SemiminorAxis(OrbitValue):
     def set(self, orbit):
 
         # p / sqrt(1 - e^2)
-        if self.satisfied(orbit, self.orbit_requirements[0]):
-            self.value = orbit.p / np.sqrt(1. - orbit.e ** 2.)
+        if orbit.type() == OrbitType.Elliptic and self.satisfied(orbit, self.orbit_requirements[0]):
+            self.value = orbit.p / np.sqrt(1 - orbit.e ** 2)
 
         # a * sqrt(1 - e^2)
         elif self.satisfied(orbit, self.orbit_requirements[1]):

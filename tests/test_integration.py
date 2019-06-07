@@ -16,8 +16,22 @@ orbit = Orbit(bodies.earth,
 
 
 class TestIntegration(unittest.TestCase):
+    """
+    Tests for orbit propagation/integration
+    """
+
     def test_numerical_intergration(self):
+        """
+        Test that, when numerically propagated for one period, the end state is periapsis 
+        """
         traj = orbit.propagate_orbit()
+        assert np.isclose(orbit.rp, traj.end().r)
+
+    def test_analytic_intergration(self):
+        """
+        Test that, when analytically propagated for one period, the end state is periapsis 
+        """
+        traj = orbit.analytic_propagate_full_orbit()
         assert np.isclose(orbit.rp, traj.end().r)
 
 

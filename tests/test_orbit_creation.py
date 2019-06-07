@@ -10,14 +10,11 @@ from orpytal.planet_constants import CentralBody
 
 ########### External ###########
 import numpy as np
-import poliastro
 from poliastro.bodies import Earth
 from poliastro.twobody import Orbit as PoliastroOrbit
 from astropy import units as u
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
-
+# For proper poliastro comparison
 earth_poliastro = CentralBody(
     name='Earth (Poliastro)',
     radius=bodies.earth.radius,
@@ -26,9 +23,11 @@ earth_poliastro = CentralBody(
 
 earth = earth_poliastro
 
+# Create set up two value pairs that can be used to create an orbit
 possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se', 'b']
 two_value_pairs = [i for i in itertools.combinations(possible_values, 2)]
 
+# These pairs are not sufficient to fully define an orbit.
 impossible_pairs = [
     ('p', 'h'),  # Direct dependency (h = sqrt(p * mu))
     ('a', 'se'),  # Direct dependency (se = -mu/sqrt(a))
@@ -49,19 +48,27 @@ unsupported_pairs = [
     ('period', 'b'),  # Should be possible
 ]
 
+# Setup sample orbit parameters
 a = 51000 * units.km
 i = 1.85 * units.deg
 raan = 49.562 * units.deg
 argp = 286.537 * units.deg
 ta = 23.33 * units.deg
 
+# Create OrPytal orbits
 circular_orbit = Orbit(earth, a=a, e=0, raan=raan, arg_periapsis=argp, i=i)
 elliptic_orbit = Orbit(earth, a=a, e=0.7, raan=raan, arg_periapsis=argp, i=i)
 
+# Create sample Orpytal states
 circular_state = circular_orbit.get_state(ta=0)
 elliptic_state = elliptic_orbit.get_state(ta=0)
 
+
 class TestOrbitCreation(unittest.TestCase):
+    """
+        Unit tests for orbit creation (circular/elliptic)
+    """
+
     def test_angle_units_after_orbit_creation_regular(self):
         """
         Check that angles have proper units (and haven't been converted to dimensionless) for regular orbit creation
@@ -170,5 +177,9 @@ class TestOrbitCreation(unittest.TestCase):
         assert test_orbit.type() == OrbitType.Elliptic
         assert test_orbit.circular()
 
+
 if __name__ == '__main__':
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.INFO)
+
     unittest.main()

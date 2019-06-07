@@ -8,11 +8,15 @@ from orpytal import planet_constants
 ########### External ###########
 import numpy as np
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
-
 class TestOrbit(unittest.TestCase):
-    def test_json(self):
+    """
+    Tests for the planet constant definitions
+    """
+
+    def test_dictionary_creation_and_loading(self):
+        """
+            Test saving/creating from dictionaries
+        """
         moon = planet_constants.moon
         moon2 = planet_constants.CentralBody.from_dict(moon.to_dict())
 
@@ -23,4 +27,6 @@ class TestOrbit(unittest.TestCase):
         assert (moon.parent.parent.radius == moon2.parent.parent.radius)
 
 if __name__ == '__main__':
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
     unittest.main()

@@ -19,7 +19,14 @@ orbit = Orbit(bodies.earth,
 
 
 class TestStateValidationMethods(unittest.TestCase):
+    """
+        Test state validation methods (that don't allow you to set wrong balues
+    """
+
     def test_validate_position(self):
+        """
+            Test position validation (can't be inside periapsis, etc)
+        """
         st = orbit.get_state()
 
         st.r = 10 * units.km
@@ -32,6 +39,9 @@ class TestStateValidationMethods(unittest.TestCase):
         assert st.r == 61000 * units.km
 
     def test_validate_velocity(self):
+        """
+            Test velocity validation (can't be faster than v at rp)
+        """
         st = orbit.get_state()
 
         st.v = 1 * units("km/s")
