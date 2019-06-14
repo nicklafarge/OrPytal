@@ -8,6 +8,7 @@ from orpytal import planet_constants
 ########### External ###########
 import numpy as np
 
+
 class TestOrbit(unittest.TestCase):
     """
     Tests for the planet constant definitions
@@ -26,7 +27,6 @@ class TestOrbit(unittest.TestCase):
         assert (moon.parent.period == moon2.parent.period)
         assert (moon.parent.parent.radius == moon2.parent.parent.radius)
 
+
 if __name__ == '__main__':
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
     unittest.main()

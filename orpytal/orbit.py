@@ -70,7 +70,7 @@ class Orbit(object):
                 def setter_fn(oos, val):
                     attribute.value = v
 
-                set_attribute(self, attribute, setter_fn)
+                successful = set_attribute(self, v, setter_fn, k)
             except AttributeError as e:
                 logging.error('Orbit has no parameter named {}.'.format(k))
                 raise e
@@ -248,8 +248,8 @@ class Orbit(object):
                 elif isinstance(var.value, frames.Vector):
 
                     if hasattr(var.value, '__len__') and hasattr(other_value, '__len__') and \
-                                    var.value.value.size > 1 and other_value.value.size > 1 and \
-                                    all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
+                            var.value.value.size > 1 and other_value.value.size > 1 and \
+                            all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
                         same = True
                     else:
                         same = var.value == other_value
@@ -851,6 +851,10 @@ class SemimajorAxis(OrbitValue):
     @orbit_setter
     def set_from_state(self, state, orbit):
         return False
+
+    def validate_state_input(self, value, orbit):
+        if value == 0:
+            raise InvalidInputError("a = 0")
 
 
 class SemiminorAxis(OrbitValue):

@@ -177,7 +177,6 @@ class TestOrbitCreation(unittest.TestCase):
         assert test_orbit.type() == OrbitType.Elliptic
         assert test_orbit.circular()
 
-
 if __name__ == '__main__':
     logging.basicConfig()
     logging.getLogger().setLevel(logging.INFO)

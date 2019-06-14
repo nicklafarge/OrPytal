@@ -55,6 +55,20 @@ class TestStateValidationMethods(unittest.TestCase):
         st.v = 6
         assert st.v == 6 * units("km/s")
 
+    def test_constructor_syntax(self):
+        """
+            Test validation from KeplarianState constructor
+        """
+        st = KeplarianState(orbit, r=10 * units.km)
+        assert st.r == None
+
+    def test_get_state_syntax(self):
+        """
+            Test validation from get_state syntax
+        """
+        st = orbit.get_state(r=10*units.km)
+        assert st.r == None
+
 
 if __name__ == '__main__':
     unittest.main()

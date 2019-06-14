@@ -53,9 +53,14 @@ class KeplarianState(object):
             self._ascending = None
 
         for k, v in kwargs.items():
+
             try:
                 attribute = getattr(self, '_' + k)
-                attribute.value = v
+
+                def setter_fn(oos, val):
+                    attribute.value = v
+
+                successful = set_attribute(self, v, setter_fn, k)
             except AttributeError as e:
                 logging.error('KeplarianState has no parameter named {}.'.format(k))
                 raise e

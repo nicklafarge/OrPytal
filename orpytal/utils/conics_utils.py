@@ -65,8 +65,7 @@ def orbit_setter(setter_function):
     return wrapper
 
 
-def set_attribute(orbit_or_state, val, setter_function):
-    var_name = setter_function.__name__
+def set_attribute(orbit_or_state, val, setter_function, var_name):
     cls_name = orbit_or_state.__class__.__name__
 
     is_keplarian_state = cls_name == 'KeplarianState'
@@ -78,14 +77,14 @@ def set_attribute(orbit_or_state, val, setter_function):
                 (isinstance(val[1], frames.CoordinateFrame) or val[1].__bases__[0] == frames.CoordinateFrame):
             val = frames.Vector(val[0], val[1])
 
-        # Validate input
-        try:
-            var = getattr(orbit_or_state, "_" + var_name)
-            if hasattr(var, "validate_state_input"):
-                var.validate_state_input(add_units(val, var.units), orbit_or_state)
-        except InvalidInputError as iie:
-            logging.error("Invalid input for {}. Validation failed due to:\n {}".format(var_name, str(iie)))
-            return False
+    # Validate input
+    try:
+        var = getattr(orbit_or_state, "_" + var_name)
+        if hasattr(var, "validate_state_input"):
+            var.validate_state_input(add_units(val, var.units), orbit_or_state)
+    except InvalidInputError as iie:
+        logging.error("Invalid input for {}. Validation failed due to:\n {}".format(var_name, str(iie)))
+        return False
 
     setter_function(orbit_or_state, val)
     logging.debug('Set {} to {}'.format(var_name, val))
@@ -96,7 +95,7 @@ def set_attribute(orbit_or_state, val, setter_function):
 
 def attribute_setter(setter_function):
     def wrapper(*args):
-        set_attribute(*args, setter_function)
+        set_attribute(*args, setter_function, setter_function.__name__)
 
     return wrapper
 

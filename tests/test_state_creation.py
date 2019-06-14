@@ -46,6 +46,7 @@ class TestOrbitCreation(unittest.TestCase):
     """
         Test Keplarian state creation
     """
+
     def test_ascending_state_matches_poliastro(self):
         """
             Test that the sample ascending state parameters match those in poliastro
@@ -104,6 +105,7 @@ class TestOrbitCreation(unittest.TestCase):
 
         # r,fpa
         assert true_anomaly_state.compare(elliptic_orbit.get_state(fpa=true_anomaly_state.fpa, r=true_anomaly_state.r))
+
 
 if __name__ == '__main__':
     unittest.main()
