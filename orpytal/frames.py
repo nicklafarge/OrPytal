@@ -62,7 +62,7 @@ class Vector(object):
         if self.frame == frame:
             value = self.value
         else:
-            value = dcm(state).dot(self.value) * self.value.units
+            value = dcm(state).dot(self.value.m) * self.value.units
 
         return Vector(value, frame)
 
@@ -76,10 +76,10 @@ class Vector(object):
         return self.to(PerifocalFrame, *args)
 
     def norm(self):
-        return np.linalg.norm(self.value) * self.value.units
+        return np.linalg.norm(self.value.m) * self.value.units
 
     def unit(self):
-        return (self.value / np.linalg.norm(self.value)).m
+        return (self.value / np.linalg.norm(self.value.m)).m
 
     def cross(self, vector2):
         assert self.frame == vector2.frame
@@ -95,7 +95,7 @@ class Vector(object):
             units = 1
             val2 = vector2
 
-        return np.dot(self.value, val2) * units
+        return np.dot(self.value.m, val2.m) * units
 
 
 class CoordinateFrame(object):

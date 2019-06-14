@@ -187,10 +187,10 @@ class Orbit(object):
 
     def type(self, tol=1e-10):
         if not self._e.evaluated and not self._a.evaluated and not self._ra.evaluated and not self._se.evaluated:
-            raise ParameterUnavailableError('Need eccentricity, a, se, or ra to evaluate type of orbit')
+            return OrbitType.Unknown
 
         if self._e.evaluated:
-            if 0.0 <= self.e < 1.0 or np.isclose(0, self.e):
+            if 0.0 <= self.e < 1.0 or np.isclose(0, self.e.m):
                 return OrbitType.Elliptic
             elif np.abs(self.e - 1.) < tol:
                 return OrbitType.Parabolic
@@ -566,7 +566,7 @@ class Eccentricity(OrbitValue):
 
         # sqrt(1 + (2 se h^2) / (mu ^ 2) )
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            sqrt_val = 1. + (2. * orbit.se * orbit.h ** 2.) / (orbit.central_body.mu ** 2.)
+            sqrt_val = 1. + (2. * orbit.se.m * orbit.h.m ** 2.) / (orbit.central_body.mu.m ** 2.)
             if np.isclose(sqrt_val, 0) and np.sign(sqrt_val) == -1:
                 sqrt_val = 0
             self.value = np.sqrt(sqrt_val)
@@ -666,7 +666,7 @@ class AngularMomentumMagnitude(OrbitValue):
 
         # | r cross v |
         if self.state_orbit_satisfied(state, self.orbit_state_requirements[0]):
-            self.value = np.linalg.norm(np.cross(state.position.value, state.velocity.value))
+            self.value = np.linalg.norm(np.cross(state.position.value.m, state.velocity.value.m))
 
 
 class AngularMomentumVector(OrbitValue):
@@ -686,9 +686,9 @@ class AngularMomentumVector(OrbitValue):
     @orbit_setter
     def set(self, orbit):
         if self.satisfied(orbit, self.orbit_requirements[0]):
-            h_vector = orbit.h * np.array([np.sin(orbit.raan) * np.sin(orbit.inclination),
-                                           -np.cos(orbit.raan) * np.sin(orbit.inclination),
-                                           np.cos(orbit.inclination)
+            h_vector = orbit.h * np.array([np.sin(orbit.raan.m) * np.sin(orbit.inclination.m),
+                                           -np.cos(orbit.raan.m) * np.sin(orbit.inclination.m),
+                                           np.cos(orbit.inclination.m)
                                            ])
             self.value = frames.Vector(h_vector, frames.InertialFrame)
         elif self.satisfied(orbit, self.orbit_requirements[1]):

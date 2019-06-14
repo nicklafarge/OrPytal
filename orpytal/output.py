@@ -1,4 +1,4 @@
-from orpytal import frames
+from orpytal import frames, OrbitType
 from orpytal.errors import ParameterUnavailableError
 
 DEFAULT_LENGTH = 17
@@ -9,6 +9,7 @@ DEFAULT_UNIT_LENGTH = 10
 DEFAULT_VALUE = '.'
 DEFAULT_FILLER = DEFAULT_VALUE * DEFAULT_LENGTH
 DEFAULT_UNIT_FILLER = DEFAULT_VALUE * DEFAULT_UNIT_LENGTH
+EMPTY_FILLER = ' ' * DEFAULT_LENGTH
 
 LABEL_FMT = '{{0: >{}}}'.format(DEFAULT_LENGTH)
 VALUE_FMT = '{{:{}.{}e}}'.format(DEFAULT_PRECISION_TOTAL_LENGTH, DEFAULT_PRECISION)
@@ -42,7 +43,8 @@ def convert_unit_str(unit_str):
 def create_key_value(label, value):
     val = DEFAULT_FILLER if value is None else VALUE_FMT.format(value.m)
     u = DEFAULT_UNIT_FILLER if value is None else UNIT_FMT.format(convert_unit_str(str(value.u)))
-    return "{}: {} {} |".format(LABEL_FMT.format(label), val, u)
+    lbl = EMPTY_FILLER if label is None else LABEL_FMT.format(label)
+    return "{}: {} {} |".format(lbl, val, u)
 
 
 def create_key_value_line(labels, values):
@@ -69,11 +71,15 @@ def orbit_parameters_output(orbit):
     output.append(create_key_value_line_params(orbit._e, orbit._i))
     output.append(create_key_value_line_params(orbit._a, orbit._raan))
     output.append(create_key_value_line_params(orbit._b, orbit._arg_periapsis))
-    output.append(create_key_value_line_params(orbit._rp, orbit._ra))
     output.append(create_key_value_line_params(orbit._p, orbit._h))
-    output.append(create_key_value_line_params(orbit._n, orbit._period))
-    output.append(create_key_value_line_params(orbit._se, orbit._flyby_angle))
-    output.append(create_key_value_line_params(orbit._v_inf, orbit._ta_inf))
+    output.append(create_key_value_line_params(orbit._se, orbit._n))
+    output.append(create_key_value_line_params(orbit._rp))
+
+    if orbit.type() == OrbitType.Elliptic:
+        output.append(create_key_value_line_params(orbit._ra, orbit._period))
+    elif orbit.type() == OrbitType.Hyperbolic:
+        output.append(create_key_value_line_params(orbit._v_inf, orbit._ta_inf))
+        output.append(create_key_value_line_params(orbit._flyby_angle))
     return output
 
 
@@ -139,14 +145,14 @@ def output_state(state):
     except ParameterUnavailableError as pue:
         frame = frames.PerifocalFrame
 
-    try:
-        state.position.to(frames.PerifocalFrame, state)
-        unit_vectors = ["e", "p", "h"]
-    except AttributeError as ae:
-        pass
-    except ParameterUnavailableError as pue:
-        frame = frames.RotatingFrame
-        unit_vectors = ["r", "theta", "h"]
+        try:
+            state.position.to(frames.PerifocalFrame, state)
+            unit_vectors = ["e", "p", "h"]
+        except AttributeError as ae:
+            pass
+        except ParameterUnavailableError as pue:
+            frame = frames.RotatingFrame
+            unit_vectors = ["r", "theta", "h"]
 
     pos = default_vector if not state.position else state.position.to(frame, state)
     vel = default_vector if not state.position or not state.velocity else state.velocity.to(frame, state)
@@ -160,7 +166,7 @@ def output_state(state):
     output.append(create_key_value_line_params(state._t_since_rp, state._arg_latitude))
     output.append(SECTION_DIVIDER)
     output.append(str(frame.name).center(LINE_WIDTH, " ") + "\n")
-    output.append(create_key_value_line(["Position","Velocity"], [None, None]))
+    output.append(create_key_value_line(["Position", "Velocity"], [None, None]))
     output.append(create_key_value_line([unit_vectors[0],unit_vectors[0]], [pos[0], vel[0]]))
     output.append(create_key_value_line([unit_vectors[1],unit_vectors[1]], [pos[1], vel[1]]))
     output.append(create_key_value_line([unit_vectors[2],unit_vectors[2]], [pos[2], vel[2]]))

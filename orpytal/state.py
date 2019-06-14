@@ -433,7 +433,7 @@ class PositionMagnitude(StateValue):
 
         # |r|
         elif self.satisfied(state, orbit, self.orbit_requirements[3]):
-            self.value = np.linalg.norm(state.position.value)
+            self.value = np.linalg.norm(state.position.value.m)
 
     def validate_state_input(self, value, state):
         if self.satisfied(state, state.orbit, ["rp"]) and value < state.orbit.rp:
@@ -498,7 +498,7 @@ class FlightPathAngle(StateValue):
 
         # acos(h/(rv))
         if self.satisfied(state, orbit, self.orbit_requirements[0]):
-            cos_val = orbit.h / (state.r * state.v)
+            cos_val = (orbit.h / (state.r * state.v)).m
             if np.isclose(cos_val, 1):
                 cos_val = 1
             self.value = state.ascending_sign * np.arccos(cos_val)
@@ -672,7 +672,7 @@ class EccentricAnomaly(StateValue):
 
         # acos((a-r)/(ae))
         elif self.satisfied(state, orbit, self.orbit_requirements[0]):
-            cos_val = (orbit.a - state.r) / (orbit.a * orbit.e)
+            cos_val = ((orbit.a - state.r) / (orbit.a * orbit.e)).m
             if np.isclose(cos_val, 1):
                 cos_val = 1
 

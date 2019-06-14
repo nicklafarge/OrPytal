@@ -10,6 +10,8 @@ from orpytal.errors import InvalidInputError
 ########### External ###########
 import numpy as np
 
+logging.disable(logging.CRITICAL)
+
 orbit = Orbit(bodies.earth,
               a=51000 * units.km,
               e=0.7,
