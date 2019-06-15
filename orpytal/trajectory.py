@@ -31,7 +31,7 @@ class Trajectory(object):
 
         for st in self.states:
             frame_fn = getattr(st.position, frame_fn_name)
-            pos = frame_fn().value
+            pos = frame_fn(st).value
             x_vals.append(pos[0].m)
             y_vals.append(pos[1].m)
             z_vals.append(pos[2].m)

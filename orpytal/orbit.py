@@ -132,20 +132,20 @@ class Orbit(object):
 
         return Trajectory(st_list)
 
-    def propagate_orbit(self, n=10):
+    def propagate_orbit(self):
         res = integration.integrate_orbit(self)
         numeric_states = res.y
 
         n_states = len(numeric_states[0])
-        d = int(n_states / n)
+        # d = int(n_states / n)
 
         pos_list = [[numeric_states[0][i], numeric_states[1][i], numeric_states[2][i]] for i in range(n_states)]
         vel_list = [[numeric_states[3][i], numeric_states[4][i], numeric_states[5][i]] for i in range(n_states)]
 
-        r_pos_list = pos_list[::d]
+        r_pos_list = pos_list
         r_pos_list.append(pos_list[-1])
 
-        r_vel_list = vel_list[::d]
+        r_vel_list = vel_list
         r_vel_list.append(vel_list[-1])
 
         states = []
@@ -726,10 +726,10 @@ class ArgumentOfPeriapsis(OrbitValue):
             self.value = np.arctan2(orbit.e_vec[1], orbit.e_vec[0])
 
         elif self.satisfied(orbit, self.orbit_requirements[2]) and not orbit.equitorial() and not orbit.circular():
-            if orbit.e_vec.frame == frames.InertialFrame and orbit.angular_momentum.frame == frames.InertialFrame:
+            if orbit.e_vec.frame == frames.InertialFrame and orbit.angular_momentum.frame == frames.InertialFrame and orbit.raan_vec.frame == frames.InertialFrame:
                 e = orbit.e_vec.value.m
                 h_xyz = orbit.angular_momentum.unit()
-                line_of_nodes = orbit.raan_vec
+                line_of_nodes = orbit.raan_vec.value.m
                 self.value = np.arctan2(e.dot(np.cross(h_xyz, line_of_nodes)), e.dot(line_of_nodes))
 
     @orbit_setter

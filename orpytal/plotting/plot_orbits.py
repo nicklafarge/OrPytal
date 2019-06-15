@@ -4,7 +4,6 @@ plot_utils = None
 def plot_orbit(orbit, frame=frames.InertialFrame, planar=None):
     # traj = orbit.analytic_propagate_full_orbit()
     traj = orbit.propagate_orbit()
-    perifocal_test = traj.perifocal()
     plot_utils = get_plot_utils(frame=frame)
     plot_utils.init_plot(frame=frame)
     plot_utils.plot_primary(traj)

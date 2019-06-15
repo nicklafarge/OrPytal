@@ -12,6 +12,8 @@ import dash_html_components as html
 import dash_core_components as dcc
 import numpy as np
 import plotly
+import plotly.plotly as py
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import plotly.graph_objs as go
 import seaborn as sns
 
@@ -22,7 +24,6 @@ BODY_COLORS = dict(
     earth="#204a87",
     sun='rgb(253,184,19)'
 )
-
 
 
 class PlotlyPlotUtils(object):
@@ -150,6 +151,7 @@ class PlotlyPlotUtils(object):
                 kwargs['name'] = name
         return kwargs
 
+
 class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
     def __init__(self, frame=frames.InertialFrame):
         self.init_plotly()
@@ -190,13 +192,12 @@ class PlotlyPlotUtils3D(PlotUtils3D, PlotlyPlotUtils):
 
     @copydoc(PlotUtilsBase.show)
     def show(self, **kwargs):
-        super().show_plotly(**kwargs)
+        self.show_plotly(**kwargs)
 
     @copydoc(PlotUtilsBase.init_plot)
     def init_plot(self, fig_number=None, **kwargs):
         super().init_plot(**kwargs)
         self.__init__(frame=self.frame)
-
 
     @copydoc(PlotUtilsBase.plot_primary)
     def plot_primary(self, primary, **kwargs):
@@ -316,7 +317,6 @@ class PlotlyPlotUtils2D(PlotUtils2D, PlotlyPlotUtils):
         self._layout.shapes = []
 
         self.default_axes()
-
 
     @copydoc(PlotUtils2D.plot_circle)
     def plot_circle(self, x, y, radius, num=500, **kwargs):
