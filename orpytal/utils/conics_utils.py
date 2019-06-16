@@ -80,7 +80,11 @@ def set_attribute(orbit_or_state, val, setter_function, var_name):
     # Validate input
     try:
         var = getattr(orbit_or_state, "_" + var_name)
-        if hasattr(var, "validate_state_input"):
+        if var.evaluated:
+            logging.error("Variable {} already has a value set - it can't be set again. Create a new instance "
+                          "instead of changing an existing one".format(var_name))
+            return False
+        elif hasattr(var, "validate_state_input"):
             var.validate_state_input(add_units(val, var.units), orbit_or_state)
     except InvalidInputError as iie:
         logging.error("Invalid input for {}. Validation failed due to:\n {}".format(var_name, str(iie)))

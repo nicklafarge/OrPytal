@@ -24,7 +24,7 @@ earth_poliastro = CentralBody(
 earth = earth_poliastro
 
 # Create set up two value pairs that can be used to create an orbit
-possible_values = ['a', 'e', 'rp', 'ra', 'e', 'p', 'h', 'period', 'se', 'b']
+possible_values = ['a', 'e', 'rp', 'ra', 'p', 'h', 'period', 'se', 'b']
 two_value_pairs = [i for i in itertools.combinations(possible_values, 2)]
 
 # These pairs are not sufficient to fully define an orbit.

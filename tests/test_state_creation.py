@@ -79,11 +79,25 @@ class TestOrbitCreation(unittest.TestCase):
         # Eccentric Anomaly
         assert true_anomaly_state.compare(elliptic_orbit.get_state(E=true_anomaly_state.E))
 
-        # ascending r
-        assert true_anomaly_state.compare(elliptic_orbit.get_state(ascending=True, r=true_anomaly_state.r))
-
         # r,fpa
         assert true_anomaly_state.compare(elliptic_orbit.get_state(fpa=true_anomaly_state.fpa, r=true_anomaly_state.r))
+
+    def test_ascending_kwarg_syntax(self):
+        """
+            Test that ascending can be set from the kwarg syntax
+        """
+
+        assert ascending_elliptic_state.compare(elliptic_orbit.get_state(ascending=True, r=ascending_elliptic_state.r))
+
+    def test_ascending_with_position(self):
+        """
+            Test that ascending can be set from the normal syntax
+        """
+
+        test_state = elliptic_orbit.get_state()
+        test_state.r = ascending_elliptic_state.r
+        test_state.ascending = True
+        assert ascending_elliptic_state.compare(test_state)
 
     def test_descscending_state_creation(self):
         """

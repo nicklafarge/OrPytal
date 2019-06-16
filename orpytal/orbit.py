@@ -719,10 +719,10 @@ class ArgumentOfPeriapsis(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-        if self.satisfied(orbit, self.orbit_requirements[0]) and orbit.circular():
-            self.value = 0
+        # if self.satisfied(orbit, self.orbit_requirements[0]) and orbit.circular():
+        #     self.value = 0
 
-        elif self.satisfied(orbit, self.orbit_requirements[1]) and orbit.equitorial():
+        if self.satisfied(orbit, self.orbit_requirements[1]) and orbit.equitorial():
             self.value = np.arctan2(orbit.e_vec[1], orbit.e_vec[0])
 
         elif self.satisfied(orbit, self.orbit_requirements[2]) and not orbit.equitorial() and not orbit.circular():

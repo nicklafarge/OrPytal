@@ -72,7 +72,7 @@ class CentralBody(object):
         if self.parent and isinstance(self.parent, CentralBody) and self.parent.a is not None:
             self.orbit = Orbit(self.parent, '{}'.format(self.name),
                                a=self.a,
-                               period=self.period,
+                               # period=self.period,
                                e=self.e,
                                i=self.i,
                                **kwargs)

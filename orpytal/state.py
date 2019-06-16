@@ -275,10 +275,11 @@ class KeplarianState(object):
         return self._ascending
 
     @ascending.setter
-    @attribute_setter
     def ascending(self, ascending):
+        # Special case - don't use the decorator
         if isinstance(ascending, bool):
             self._ascending = ascending
+            self.set_vars()
         else:
             raise InvalidInputError("Ascending must be True/False")
 

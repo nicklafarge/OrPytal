@@ -66,8 +66,17 @@ class TestStateValidationMethods(unittest.TestCase):
         """
             Test validation from get_state syntax
         """
-        st = orbit.get_state(r=10*units.km)
+        st = orbit.get_state(r=10 * units.km)
         assert st.r == None
+
+    def test_prohibit_resetting_variable(self):
+        """
+            Test that if a variable is already set, you can't set it again
+        """
+        bad_r = 14000*units.km
+        st = orbit.get_state(ta=60)
+        st.r = bad_r
+        assert st.r != bad_r
 
 
 if __name__ == '__main__':

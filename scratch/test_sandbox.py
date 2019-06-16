@@ -3,18 +3,15 @@ import logging
 import itertools
 
 ########### Local ###########
-from orpytal import units, Orbit, KeplarianState, bodies, plotting, get_plot_utils, frames
-from orpytal.planet_constants import BODIES_532 as bodies
-from orpytal.plotting import plot_orbit
-import matplotlib.pyplot as plt
-import numpy as np
+import orpytal as op
 
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+# Compute an orbit given radius of apoapsis and semilatus rectum
+example_orbit = op.Orbit(op.bodies.earth)
 
-earth = bodies['EARTH']
-orbit = Orbit(earth, a=10*earth.radius, e=0.4, i=30*units.deg, raan=45*units.deg, arg_periapsis=-90*units.deg)
-# st = orbit.get_state(ta=135*units.deg)
-st = orbit.get_state()
-st.ta=135*units.deg
-print(st)
+example_orbit.period = 7.3 * op.units.hours
+example_orbit.e = 0.5
+example_orbit.raan = 120 * op.units.deg
+example_orbit.arg_periapsis = 70 * op.units.deg
+example_orbit.i = 45 * op.units.deg
+
+op.plotting.plot_orbit(example_orbit, frame=op.frames.InertialFrame)
