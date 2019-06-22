@@ -54,7 +54,9 @@ class Trajectory(object):
         return self.in_frame(frame_name)
 
     def start(self):
+        self.states[0].set_vars()
         return self.states[0]
 
     def end(self):
+        self.states[-1].set_vars()
         return self.states[-1]

@@ -1,5 +1,7 @@
 from orpytal import frames
+
 plot_utils = None
+
 
 def plot_orbit(orbit, frame=frames.InertialFrame, planar=None):
     # traj = orbit.analytic_propagate_full_orbit()

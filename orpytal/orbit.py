@@ -151,8 +151,8 @@ class Orbit(object):
         states = []
         for p, v in zip(r_pos_list, r_vel_list):
             st = self.get_state()
-            st.velocity = v, frames.InertialFrame
-            st.position = p, frames.InertialFrame
+            st._position.value = frames.Vector(p, frames.InertialFrame)
+            st._velocity.value = frames.Vector(v, frames.InertialFrame)
             states.append(st)
 
         return Trajectory(states)
