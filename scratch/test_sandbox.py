@@ -15,3 +15,16 @@ example_orbit.arg_periapsis = 70 * op.units.deg
 example_orbit.i = 45 * op.units.deg
 
 op.plotting.plot_orbit(example_orbit, frame=op.frames.InertialFrame)
+
+
+# Constructor kwargs syntax
+example_orbit_kwargs = op.Orbit(op.bodies.earth, ra=21000*op.units.km,
+                                p=11000*op.units.km)
+
+# Parameter syntax
+example_orbit_parameters = op.Orbit(op.bodies.earth)
+example_orbit_parameters.ra = 21000*op.units.km
+example_orbit_parameters.p =11000*op.units.km
+
+# These yield the same orbit, outputted as follows
+# print(example_orbit_kwargs)

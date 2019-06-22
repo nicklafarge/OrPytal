@@ -524,8 +524,3 @@ BODIES_532['CERES'] = CentralBody(
 
 for k, b in BODIES.items():
     setattr(sys.modules[__name__], b.name.lower(), b)
-
-
-if __name__ == '__main__':
-    moon2 = CentralBody.from_dict(moon.to_dict())
-    moon2.to_dict()

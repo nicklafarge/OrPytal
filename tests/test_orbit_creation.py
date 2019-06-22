@@ -154,10 +154,24 @@ class TestOrbitCreation(unittest.TestCase):
         """
         test_st = elliptic_orbit.get_state(ta=0.2)
 
-        test_orbit = Orbit(earth, i=i, raan=raan, arg_periapsis=argp)
+        test_orbit = Orbit(earth)
         new_st = KeplarianState(test_orbit)
-        new_st.position = test_st.position
-        new_st.velocity = test_st.velocity
+        new_st.position = test_st.position.inertial(test_st)
+        new_st.velocity = test_st.velocity.inertial(test_st)
+
+        assert elliptic_orbit.compare(test_orbit)
+        assert test_orbit.type() == OrbitType.Elliptic
+
+    def test_creation_from_position_and_velocity_tuple(self):
+        """
+        Test creation from inertial position and velocity for an elliptic orbit with tuple syntax
+        """
+        test_st = elliptic_orbit.get_state(ta=0.2)
+
+        test_orbit = Orbit(earth)
+        new_st = KeplarianState(test_orbit)
+        new_st.position = (test_st.position.inertial(test_st).value, frames.InertialFrame)
+        new_st.velocity = (test_st.velocity.inertial(test_st).value, frames.InertialFrame)
 
         assert elliptic_orbit.compare(test_orbit)
         assert test_orbit.type() == OrbitType.Elliptic

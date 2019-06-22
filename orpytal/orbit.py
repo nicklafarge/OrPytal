@@ -151,8 +151,8 @@ class Orbit(object):
         states = []
         for p, v in zip(r_pos_list, r_vel_list):
             st = self.get_state()
-            st.position = p, frames.InertialFrame
             st.velocity = v, frames.InertialFrame
+            st.position = p, frames.InertialFrame
             states.append(st)
 
         return Trajectory(states)
@@ -580,7 +580,7 @@ class Eccentricity(OrbitValue):
 
         # |e|
         elif self.satisfied(orbit, self.orbit_requirements[2]):
-            self.value = np.linalg.norm(orbit.e_vec)
+            self.value = np.linalg.norm(orbit.e_vec.value)
 
         # 1 - p/ra
         elif self.satisfied(orbit, self.orbit_requirements[3]):
@@ -719,9 +719,6 @@ class ArgumentOfPeriapsis(OrbitValue):
 
     @orbit_setter
     def set(self, orbit):
-        # if self.satisfied(orbit, self.orbit_requirements[0]) and orbit.circular():
-        #     self.value = 0
-
         if self.satisfied(orbit, self.orbit_requirements[1]) and orbit.equitorial():
             self.value = np.arctan2(orbit.e_vec[1], orbit.e_vec[0])
 

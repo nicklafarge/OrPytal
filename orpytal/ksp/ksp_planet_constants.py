@@ -100,8 +100,8 @@ BODIES['MUN'] = CentralBody(
     e=0 * units.dimensionless,
     i=0 * units.degrees,
     parent=BODIES['KERBIN'],
-    arg_periapsis=0 * units.deg,
-    raan=0 * units.deg
+    # arg_periapsis=0 * units.deg,
+    # raan=0 * units.deg
 )
 
 BODIES['MINIMUS'] = CentralBody(
@@ -184,8 +184,8 @@ BODIES['LAYTHE'] = CentralBody(
     e=0 * units.dimensionless,
     i=0 * units.deg,
     parent=BODIES['JOOL'],
-    arg_periapsis=0 * units.deg,
-    raan=0 * units.deg
+    # arg_periapsis=0 * units.deg,
+    # raan=0 * units.deg
 )
 BODIES['VALL'] = CentralBody(
     name='Vall',
@@ -196,8 +196,8 @@ BODIES['VALL'] = CentralBody(
     e=0 * units.dimensionless,
     i=0 * units.deg,
     parent=BODIES['JOOL'],
-    arg_periapsis=0 * units.deg,
-    raan=0 * units.deg
+    # arg_periapsis=0 * units.deg,
+    # raan=0 * units.deg
 )
 BODIES['TYLO'] = CentralBody(
     name='Jool',
