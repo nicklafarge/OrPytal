@@ -1,7 +1,8 @@
 # OrPytal
 
-OrPytal is an Python package for orbital mechanics. It began as a pet project to find a way to easily create two-body orbits and states, without needt of parameters. For example, what if you wanted to know what an orbit would look like with a particular radius of apoapsis and specific energy? How about semilatus rectum and eccentricity? OrPytal makes these problems trivial and syntactically easy.
+OrPytal is an Python package for orbital mechanics. It began as a pet project to find a way to easily create two-body orbits and states, without needing a particular set of parameters. For example, what if you wanted to know what an orbit would look like with a particular radius of apoapsis and specific energy? How about semilatus rectum and eccentricity? OrPytal makes these problems trivial and syntactically easy.
 
+Very incomplete documentation can be found [here](https://orpytal.readme.io/)
 
 ## A quick example
 

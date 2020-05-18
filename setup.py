@@ -9,11 +9,11 @@ print('-----------------------------------------')
 # https://blog.ionelmc.ro/2014/05/25/python-packaging/
 setup(
     name="orpytal",
-    version="0.0.15",
+    version="0.1.0",
     description="Python Package for Two-Body Orbital Mechanics",
     author="Nick LaFarge",
     author_email="nick.lafarge@gmail.com",
-    url="http://nicklafarge.space/orpytal",
+    url="https://github.com/nicklafarge/OrPytal",
     download_url="https://github.com/nicklafarge/OrPytal",
     license="MIT",
     keywords=[
