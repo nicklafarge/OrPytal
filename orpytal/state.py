@@ -7,7 +7,9 @@ from orpytal import frames, output, OrbitType
 from orpytal.base import OrbitBase
 from orpytal.common import units
 from orpytal.errors import ParameterUnavailableError, InvalidInputError
-from orpytal.utils.conics_utils import *
+from orpytal.utils.conics_utils import set_attribute, attribute_setter, check_satisfied, orbit_setter, common_val, \
+    angle_pos_neg
+from orpytal.utils import poliastro_test_utils
 
 ########### External ###########
 import numpy as np
@@ -113,8 +115,8 @@ class KeplarianState(object):
 
                 elif isinstance(var.value, frames.Vector):
                     if hasattr(var.value, '__len__') and hasattr(other_value, '__len__') and \
-                                    var.value.value.size > 1 and other_value.value.size > 1 and \
-                                    all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
+                            var.value.value.size > 1 and other_value.value.size > 1 and \
+                            all(np.isnan(var.value.value)) and all(np.isnan(other_value.value)):
                         same = True
                     else:
                         same = var.value == other_value
@@ -137,30 +139,10 @@ class KeplarianState(object):
             logging.warning('Inputted orbit is not an instance of poliastro.twobody.Orbit')
             return False
 
-        def compare_value(symbol, psymbol=None):
-            my_value = getattr(self, symbol)
-
-            if isinstance(my_value, frames.Vector):
-                my_value = my_value.inertial(self).value
-
-            other_value = getattr(poliastro_orbit, symbol if not psymbol else psymbol)
-            unit_str = my_value.units.format_babel()
-
-            if unit_str != 'dimensionless':
-                other_value = other_value.to(unit_str)
-
-            close_check = np.isclose(my_value.to(unit_str).m, other_value.value)
-            try:
-                same = bool(close_check)
-            except ValueError:
-                same = all(close_check)
-
-            return same
-
-        assert compare_value('arg_latitude', 'arglat')
-        assert compare_value('position', 'r')
-        assert compare_value('velocity', 'v')
-        assert compare_value('ta', 'nu')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'arg_latitude', 'arglat')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'position', 'r')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'velocity', 'v')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'ta', 'nu')
 
     @property
     def r(self):

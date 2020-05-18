@@ -84,7 +84,7 @@ class Vector(object):
     def cross(self, vector2):
         assert self.frame == vector2.frame
         units = self.value.units * vector2.value.units
-        return np.cross(self.value, vector2.value) * units
+        return np.cross(self.value, vector2.value)
 
     def dot(self, vector2):
         if isinstance(vector2, Vector):
@@ -202,8 +202,8 @@ class PerifocalFrame(CoordinateFrame):
         if state.ta is None:
             raise ParameterUnavailableError('Need true anomaly to convert to the rotating frame')
         return np.array(
-            [[np.cos(state.ta), np.sin(state.ta), 0],
-             [-np.sin(state.ta), np.cos(state.ta), 0],
+            [[np.cos(state.ta).m, np.sin(state.ta).m, 0],
+             [-np.sin(state.ta).m, np.cos(state.ta).m, 0],
              [0, 0, 1]]
         )
 

@@ -2,11 +2,13 @@
 import logging
 
 ########### Local ###########
-from orpytal.base import OrbitBase
+from orpytal.base import OrbitBase, units
 from orpytal import output, integration, frames, OrbitType
+from orpytal.errors import ParameterUnavailableError, InvalidInputError
 from orpytal.state import KeplarianState
 from orpytal.trajectory import Trajectory
-from orpytal.utils.conics_utils import *
+from orpytal.utils.conics_utils import set_attribute, attribute_setter, orbit_setter
+from orpytal.utils import poliastro_test_utils
 
 ########### External ###########
 import numpy as np
@@ -271,41 +273,53 @@ class Orbit(object):
         if not isinstance(poliastro_orbit, PoliastroOrbit):
             logging.warning('Inputted orbit is not an instance of poliastro.twobody.Orbit')
             return False
+        #
+        # def compare_value(symbol, psymbol=None):
+        #     my_value = getattr(self, symbol)
+        #
+        #     if isinstance(my_value, frames.Vector):
+        #         my_value = my_value.value
+        #
+        #     other_value = getattr(poliastro_orbit, symbol if not psymbol else psymbol)
+        #     unit_str = my_value.units.format_babel()
+        #
+        #     if unit_str != 'dimensionless':
+        #         other_value = other_value.to(unit_str)
+        #
+        #     if my_value.units == units.rad:
+        #         from orpytal.utils.conics_utils import angle_positive
+        #         my_value = angle_positive(my_value)
+        #         other_value = angle_positive(other_value.value*units.rad)
+        #
+        #     if hasattr(other_value, 'm'):
+        #         other_value_magnitude = other_value.m
+        #     else:
+        #         other_value_magnitude = other_value.value
+        #
+        #     return np.isclose(my_value.to(unit_str).m, other_value_magnitude)
 
-        def compare_value(symbol, psymbol=None):
-            my_value = getattr(self, symbol)
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'a')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'e', 'ecc')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'rp', 'r_p')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'se', 'energy')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'n')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'arg_periapsis', 'argp')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'raan')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'i', 'inc')
+        assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'p')
 
-            if isinstance(my_value, frames.Vector):
-                my_value = my_value.value
-
-            other_value = getattr(poliastro_orbit, symbol if not psymbol else psymbol)
-            unit_str = my_value.units.format_babel()
-
-            if unit_str != 'dimensionless':
-                other_value = other_value.to(unit_str)
-
-            return np.isclose(my_value.to(unit_str).m, other_value.value)
-
-        assert compare_value('a')
-        assert compare_value('e', 'ecc')
-        assert compare_value('rp', 'r_p')
-        assert compare_value('se', 'energy')
-        assert compare_value('n')
-        assert compare_value('arg_periapsis', 'argp')
-        assert compare_value('raan')
-        assert compare_value('i', 'inc')
-        assert compare_value('p')
-        assert all(compare_value('angular_momentum', 'h_vec'))
+        # Poliastro units wrong - can't compare
+        # assert all(poliastro_test_utils.compare_value(self, poliastro_orbit, 'angular_momentum', 'h_vec'))
 
         # Handlded differently for eccentricity vector in a circular orbit
         if self.circular():
             assert all(np.isnan(self.e_vec)) and all(np.isclose(poliastro_orbit.e_vec, 0))
         else:
-            assert all(compare_value('e_vec'))
+            assert poliastro_test_utils.compare_value(self, poliastro_orbit, 'e_vec')
 
         if self.type() == OrbitType.Elliptic:
-            assert compare_value('ra', 'r_a')
-            assert compare_value('period')
+            assert poliastro_test_utils.compare_value(self, poliastro_orbit,'ra', 'r_a')
+            assert poliastro_test_utils.compare_value(self, poliastro_orbit,'period')
 
     def angles_set(self):
         return self._raan.evaluated and self._arg_periapsis.evaluated
@@ -580,7 +594,7 @@ class Eccentricity(OrbitValue):
 
         # |e|
         elif self.satisfied(orbit, self.orbit_requirements[2]):
-            self.value = np.linalg.norm(orbit.e_vec.value)
+            self.value = np.linalg.norm(orbit.e_vec.value.m)
 
         # 1 - p/ra
         elif self.satisfied(orbit, self.orbit_requirements[3]):
