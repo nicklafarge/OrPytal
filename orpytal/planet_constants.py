@@ -6,7 +6,6 @@ import numpy as np
 
 ########### External ###########
 import untangle
-from poliastro.bodies import Earth
 
 ########### Local ###########
 from orpytal import Orbit
